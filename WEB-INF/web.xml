@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<web-app version="2.5" xmlns="http://java.sun.com/xml/ns/javaee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
+
+	<filter>
+		<filter-name>MD5Filter</filter-name>
+		<filter-class>org.compiere.web.MD5Filter</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>MD5Filter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+	<servlet>
+		<servlet-name>GetMD5File</servlet-name>
+		<servlet-class>org.compiere.web.GetMD5FileServlet</servlet-class>
+	</servlet>
+	<!-- <servlet>
+		<servlet-name>ICIUPICallback</servlet-name>
+		<servlet-class>org.syvasoft.iciciupi.CallBack</servlet-class>
+	</servlet> -->
+
+
+
+	<servlet-mapping>
+		<servlet-name>GetMD5File</servlet-name>
+		<url-pattern>/GetMD5File</url-pattern>
+	</servlet-mapping>
+
+
+
+  <!-- User Login Servlet -->
+ <servlet>
+    <servlet-name>UserLoginServlet</servlet-name>
+    <servlet-class>org.vijaytech.textile.UserLoginServlet</servlet-class>
+</servlet>
+
+<servlet-mapping>
+    <servlet-name>UserLoginServlet</servlet-name>
+    <url-pattern>/UserLoginServlet</url-pattern>
+</servlet-mapping> 
+
+<!-- Welcome file -->
+<welcome-file-list>
+    <welcome-file>pages/loginpage.jsp</welcome-file>
+</welcome-file-list>
+  
+   
+ <servlet>
+    <servlet-name>LoadBillInfo</servlet-name>
+    <servlet-class>org.vijaytech.textile.LoadBillInfo</servlet-class>
+</servlet>
+
+<servlet-mapping>
+    <servlet-name>LoadBillInfo</servlet-name>
+    <url-pattern>/LoadBillInfo</url-pattern>
+</servlet-mapping>
+
+ 
+
+
+ <session-config>
+    <session-timeout>1440</session-timeout> 
+</session-config>
+
+
+<!-- <servlet>
+    <servlet-name>SaveRentServlet</servlet-name>
+    <servlet-class>org.syvasoft.sprmobileapp.SaveRateCardServlet.SaveRentServlet</servlet-class>
+</servlet>
+
+<servlet-mapping>
+    <servlet-name>SaveRentServlet</servlet-name>
+    <url-pattern>/SaveRentServlet</url-pattern>
+</servlet-mapping>
+
+ 
+ <servlet>
+    <servlet-name>QuotationSaveServlet</servlet-name>
+    <servlet-class>org.syvasoft.sprmobileapp.SaveRateCardServlet.QuotationSaveServlet</servlet-class>
+</servlet>
+<servlet-mapping>
+    <servlet-name>QuotationSaveServlet</servlet-name>
+    <url-pattern>/QuotationSaveServlet</url-pattern>
+</servlet-mapping>
+ 
+  <servlet>
+    <servlet-name>Quotation</servlet-name>
+    <servlet-class>org.syvasoft.sprmobileapp.SaveRateCardServlet.Quotation</servlet-class>
+</servlet>
+<servlet-mapping>
+    <servlet-name>Quotation</servlet-name>
+    <url-pattern>/Quotation</url-pattern>
+</servlet-mapping>
+ 
+ 
+<servlet>
+  <servlet-name>StatusComplete</servlet-name>
+  <servlet-class>org.syvasoft.sprmobileapp.SaveRateCardServlet.StatusComplete</servlet-class>
+</servlet>
+
+<servlet-mapping>
+  <servlet-name>StatusComplete</servlet-name>
+  <url-pattern>/StatusComplete</url-pattern>
+</servlet-mapping>
+<servlet>
+  <servlet-name>WhatsAppCheckServlet</servlet-name>
+  <servlet-class>org.syvasoft.sprmobileapp.SaveRateCardServlet.WhatsAppCheckServlet</servlet-class>
+</servlet>
+
+<servlet-mapping>
+  <servlet-name>WhatsAppCheckServlet</servlet-name>
+  <url-pattern>/WhatsAppCheckServlet</url-pattern>
+</servlet-mapping>
+
+<servlet>
+  <servlet-name>TaxIdToCustomer</servlet-name>
+  <servlet-class>org.syvasoft.sprmobileapp.SaveRateCardServlet.TaxIdToCustomer</servlet-class>
+</servlet>
+
+<servlet-mapping>
+  <servlet-name>TaxIdToCustomer</servlet-name>
+  <url-pattern>/TaxIdToCustomer</url-pattern>
+</servlet-mapping> -->
+</web-app>
