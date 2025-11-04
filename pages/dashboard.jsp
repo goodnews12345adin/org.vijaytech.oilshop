@@ -5,7 +5,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard | MyApp</title>
+    <title>Dashboard | Vijay Tech</title>
 
     <!-- ✅ Bootstrap & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -40,7 +40,7 @@
 
     <!-- ✅ Common Layout Includes -->
     <%@ include file="header.jsp" %>
-    <%-- <%@ include file="sidebar.jsp" %> --%>
+    <%@ include file="sidebar.jsp" %> 
 
     <!-- ✅ Page Content -->
     <main class="main-content">

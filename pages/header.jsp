@@ -1,10 +1,10 @@
 <%@ page session="true" %>
-<%
+<%-- <%
     String username = (String) session.getAttribute("username");
     if (username == null) {
         username = "Guest";
     }
-%>
+%> --%>
 
 <!-- ====== Header / Navbar ====== -->
 <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top">
@@ -21,7 +21,7 @@
     </button>
 
     <!-- Navbar Links -->
-    <div class="collapse navbar-collapse" id="navbarMenu">
+    <!-- <div class="collapse navbar-collapse" id="navbarMenu">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
         <li class="nav-item">
           <a class="nav-link" href="dashboard.jsp"><i class="bi bi-house-door"></i> Dashboard</a>
@@ -35,11 +35,11 @@
         <li class="nav-item">
           <a class="nav-link" href="settings.jsp"><i class="bi bi-gear"></i> Settings</a>
         </li>
-      </ul>
+      </ul> -->
 
       <!-- Right Side -->
       <div class="d-flex align-items-center">
-        <span class="me-3 text-muted">Welcome, <strong><%= username %></strong></span>
+        <span class="me-3 text-muted">Welcome, <strong><%-- <%= username %> --%></strong></span>
         <a href="logout.jsp" class="btn btn-outline-primary btn-sm">
           <i class="bi bi-box-arrow-right"></i> Logout
         </a>

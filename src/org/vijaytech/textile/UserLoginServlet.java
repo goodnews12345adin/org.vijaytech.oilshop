@@ -104,7 +104,7 @@ public class UserLoginServlet extends HttpServlet {
 
                 
               
-                response.sendRedirect("pages/textileBill.jsp");
+                response.sendRedirect("pages/dashboard.jsp");
             } else {
                 setiDempiereContext(request);
                 response.sendRedirect("pages/loginpage.jsp?error=1");

@@ -61,9 +61,18 @@
 
 
  <session-config>
-    <session-timeout>1440</session-timeout> 
+    <session-timeout>10000</session-timeout> 
 </session-config>
 
+<servlet>
+    <servlet-name>SalesServlet</servlet-name>
+    <servlet-class>org.vijaytech.textile.SalesServlet</servlet-class>
+</servlet>
+
+<servlet-mapping>
+    <servlet-name>SalesServlet</servlet-name>
+    <url-pattern>/SalesServlet</url-pattern>
+</servlet-mapping>
 
 <!-- <servlet>
     <servlet-name>SaveRentServlet</servlet-name>

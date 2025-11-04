@@ -15,15 +15,17 @@
   <hr>
   <ul class="nav nav-pills flex-column mb-auto">
     <li class="nav-item">
-      <a href="dashboard.jsp" class="nav-link text-white active" aria-current="page">
+      <a href="pages/dashboard.jsp" class="nav-link text-white active" aria-current="page">
         <i class="bi bi-house-door me-2"></i> Dashboard
       </a>
     </li>
-    <li>
-      <a href="sales.jsp" class="nav-link text-white">
-        <i class="bi bi-cart3 me-2"></i> Sales
-      </a>
-    </li>
+   <li>
+  <a href="${pageContext.request.contextPath}/SalesServlet" class="nav-link text-white">
+    <i class="bi bi-cart3 me-2"></i> Sales
+  </a>
+</li>
+
+
     <li>
       <a href="products.jsp" class="nav-link text-white">
         <i class="bi bi-box-seam me-2"></i> Products
@@ -50,7 +52,7 @@
     <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser"
        data-bs-toggle="dropdown" aria-expanded="false">
       <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="" width="32" height="32" class="rounded-circle me-2">
-      <strong><%= username %></strong>
+      <strong><%-- <%= username %> --%></strong>
     </a>
     <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser">
       <li><a class="dropdown-item" href="profile.jsp">Profile</a></li>
