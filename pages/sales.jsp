@@ -52,12 +52,11 @@
                     List<Map<String, Object>> productList = (List<Map<String, Object>>) request.getAttribute("productList");
                     if (productList != null && !productList.isEmpty()) {
                         for (Map<String, Object> p : productList) {
-                            String id = p.get("id").toString();
                             String name = p.get("name").toString();
                             String rate = p.get("rate").toString();
                             String uom = p.get("uom").toString();
                 %>
-                            <option value="<%= id %>|<%= name %>|<%= rate %>|<%= uom %>">
+                            <option value="<%= name %>|<%= rate %>|<%= uom %>">
                                 <%= name %> - ₹<%= rate %>
                             </option>
                 <%

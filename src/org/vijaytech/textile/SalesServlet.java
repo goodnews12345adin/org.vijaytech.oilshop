@@ -47,21 +47,21 @@ public class SalesServlet extends HttpServlet {
 	            System.out.println("Loading products for Org: " + AD_Org_ID + ", Client: " + AD_Client_ID);
 
 	            // 🔹 Fetch product list
-	            List<TF_MProduct> prodList = new Query(ctx, TF_MProduct.Table_Name,
-	                    "AD_Org_ID=?", null)
+	            List<MPriceListUOM> prodList = new Query(ctx, MPriceListUOM.Table_Name,
+	                    "IsSOTrx ='Y' AND AD_Org_ID =? ", null)
 	            		.setClient_ID()
-	                    .setParameters(AD_Org_ID)
+	                    .setParameters(1000000)
 	                    .list();
 	            System.out.println("data : "+prodList.size());
 	            List<Map<String, Object>> productData = new ArrayList<>();
 
-	            for (TF_MProduct pro : prodList) {
+	            for (MPriceListUOM pro : prodList) {
 	                BigDecimal priceByUom = MPriceListUOM.getPrice(ctx, pro.get_ID(), pro.getC_UOM_ID(), 0, true);
 
 	                Map<String, Object> p = new HashMap<>();
-	                p.put("id", pro.get_ID());
-	                p.put("name", pro.getName());
-	                p.put("rate", priceByUom);
+	          
+	                p.put("name", pro.getM_Product().getName());
+	                p.put("rate", pro.getPrice());
 	                p.put("uom", pro.getC_UOM_ID());
 	                productData.add(p);
 	            }

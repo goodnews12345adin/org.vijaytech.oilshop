@@ -77,7 +77,7 @@ public class UserLoginServlet extends HttpServlet {
                 ResultSet rs1 = pstmt1.executeQuery();
 
                 while (rs1.next()) {
-                     orgID = rs1.getInt("AD_Org_ID");
+                     orgID = 1000000;
 //                    System.out.println("orgID"+orgID);
                     String orgName = rs1.getString("Name");
                     orgList.add(new Organization(orgID, orgName));
