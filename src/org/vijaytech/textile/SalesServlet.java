@@ -65,6 +65,7 @@ public class SalesServlet extends HttpServlet {
 	                p.put("name", pro.getM_Product().getName());
 	                p.put("rate", pro.getPrice());
 	                p.put("uom", pro.getC_UOM_ID());
+	                p.put("prodId", pro.get_ID());
 	                productData.add(p);
 	            }
 
@@ -126,14 +127,7 @@ public class SalesServlet extends HttpServlet {
 	        // ---- Items ----
 	        JSONArray items = salesData.getJSONArray("items");
 	        System.out.println("\nItems:");
-	        for (int i = 0; i < items.length(); i++) {
-	            JSONObject item = items.getJSONObject(i);
-	            int qty = item.getInt("qty");
-	            double rate = item.getDouble("rate");
-	            double amount = item.getDouble("amount");
-
-	            System.out.println("Qty: " + qty + ", Rate: " + rate + ", Amount: " + amount);
-	        }
+	       
 	        
 	        TF_MOrder ordH = new TF_MOrder(ctx, 0, null);
 	        TF_MBPartner bp = new TF_MBPartner(ctx, 1005586, null);
@@ -142,9 +136,24 @@ public class SalesServlet extends HttpServlet {
 	        ordH.setC_DocType_ID(1000062);
 	        ordH.setM_Warehouse_ID(1000113);
 	        ordH.setPaymentRule("B");
-	        ordH.saveEx();
-	        TF_MOrderLine  ordLine = new TF_MOrderLine(ctx, 0, null);
-	        ordLine.setOrder(ordH);
+//	        ordH.saveEx();
+	        
+	        for (int i = 0; i < items.length(); i++) {
+	            JSONObject item = items.getJSONObject(i);
+	            String product = item.getString("product");
+	            int qty = item.getInt("qty");
+	            int prodId = item.getInt("prodId");
+	            int uom = item.getInt("unit");
+	            double rate = item.getDouble("rate");
+	            double amount = item.getDouble("amount");
+	            TF_MOrderLine  ordLine = new TF_MOrderLine(ctx, 0, null);
+//		        ordLine.setOrder(ordH);
+//		        ordLine.setprod
+		        MPriceListUOM mprice = new MPriceListUOM(ctx,prodId, null);
+		       
+	            System.out.println("Qty: " + qty + ", Rate: " + rate + ", Amount: " + amount+", prodId: "+mprice.getM_Product().getName());
+	        }
+	        
 	        
 	        
 	        response.getWriter().write("{\"status\":\"success\"}");

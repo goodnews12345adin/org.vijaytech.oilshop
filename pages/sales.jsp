@@ -128,13 +128,14 @@ function recalculate() {
 }
 
 // ➕ Add a product row
-function addRow(name = '', rate = 0, unit = 'Unit', qty = 1) {
+function addRow(name = '', rate = 0, unit = 'Unit', qty = 1,Id) {
     if (!name || name.trim() === '') return;
 
     const tr = document.createElement('tr');
 
     const tdIndex = document.createElement('td');
     const tdDesc = document.createElement('td');
+    const tdProdId = document.createElement('td');
     const tdUom = document.createElement('td');
     const tdQty = document.createElement('td');
     const tdRate = document.createElement('td');
@@ -147,6 +148,11 @@ function addRow(name = '', rate = 0, unit = 'Unit', qty = 1) {
     const inputDesc = Object.assign(document.createElement('input'), {
         className: 'form-control form-control-sm desc',
         value: name
+    });
+    const inputProdId = Object.assign(document.createElement('input'), {
+        type: 'hidden',
+        className: 'ProdID',
+        value: Id
     });
     const inputUom = Object.assign(document.createElement('input'), {
         className: 'form-control form-control-sm uom',
@@ -171,6 +177,7 @@ function addRow(name = '', rate = 0, unit = 'Unit', qty = 1) {
     tdUom.appendChild(inputUom);
     tdQty.appendChild(inputQty);
     tdRate.appendChild(inputRate);
+    tdProdId.appendChild(inputProdId);
     tdAmount.textContent = '0.00';
     tdAction.appendChild(btnRemove);
 
@@ -193,9 +200,11 @@ $('#manual-product').change(function() {
     if (!val) return;
 
     const parts = val.split('|');
+    console.log("data "+parts);
     const name = parts[0]?.trim() || '';
     const rate = parseFloat(parts[1]) || 0;
     const unit = parts[2]?.trim() || '';
+    const prodId = parts[3]?.trim() || '';
 
     if (!name) {
         alert('Invalid product data');
@@ -220,7 +229,7 @@ $('#manual-product').change(function() {
         recalculate();
     } else {
         // Add new product
-        addRow(name, rate, unit);
+        addRow(name, rate, unit,prodId);
     }
 
     $(this).val('');
@@ -241,8 +250,9 @@ $('#send-btn').click(function() {
 			  items: $("#items-body tr").map(function() {
 			    const $row = $(this);
 			    return {
-			      product: $row.find(".prod").val(),
-			      unit: $row.find(".unit").val(),
+			      product: $row.find(".desc").val(),
+			      prodId: $row.find(".ProdID").val(),
+			      unit: $row.find(".uom").val(),
 			      qty: parseFloat($row.find(".qty").val()) || 0,
 			      rate: parseFloat($row.find(".rate").val()) || 0,
 			      amount: parseFloat($row.find(".amount").text()) || 0
