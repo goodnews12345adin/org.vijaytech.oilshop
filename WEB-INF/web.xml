@@ -73,6 +73,15 @@
     <servlet-name>SalesServlet</servlet-name>
     <url-pattern>/SalesServlet</url-pattern>
 </servlet-mapping>
+<servlet>
+    <servlet-name>PurchaseServlet</servlet-name>
+    <servlet-class>org.vijaytech.textile.PurchaseServlet</servlet-class>
+</servlet>
+
+<servlet-mapping>
+    <servlet-name>PurchaseServlet</servlet-name>
+    <url-pattern>/PurchaseServlet</url-pattern>
+</servlet-mapping>
 
 <!-- <servlet>
     <servlet-name>SaveRentServlet</servlet-name>
