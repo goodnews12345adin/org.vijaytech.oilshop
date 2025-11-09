@@ -10,7 +10,7 @@
 <div class="sidebar d-flex flex-column flex-shrink-0 p-3 text-white">
   <a href="dashboard.jsp" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
     <i class="bi bi-speedometer2 fs-4 me-2"></i>
-    <span class="fs-5 fw-semibold">MyApp</span>
+    <span class="fs-5 fw-semibold">Vijay Tech </span>
   </a>
   <hr>
   <ul class="nav nav-pills flex-column mb-auto">
@@ -41,11 +41,22 @@
         <i class="bi bi-people me-2"></i> Customers
       </a>
     </li>
-    <li>
-      <a href="reports.jsp" class="nav-link text-white">
-        <i class="bi bi-bar-chart me-2"></i> Reports
-      </a>
-    </li>
+    <li class="nav-item">
+  <a class="nav-link text-white" data-bs-toggle="collapse" href="#reportsMenu" role="button" aria-expanded="false" aria-controls="reportsMenu">
+    <i class="bi bi-bar-chart me-2"></i> Reports
+    <i class="bi bi-chevron-down float-end"></i>
+  </a>
+  <div class="collapse ps-4" id="reportsMenu">
+    <ul class="nav flex-column">
+      <li class="nav-item">
+        <a href="PrintPurchaseReportServlet" class="nav-link text-white">Sales Report</a>
+      </li>
+      <li class="nav-item">
+        <a href="purchaseReport.jsp" class="nav-link text-white">Purchase Report</a>
+      </li>
+    </ul>
+  </div>
+</li>
     <li>
       <a href="settings.jsp" class="nav-link text-white">
         <i class="bi bi-gear me-2"></i> Settings

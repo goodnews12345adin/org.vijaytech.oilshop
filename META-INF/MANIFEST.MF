@@ -1,17 +1,23 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Syvasoft SPR Mobile App
+Bundle-Name: Vijay Tech Mobile App
 Bundle-SymbolicName: org.vijay.textile;singleton:=true
 Bundle-Version: 10.1.0.qualifier
-Require-Bundle: org.adempiere.base;bundle-version="0.0.0",
- org.adempiere.base.process;bundle-version="10.0.0",
- org.adempiere.base.callout;bundle-version="10.0.0",
- org.vijaytech.vts;bundle-version="1.0.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Web-ContextPath: textileapp
 Bundle-ClassPath: .,
  textileapp/,
  pages/
+Require-Bundle: org.adempiere.base;bundle-version="0.0.0",
+ org.adempiere.base.process;bundle-version="10.0.0",
+ org.adempiere.base.callout;bundle-version="10.0.0",
+ org.vijaytech.vts;bundle-version="1.0.0",
+ org.adempiere.ui,
+ org.idempiere.printformat.editor;bundle-version="10.0.0",
+ org.adempiere.print;bundle-version="10.0.0";resolution:=optional,
+ org.eclipse.jetty.servlet-api,
+ wrapped.io.opencensus.opencensus-api,
+ org.compiere.db.postgresql.provider;bundle-version="10.0.0"
 Import-Package: com.lowagie.text,
  com.lowagie.text.pdf,
  javax.servlet;version="2.5.0",
@@ -22,7 +28,10 @@ Import-Package: com.lowagie.text,
  org.apache.commons.collections.keyvalue;version="3.2.2",
  org.apache.commons.io;version="2.2.0",
  org.compiere.model,
+ org.compiere.util,
  org.json,
+ org.apache.poi,
+ org.apache.poi.ooxml,
  org.syvasoft.eInvoiceutil,
  org.syvasoft.tallyfrontcrusher.model,
  org.syvasoft.tallyfrontcrusher.process
