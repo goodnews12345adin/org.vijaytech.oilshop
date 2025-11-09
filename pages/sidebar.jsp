@@ -20,12 +20,12 @@
       </a>
     </li>
    <li>
-  <a href="${pageContext.request.contextPath}/SalesServlet.html" class="nav-link text-white">
+  <a href="${pageContext.request.contextPath}/SalesServlet" class="nav-link text-white">
     <i class="bi bi-cart3 me-2"></i> Sales
   </a>
 </li>
    <li>
-  <a href="${pageContext.request.contextPath}/PurchaseServlet.html" class="nav-link text-white">
+  <a href="${pageContext.request.contextPath}/PurchaseServlet" class="nav-link text-white">
     <i class="bi bi-cart3 me-2"></i> purchase
   </a>
 </li>

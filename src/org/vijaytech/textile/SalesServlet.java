@@ -17,10 +17,12 @@ import java.util.Properties;
 import javax.servlet.*;
 import javax.servlet.http.*;
 
+import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MOrder;
 import org.compiere.model.MProduct;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
+import org.compiere.util.Trx;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.syvasoft.tallyfrontcrusher.model.MPriceListUOM;
@@ -101,12 +103,10 @@ public class SalesServlet extends HttpServlet {
 	         response.sendRedirect(request.getContextPath() + "/userlogin.jsp?error=session_expired");
 	         return;
 	     }
-
 	     try {
 	         // ✅ Ensure context is valid
 	         Properties ctx = (Properties) session.getAttribute("ctx");
 	         if (ctx == null) ctx = Env.getCtx();
-
 	         // 🧩 Ensure mandatory context keys exist
 	         if (Env.getAD_Client_ID(ctx) == 0)
 	             Env.setContext(ctx, "#AD_Client_ID", 1000000); // your tenant
@@ -157,7 +157,7 @@ public class SalesServlet extends HttpServlet {
 	         ordH.setC_BankAccount_ID(1000094);
 	         ordH.setDateAcct(new Timestamp(System.currentTimeMillis()));
 	         ordH.setDateOrdered(new Timestamp(System.currentTimeMillis()));
-	         ordH.setDocAction(MOrder.DOCSTATUS_Drafted);
+	         ordH.setDocStatus(MOrder.DOCSTATUS_Drafted);
 	         ordH.saveEx();
 	        
 	         System.out.println("order header : "+ordH.get_ID());
@@ -187,20 +187,26 @@ public class SalesServlet extends HttpServlet {
 	             ordLine.saveEx();
 	         }
 
-	         ordH.setDocAction(MOrder.DOCSTATUS_Completed);
-	         ordH.saveEx();
-	         // ✅ Commit transaction if using Trx
-	         // Trx.get(Trx.createTrxName()).commit();
+	      // ✅ Properly Complete the Document
+	         ordH.setDocAction(MOrder.DOCACTION_Complete);
+	         
 
+	         if (!ordH.processIt(MOrder.DOCACTION_Complete)) {
+	             throw new AdempiereException("❌ Could not complete order: " + ordH.getProcessMsg());
+	         }
+	         ordH.saveEx();
+	        
 	         response.getWriter().write("{\"status\":\"success\"}");
 	     } catch (Exception e) {
-	         e.printStackTrace();
-	         response.setStatus(500);
-	         response.getWriter().write("{\"status\":\"error\",\"message\":\"" + e.getMessage() + "\"}");
-	     }
+	       
+	            e.printStackTrace();
+	            response.setStatus(500);
+	            response.getWriter().write("{\"error\":\"" + e.getMessage().replace("\"","'") + "\"}");
+	        } 
+	       
 	 }
-
-	 }
+}
+	 
 
 
 
