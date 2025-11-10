@@ -39,116 +39,67 @@
 <body>
 
     <!-- ✅ Common Layout Includes -->
-    <%@ include file="header.jsp" %>
+   <%--  <%@ include file="header.jsp" %> --%>
     <%@ include file="sidebar.jsp" %> 
 
-    <!-- ✅ Page Content -->
-    <main class="main-content">
-        <div class="container-fluid">
-            <h3 class="fw-bold mb-4">Dashboard</h3>
+      <!-- 🔷 Main Area -->
+  <main class="main">
+    <header class="topbar glass neon-border mx-3 my-3 px-3 py-2 d-flex align-items-center justify-content-between rounded-4">
+      <div class="d-flex align-items-center gap-2">
+        <h5 class="mb-0">Dashboard</h5>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <button id="themeToggle" class="btn btn-outline-light btn-sm">☀️</button>
+        <span class="badge text-bg-dark-subtle glass border rounded-pill px-3 py-2">👤 admin</span>
+      </div>
+    </header>
 
-            <div class="row g-4">
-                <!-- Card 1 -->
-                <div class="col-md-3">
-                    <div class="card p-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="text-muted">Total Sales</h6>
-                                <h3 class="fw-semibold text-primary">₹1,24,500</h3>
-                            </div>
-                            <i class="bi bi-currency-rupee fs-3 text-secondary"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Card 2 -->
-                <div class="col-md-3">
-                    <div class="card p-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="text-muted">Customers</h6>
-                                <h3 class="fw-semibold text-primary">350</h3>
-                            </div>
-                            <i class="bi bi-people fs-3 text-secondary"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Card 3 -->
-                <div class="col-md-3">
-                    <div class="card p-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="text-muted">Products</h6>
-                                <h3 class="fw-semibold text-primary">124</h3>
-                            </div>
-                            <i class="bi bi-box-seam fs-3 text-secondary"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Card 4 -->
-                <div class="col-md-3">
-                    <div class="card p-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="text-muted">Pending Orders</h6>
-                                <h3 class="fw-semibold text-primary">18</h3>
-                            </div>
-                            <i class="bi bi-clock-history fs-3 text-secondary"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Example Table Section -->
-            <div class="card mt-5">
-                <div class="card-header bg-white">
-                    <h6 class="fw-bold mb-0">Recent Transactions</h6>
-                </div>
-                <div class="card-body p-0">
-                    <table class="table table-hover mb-0 align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>#</th>
-                                <th>Customer</th>
-                                <th>Product</th>
-                                <th>Amount</th>
-                                <th>Status</th>
-                                <th>Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>001</td>
-                                <td>John Doe</td>
-                                <td>Cement Bag</td>
-                                <td>₹5,000</td>
-                                <td><span class="badge bg-success">Completed</span></td>
-                                <td>2025-11-01</td>
-                            </tr>
-                            <tr>
-                                <td>002</td>
-                                <td>Mary Smith</td>
-                                <td>Steel Rods</td>
-                                <td>₹8,750</td>
-                                <td><span class="badge bg-warning text-dark">Pending</span></td>
-                                <td>2025-11-01</td>
-                            </tr>
-                            <tr>
-                                <td>003</td>
-                                <td>Ravi Kumar</td>
-                                <td>Sand Load</td>
-                                <td>₹3,200</td>
-                                <td><span class="badge bg-danger">Failed</span></td>
-                                <td>2025-10-31</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+    <section class="content glass rounded-4 mx-3 mb-4 p-3 p-md-4">
+      <div class="row g-3">
+        <div class="col-12 col-md-4">
+          <div class="card card-soft h-100 p-3">
+            <div class="h6">Today’s Orders</div>
+            <div class="display-6 fw-bold">28</div>
+          </div>
         </div>
-    </main>
+        <div class="col-12 col-md-4">
+          <div class="card card-soft h-100 p-3">
+            <div class="h6">Pending Billing</div>
+            <div class="display-6 fw-bold">7</div>
+          </div>
+        </div>
+        <div class="col-12 col-md-4">
+          <div class="card card-soft h-100 p-3">
+            <div class="h6">Shipped</div>
+            <div class="display-6 fw-bold">15</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <div class="card card-soft p-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">Recent Orders</h6>
+            <button class="btn btn-sm btn-primary-gradient">New Order</button>
+          </div>
+          <div class="table-responsive mt-3">
+            <table class="table table-hover align-middle soft-table">
+              <thead>
+                <tr>
+                  <th>#</th><th>Customer</th><th>Item</th><th>Qty</th><th>Status</th><th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>1001</td><td>Shri Mills</td><td>Cotton Yarn</td><td>120</td><td><span class="badge bg-success">Shipped</span></td><td><button class="btn btn-sm btn-outline-light">View</button></td></tr>
+                <tr><td>1002</td><td>A1 Textiles</td><td>Dyed Fabric</td><td>60</td><td><span class="badge bg-warning text-dark">Pending</span></td><td><button class="btn btn-sm btn-outline-light">View</button></td></tr>
+                <tr><td>1003</td><td>RK Traders</td><td>Grey Fabric</td><td>90</td><td><span class="badge bg-info text-dark">Processing</span></td><td><button class="btn btn-sm btn-outline-light">View</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
 
     <%@ include file="footer.jsp" %>
 

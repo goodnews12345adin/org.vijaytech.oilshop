@@ -1,0 +1,331 @@
+:root {
+  --bg: #22010e;
+  --fg: #fff6f8;
+  --thread: rgba(255, 160, 190, 0.75);
+  --thread2: rgba(255, 230, 180, 0.55);
+  --spark: rgba(255,255,255,0.9);
+}
+
+:root.dark {
+  --bg: #0e0b11;
+  --fg: #eae6ec;
+  --thread: rgba(255, 90, 140, 0.75);
+  --thread2: rgba(255, 220, 140, 0.45);
+  --spark: rgba(255,255,255,0.8);
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: black;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Noto Sans";
+  overflow-x: hidden;
+}
+
+/* 🔥 Animated background base */
+.bg-stage {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  overflow: hidden;
+  background: radial-gradient(ellipse at center, rgba(0,0,0,.18), rgba(0,0,0,.75)),
+              url('../img/bg-textile.jpg') center/cover no-repeat fixed;
+}
+.bg-stage canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Foreground layout */
+.shell {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6vh 4vw;
+}
+
+/* Glass effect */
+.glass {
+  background: #e9ecef;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255,255,255,0.28);
+  border-radius: 22px;
+  box-shadow:
+    0 0 0 2px rgba(255,255,255,0.05) inset,
+    0 0 18px 2px rgba(255,216,111,0.9),
+    0 0 48px 10px rgba(248, 211, 222, 0.25);
+}
+
+/* Auth card */
+.card-auth {
+  width: min(460px,92vw);
+  padding: 26px 22px;
+  text-align: center;
+}
+.card-auth h1 {
+  font-weight: 800;
+  letter-spacing: .5px;
+  margin: 0 0 8px;
+}
+.card-auth .muted { opacity: .85; margin-bottom: 16px; }
+
+/* Inputs and buttons */
+.form-control {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.3);
+}
+.btn-gradient {
+  background: linear-gradient(135deg, #ff2f6d, #a00035);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 16px;
+}
+.toggle {
+  border: 1px solid rgba(255,255,255,0.35);
+  background: transparent;
+  color: var(--fg);
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+.footer {
+  opacity: .8;
+  margin-top: 10px;
+  font-size: .9rem;
+}
+
+/* ==========================================
+   🧵 ERP Sidebar + Layout
+   ========================================== */
+.sidebar {
+  position: fixed;
+  left: 0; top: 0; bottom: 0;
+  width: 250px;
+  background: rgba(60, 0, 20, 0.75);
+  backdrop-filter: blur(12px);
+  border-right: 1px solid rgba(255,255,255,0.2);
+  box-shadow: inset -1px 0 0 rgba(255,255,255,0.08),
+              0 0 12px rgba(255,47,109,0.3);
+  color: #fff;
+  padding-top: 1rem;
+  z-index: 10;
+}
+
+.sb-title {
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: #ffe7ef;
+  letter-spacing: .5px;
+}
+
+.sb-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-top: 1rem;
+}
+.sb-link {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  color: #fff;
+  text-decoration: none;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  font-weight: 500;
+  opacity: 0.9;
+  transition: all 0.3s ease;
+}
+.sb-link:hover {
+  background: rgba(255,255,255,0.12);
+  box-shadow: inset 4px 0 0 #ff2f6d;
+}
+.sb-link.active {
+  background: rgba(255,255,255,0.18);
+  box-shadow: inset 4px 0 0 #ff2f6d;
+}
+
+.main {
+  margin-left: 0px;
+  padding: 20px 30px;
+  min-height: 100vh;
+  background: radial-gradient(ellipse at center, rgba(0,0,0,.45), rgba(0,0,0,.9)),
+              url('../img/bg-textile.jpg') center/cover no-repeat fixed;
+}
+
+/* Topbar */
+.topbar {
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 20px 0 !important;
+  box-shadow: 0 0 16px rgba(255,47,109,0.25);
+}
+
+/* Content area */
+.content {
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 0 25px rgba(255,47,109,0.25);
+  margin: 0 !important;
+}
+
+/* ERP Cards */
+.card-soft {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 16px;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 15px rgba(255,47,109,0.25);
+}
+.card-soft:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0 25px rgba(255,47,109,0.4);
+}
+.card-soft .h6 {
+  color: #ffe7ef;
+  font-weight: 600;
+}
+.card-soft .display-6 {
+  color: #ffd86f;
+  font-weight: 800;
+}
+
+/* Buttons */
+.btn-primary-gradient {
+  background: linear-gradient(135deg, #ff2f6d, #a00035);
+  border: none;
+  color: #fff;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+.btn-primary-gradient:hover {
+  box-shadow: 0 0 15px rgba(255,47,109,0.6);
+  filter: brightness(1.05);
+}
+
+/* Tables */
+.soft-table thead th {
+  color: #ffd6e3;
+  font-weight: 600;
+  border-bottom-color: rgba(255,47,109,0.4);
+}
+.soft-table tbody td {
+  color: var(--fg);
+  border-top-color: rgba(255,47,109,0.1);
+}
+.table-hover > tbody > tr:hover {
+  background-color: rgba(255, 47, 109, 0.08);
+}
+
+.footer {
+  text-align: center;
+  margin-top: 2rem;
+  color: #ffe7ef;
+  opacity: 0.8;
+  font-size: 0.85rem;
+}
+
+/* ========================================
+   ✨ Textile Thread Shimmer Animation
+   ======================================== */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.topbar,
+.card-soft {
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+.topbar::before,
+.card-soft::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 47, 109, 0) 0%,
+    rgba(255, 230, 150, 0.3) 45%,
+    rgba(255, 47, 109, 0) 70%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 6s linear infinite;
+  opacity: 0.6;
+}
+.topbar::after,
+.card-soft::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 8px rgba(255, 47, 109, 0.25);
+  pointer-events: none;
+}
+:root.dark .topbar::before,
+:root.dark .card-soft::before {
+  background: linear-gradient(
+    120deg,
+    rgba(255, 47, 109, 0) 0%,
+    rgba(255, 220, 140, 0.4) 50%,
+    rgba(255, 47, 109, 0) 75%
+  );
+  opacity: 0.45;
+}
+
+/* =========================================
+   ✨ Floating Sparkle / Fiber Dust Animation
+   ========================================= */
+.bg-stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.7) 1px, transparent 2px),
+                    radial-gradient(circle, rgba(255, 47, 109, 0.5) 1px, transparent 2px),
+                    radial-gradient(circle, rgba(255, 230, 150, 0.4) 1px, transparent 2px);
+  background-size: 300px 300px, 400px 400px, 500px 500px;
+  animation: sparkleDrift 40s linear infinite;
+  opacity: 0.25;
+  mix-blend-mode: screen;
+  filter: blur(0.5px);
+}
+@keyframes sparkleDrift {
+  0% { background-position: 0 0, 0 0, 0 0; }
+  50% { background-position: 200px 100px, -150px 80px, 100px -120px; }
+  100% { background-position: 0 0, 0 0, 0 0; }
+}
+:root.dark .bg-stage::after {
+  opacity: 0.18;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.5) 1px, transparent 2px),
+                    radial-gradient(circle, rgba(255, 90, 140, 0.35) 1px, transparent 2px),
+                    radial-gradient(circle, rgba(255, 200, 120, 0.25) 1px, transparent 2px);
+}
+
+/* =========================================
+   📱 Responsive Layout
+   ========================================= */
+@media (max-width: 768px) {
+  .main { margin-left: 0; padding: 15px; }
+  .sidebar { left: -250px; transition: all 0.3s ease; z-index: 1050; }
+  .sidebar.active { left: 0; }
+}

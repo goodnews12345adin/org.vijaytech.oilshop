@@ -8,15 +8,13 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
- <%@ include file="header.jsp" %>
-  <%@ include file="sidebar.jsp" %>
 <div class="container py-4">
   <div class="row justify-content-center">
     <div class="col-lg-9">
       <div class="card shadow-sm">
         <div class="card-body">
           <h5 class="card-title">Purchase & Sales Report (Direct SQL → HTML)</h5>
-          <form class="row g-3" action="<%=request.getContextPath()%>/PrintPurchaseReportServlet" method="get">
+          <form class="row g-3" action="<%=request.getContextPath()%>/ps-report" method="get">
             <div class="col-md-3">
               <label class="form-label">From Date</label>
               <input type="date" class="form-control" name="from" required>

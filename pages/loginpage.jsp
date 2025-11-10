@@ -8,74 +8,71 @@
     <!-- ✅ Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <style>
-        body {
-            background: linear-gradient(135deg, #f8f9fa, #dbeafe);
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Segoe UI', sans-serif;
-        }
-        .login-card {
-            width: 400px;
-            background: #fff;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            padding: 2rem;
-        }
-        .login-card h3 {
-            font-weight: 600;
-            color: #0d6efd;
-            text-align: center;
-            margin-bottom: 1.5rem;
-        }
-        .brand-logo {
-            display: block;
-            margin: 0 auto 15px;
-            width: 80px;
-        }
-    </style>
+    <!-- ✅ External Theme CSS (from your /pages/css folder) -->
+    <link href="${pageContext.request.contextPath}/pages/css/style.css" rel="stylesheet" />
+
+    <!-- ✅ Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
-<body>
 
-    
+<body class="bg-textile">
 
-    <div class="login-card">
-        <img src="company_logo.png" alt="Company Logo" class="brand-logo">
-        <h3>Sree Textiles Billing</h3>
+  <div class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-11 col-sm-8 col-md-6 col-lg-5">
 
-        <%-- <% if (!error.isEmpty()) { %>
-            <div class="alert alert-danger py-2 text-center">
-                <%= error %>
-            </div>
-        <% } %> --%>
+        <div class="auth-card glass neon-border p-4 p-md-5 text-center">
 
-        <form method="post" action="${pageContext.request.contextPath}/UserLoginServlet" onsubmit="showLoading()" novalidate>
+          <h5 class="text-soft mb-3">Login</h5>
+
+          <!-- ✅ FIXED: Changed to POST and added name attributes -->
+          <form class="text-start" action="${pageContext.request.contextPath}/UserLoginServlet" method="post">
             <div class="mb-3">
-                <label for="username" class="form-label">Username</label>
-                <input type="text" id="username" name="username" class="form-control" placeholder="Enter username" required>
+              <label class="form-label">Username</label>
+              <input type="text" 
+                     class="form-control form-control-lg soft-input" 
+                     id="username" 
+                     name="username"
+                     placeholder="Enter username"
+                     required>
             </div>
 
             <div class="mb-3">
-                <label for="password" class="form-label">Password</label>
-                <input type="password" id="password" name="password" class="form-control" placeholder="Enter password" required>
+              <label class="form-label">Password</label>
+              <input type="password" 
+                     class="form-control form-control-lg soft-input" 
+                     id="password" 
+                     name="password"
+                     placeholder="Enter password"
+                     required>
             </div>
 
-            <div class="form-check mb-3">
-                <input class="form-check-input" type="checkbox" id="remember">
-                <label class="form-check-label" for="remember">Remember me</label>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="" id="remember">
+                <label class="form-check-label" for="remember">
+                  Remember me
+                </label>
+              </div>
+              <button type="button" class="btn btn-outline-light btn-sm rounded-3" id="themeToggle" title="Toggle theme">☀️</button>
             </div>
 
-            <button type="submit" class="btn btn-primary w-100">Login</button>
+            <!-- ✅ FIXED: type=submit -->
+            <button type="submit" class="btn btn-primary-gradient w-100 btn-lg">Login</button>
+          </form>
 
-            <div class="text-center mt-3">
-                <small class="text-muted">© 2025 Sree Textiles</small>
-            </div>
-        </form>
+          <div class="small mt-3 opacity-75">© 2024 Sree Textiles</div>
+        </div>
+
+      </div>
     </div>
+  </div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- ✅ Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- ✅ External Theme JS -->
+  <script src="${pageContext.request.contextPath}/pages/js/style.js"></script>
+
 </body>
 </html>
