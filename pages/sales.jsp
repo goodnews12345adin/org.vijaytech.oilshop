@@ -44,7 +44,7 @@ Integer AD_Org_ID = (Integer) session.getAttribute("AD_Org_ID");
 </head>
 
 <body class="bg-light py-4">
-<%@ include file="header.jsp" %>
+<%-- <%@ include file="header.jsp" %> --%>
 <%@ include file="sidebar.jsp" %>
 
 <div class="container mt-4">

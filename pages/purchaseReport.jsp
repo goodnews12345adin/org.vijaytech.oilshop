@@ -8,6 +8,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
+ <%@ include file="sidebar.jsp" %> 
 <div class="container py-4">
   <div class="row justify-content-center">
     <div class="col-lg-9">
