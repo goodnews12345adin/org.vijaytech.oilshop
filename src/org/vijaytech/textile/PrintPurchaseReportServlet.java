@@ -1,187 +1,280 @@
 package org.vijaytech.textile;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
+
 import javax.servlet.ServletException;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
-import org.compiere.print.ReportEngine;
-import org.compiere.model.MQuery;
-import org.compiere.model.PrintInfo;
-import org.compiere.print.MPrintFormat;
 import org.compiere.util.DB;
-import org.compiere.util.Env;
-import org.compiere.util.Language;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import com.lowagie.text.Document;
+import com.lowagie.text.PageSize;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.pdf.PdfPTable;
+import com.lowagie.text.pdf.PdfWriter;
 
 public class PrintPurchaseReportServlet extends HttpServlet {
-	
-	   private static final int PAGE_SIZE = 200; // Rows per page in detail mode
 
+	    private static final int PAGE_SIZE = 200;
+
+	    private static Timestamp toTs(String ymd) {
+	        return Timestamp.valueOf(LocalDate.parse(ymd).atStartOfDay());
+	    }
+
+	    private static Timestamp toTsEnd(String ymd) {
+	        return Timestamp.valueOf(LocalDate.parse(ymd)
+	                .plusDays(1).atStartOfDay().minusNanos(1_000_000));
+	    }
+
+	    private static String n(BigDecimal bd) {
+	        return bd == null ? "" : bd.toPlainString();
+	    }
+
+	    // ===========================
+	    //       ROW PDF GET
+	    // ===========================
 	    @Override
-	    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-	            throws ServletException, IOException {
+	    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+	            throws IOException {
 
-	        /** --- 1. Read web params --- */
-	    	 HttpSession session = request.getSession(false);
+	        String rowpdf = req.getParameter("rowpdf");
+	        String docno = req.getParameter("docno");
 
-		        // 🔒 Check login/session
-		        if (session == null || session.getAttribute("ctx") == null) {
-		            response.sendRedirect(request.getContextPath() + "/userlogin.jsp?error=session_expired");
-		            return;
-		        }
-
-		            Properties ctx = (Properties) session.getAttribute("ctx");
-
-	        if (ctx == null) ctx = Env.getCtx();
-	        System.out.println("data income ");
-	        String type = val(request.getParameter("type"));     // sales | purchase
-	        String from = val(request.getParameter("from"));     // yyyy-MM-dd
-	        String to   = val(request.getParameter("to"));       // yyyy-MM-dd
-	        String org  = val(request.getParameter("org"));      // optional AD_Org_ID
-	        String bp   = val(request.getParameter("bp"));       // optional C_BPartner_ID
-	        boolean summary = "Y".equalsIgnoreCase(val(request.getParameter("summary")));
-	        int page = parseInt(val(request.getParameter("page")), 1);
-	        if (page < 1) page = 1;
-
-	        if (!"sales".equalsIgnoreCase(type) && !"purchase".equalsIgnoreCase(type)) {
-	            type = "sales"; // default
+	        if ("Y".equalsIgnoreCase(rowpdf) && docno != null) {
+	            exportSinglePDF(docno, resp);
+	            return;
 	        }
 
-	        /** --- 2. Build SQL --- */
-	        boolean isSOTrx = "sales".equalsIgnoreCase(type);
+	        resp.getWriter().write("Invalid Request");
+	    }
+
+
+	    // ===========================
+	    //     MAIN JSON POST
+	    // ===========================
+	    @Override
+	    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+	            throws IOException {
+
+	        StringBuilder sb = new StringBuilder();
+	        try (BufferedReader br = request.getReader()) {
+	            String line;
+	            while ((line = br.readLine()) != null) sb.append(line);
+	        }
+
+	        JSONObject jsonIn = new JSONObject(sb.toString());
+
+	        String from = jsonIn.optString("from");
+	        String to = jsonIn.optString("to");
+	        String type = jsonIn.optString("type");
+	        String org = jsonIn.optString("org", null);
+	        String bp = jsonIn.optString("bp", null);
+	        String summary = jsonIn.optString("summary", "N");
+	        int page = jsonIn.optInt("page", 1);
+	        boolean isSOTrx = type.equalsIgnoreCase("sales");
+
+	        JSONArray result = new JSONArray();
+
 	        StringBuilder sql = new StringBuilder();
 
-	        if (summary) {
-	            sql.append("SELECT i.DateInvoiced, bp.Name AS BPartner, p.Name AS Product, ")
-	               .append("SUM(il.QtyInvoiced) AS Qty, AVG(il.PriceActual) AS Price, SUM(il.LineNetAmt) AS Amount ")
+	        if (summary.equals("Y")) {
+	            // -------------------------
+	            // SUMMARY MODE
+	            // -------------------------
+	            sql.append("SELECT ")
+	               .append(" i.DateInvoiced, ")
+	               .append(" bp.Name AS BPartner, ")
+	               .append(" p.Name AS Product, ")
+	               .append(" SUM(il.QtyInvoiced) AS Qty, ")
+	               .append(" AVG(il.PriceActual) AS Price, ")
+	               .append(" SUM(il.LineNetAmt) AS Amount ")
 	               .append("FROM C_Invoice i ")
-	               .append("JOIN C_InvoiceLine il ON (i.C_Invoice_ID=il.C_Invoice_ID) ")
-	               .append("LEFT JOIN C_BPartner bp ON (i.C_BPartner_ID=bp.C_BPartner_ID) ")
-	               .append("LEFT JOIN M_Product p ON (il.M_Product_ID=p.M_Product_ID) ")
-	               .append("WHERE i.IsSOTrx=? AND i.DocStatus IN ('CO','CL') ")
+	               .append("JOIN C_InvoiceLine il ON i.C_Invoice_ID = il.C_Invoice_ID ")
+
+	               // Business Partner
+	               .append("LEFT JOIN C_BPartner bp ON i.C_BPartner_ID = bp.C_BPartner_ID ")
+
+	               // Your table (TF_PriceListUOM)
+	               .append("LEFT JOIN TF_PriceListUOM plu ON il.M_Product_ID = plu.M_Product_ID ")
+
+	               // Product table for name
+	               .append("LEFT JOIN M_Product p ON plu.M_Product_ID = p.M_Product_ID ")
+
+	               .append("WHERE i.IsSOTrx=? ")
+	               .append("AND i.DocStatus IN ('CO','CL') ")
 	               .append("AND i.DateInvoiced BETWEEN ? AND ? ");
-	            if (org != null) sql.append("AND i.AD_Org_ID=? ");
-	            if (bp != null)  sql.append("AND i.C_BPartner_ID=? ");
+
+	            if (org != null && !org.isEmpty())
+	                sql.append("AND i.AD_Org_ID=? ");
+
+	            if (bp != null && !bp.isEmpty())
+	                sql.append("AND i.C_BPartner_ID=? ");
+
 	            sql.append("GROUP BY i.DateInvoiced, bp.Name, p.Name ")
-	               .append("ORDER BY i.DateInvoiced, bp.Name, p.Name ");
+	               .append("ORDER BY i.DateInvoiced");
+
 	        } else {
-	            sql.append("SELECT i.DateInvoiced, i.DocumentNo, bp.Name AS BPartner, p.Name AS Product, ")
-	               .append("il.QtyInvoiced AS Qty, il.PriceActual AS Price, il.LineNetAmt AS Amount ")
+
+	            // -------------------------
+	            // DETAIL MODE
+	            // -------------------------
+	            sql.append("SELECT ")
+	               .append(" i.DateInvoiced, ")
+	               .append(" i.DocumentNo, ")
+	               .append(" bp.Name AS BPartner, ")
+	               .append(" p.Name AS Product, ")
+	               .append(" il.QtyInvoiced AS Qty, ")
+	               .append(" il.PriceActual AS Price, ")
+	               .append(" il.LineNetAmt AS Amount ")
 	               .append("FROM C_Invoice i ")
-	               .append("JOIN C_InvoiceLine il ON (i.C_Invoice_ID=il.C_Invoice_ID) ")
-	               .append("LEFT JOIN C_BPartner bp ON (i.C_BPartner_ID=bp.C_BPartner_ID) ")
-	               .append("LEFT JOIN M_Product p ON (il.M_Product_ID=p.M_Product_ID) ")
-	               .append("WHERE i.IsSOTrx=? AND i.DocStatus IN ('CO','CL') ")
+	               .append("JOIN C_InvoiceLine il ON i.C_Invoice_ID = il.C_Invoice_ID ")
+
+	               // Business Partner
+	               .append("LEFT JOIN C_BPartner bp ON i.C_BPartner_ID = bp.C_BPartner_ID ")
+
+	               // Your TF PriceList table
+	               .append("LEFT JOIN TF_PriceListUOM plu ON il.M_Product_ID = plu.M_Product_ID ")
+
+	               // Product name
+	               .append("LEFT JOIN M_Product p ON plu.M_Product_ID = p.M_Product_ID ")
+
+	               .append("WHERE i.IsSOTrx=? ")
+	               .append("AND i.DocStatus IN ('CO','CL') ")
 	               .append("AND i.DateInvoiced BETWEEN ? AND ? ");
-	            if (org != null) sql.append("AND i.AD_Org_ID=? ");
-	            if (bp != null)  sql.append("AND i.C_BPartner_ID=? ");
-	            sql.append("ORDER BY i.DateInvoiced, i.DocumentNo, p.Name ")
+
+	            if (org != null && !org.isEmpty())
+	                sql.append("AND i.AD_Org_ID=? ");
+
+	            if (bp != null && !bp.isEmpty())
+	                sql.append("AND i.C_BPartner_ID=? ");
+
+	            sql.append("ORDER BY i.DateInvoiced ")
 	               .append("OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
 	        }
 
-	        /** --- 3. Execute SQL & Stream HTML --- */
+
 	        try (Connection conn = DB.getConnectionRW();
 	             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
 	            int idx = 1;
+
 	            ps.setString(idx++, isSOTrx ? "Y" : "N");
 	            ps.setTimestamp(idx++, toTs(from));
-	            ps.setTimestamp(idx++, toTsInclusiveEnd(to));
-	            if (org != null) ps.setInt(idx++, Integer.parseInt(org));
-	            if (bp != null)  ps.setInt(idx++, Integer.parseInt(bp));
-	            if (!summary) {
+	            ps.setTimestamp(idx++, toTsEnd(to));
+
+	            if (org != null && !org.isEmpty()) ps.setInt(idx++, Integer.parseInt(org));
+	            if (bp != null && !bp.isEmpty()) ps.setInt(idx++, Integer.parseInt(bp));
+
+	            if (summary.equals("N")) {
 	                int offset = (page - 1) * PAGE_SIZE;
 	                ps.setInt(idx++, offset);
 	                ps.setInt(idx++, PAGE_SIZE);
 	            }
 
-	            try (ResultSet rs = ps.executeQuery()) {
-	                response.setContentType("text/html; charset=UTF-8");
-	                try (ServletOutputStream out = response.getOutputStream()) {
+	            ResultSet rs = ps.executeQuery();
+System.out.println("data size :  "+rs.getFetchSize()); 
+	            while (rs.next()) {
+	                JSONObject row = new JSONObject();
 
-	                    out.println("<html><head><meta charset='UTF-8'>");
-	                    out.println("<link href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css' rel='stylesheet'>");
-	                    out.println("<title>" + esc(type) + " Report</title></head><body class='p-3'>");
+	                row.put("Date", rs.getTimestamp("DateInvoiced").toString());
 
-	                    out.println("<div class='container-fluid'>");
-	                    out.println("<h4 class='mb-3 text-capitalize'>" + esc(type) + " Report</h4>");
+	                if (summary.equals("N"))
+	                    row.put("DocumentNo", rs.getString("DocumentNo"));
 
-	                    out.println("<div class='table-responsive'><table class='table table-sm table-striped table-bordered'>");
+	                row.put("BPartner", rs.getString("BPartner"));
+	                row.put("Product", rs.getString("Product"));
+	                row.put("Qty", n(rs.getBigDecimal("Qty")));
+	                row.put("Price", n(rs.getBigDecimal("Price")));
+	                row.put("Amount", n(rs.getBigDecimal("Amount")));
 
-	                    if (summary) {
-	                        out.println("<thead class='table-light'><tr>" +
-	                                th("Date") + th("Business Partner") + th("Product") +
-	                                th("Qty") + th("Price") + th("Amount") + "</tr></thead><tbody>");
-	                        while (rs.next()) {
-	                            out.println("<tr>" +
-	                                    td(fmtDate(rs.getTimestamp("DateInvoiced"))) +
-	                                    td(esc(rs.getString("BPartner"))) +
-	                                    td(esc(rs.getString("Product"))) +
-	                                    td(rs.getBigDecimal("Qty")) +
-	                                    td(rs.getBigDecimal("Price")) +
-	                                    td(rs.getBigDecimal("Amount")) +
-	                                    "</tr>");
-	                        }
-	                    } else {
-	                        out.println("<thead class='table-light'><tr>" +
-	                                th("Date") + th("Doc No") + th("Business Partner") +
-	                                th("Product") + th("Qty") + th("Price") + th("Amount") + "</tr></thead><tbody>");
-	                        while (rs.next()) {
-	                            out.println("<tr>" +
-	                                    td(fmtDate(rs.getTimestamp("DateInvoiced"))) +
-	                                    td(esc(rs.getString("DocumentNo"))) +
-	                                    td(esc(rs.getString("BPartner"))) +
-	                                    td(esc(rs.getString("Product"))) +
-	                                    td(rs.getBigDecimal("Qty")) +
-	                                    td(rs.getBigDecimal("Price")) +
-	                                    td(rs.getBigDecimal("Amount")) +
-	                                    "</tr>");
-	                        }
-	                    }
-	                    out.println("</tbody></table></div>");
-
-	                    if (!summary) {
-	                        int prev = Math.max(1, page - 1);
-	                        int next = page + 1;
-	                        out.println("<a class='btn btn-sm btn-secondary me-2' href='?type=" + type + "&from=" + from + "&to=" + to + "&page=" + prev + "'>Prev</a>");
-	                        out.println("<a class='btn btn-sm btn-secondary' href='?type=" + type + "&from=" + from + "&to=" + to + "&page=" + next + "'>Next</a>");
-	                    }
-
-	                    out.println("</div></body></html>");
-	                }
+	                result.put(row);
 	            }
+
+	        } catch (Exception ex) {
+	            ex.printStackTrace();
+	            JSONObject err = new JSONObject();
+	            err.put("error", ex.getMessage());
+	            response.getWriter().write(err.toString());
+	            return;
+	        }
+
+	        response.setContentType("application/json");
+	        response.getWriter().write(result.toString());
+	    }
+
+
+	    // ===========================
+	    //     SINGLE PDF EXPORT
+	    // ===========================
+	    private void exportSinglePDF(String docNo, HttpServletResponse response) throws IOException {
+
+	        String sql = "SELECT i.DateInvoiced, i.DocumentNo, bp.Name AS BPartner, "
+	                + "p.Name AS Product, il.QtyInvoiced, il.PriceActual, il.LineNetAmt "
+	                + "FROM C_Invoice i "
+	                + "JOIN C_InvoiceLine il ON i.C_Invoice_ID=il.C_Invoice_ID "
+	                + "LEFT JOIN C_BPartner bp ON i.C_BPartner_ID=bp.C_BPartner_ID "
+	                + "LEFT JOIN TF_PriceListUOM p ON il.M_Product_ID=p.M_Product_ID "
+	                + "WHERE i.DocumentNo=?";
+
+	        Document pdf = new Document(PageSize.A4);
+	        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+	        try {
+	            PdfWriter.getInstance(pdf, baos);
+	            pdf.open();
+
+	            pdf.add(new Paragraph("Invoice PDF - " + docNo));
+
+	            PdfPTable table = new PdfPTable(7);
+	            table.setWidthPercentage(100);
+
+	            table.addCell("Date");
+	            table.addCell("DocumentNo");
+	            table.addCell("BPartner");
+	            table.addCell("Product");
+	            table.addCell("Qty");
+	            table.addCell("Price");
+	            table.addCell("Amount");
+
+	            Connection conn = DB.getConnectionRW();
+	            PreparedStatement ps = conn.prepareStatement(sql);
+	            ps.setString(1, docNo);
+	            ResultSet rs = ps.executeQuery();
+
+	            while (rs.next()) {
+	                table.addCell(rs.getTimestamp("DateInvoiced").toString());
+	                table.addCell(rs.getString("DocumentNo"));
+	                table.addCell(rs.getString("BPartner"));
+	                table.addCell(rs.getString("Product"));
+	                table.addCell(rs.getString("QtyInvoiced"));
+	                table.addCell(rs.getString("PriceActual"));
+	                table.addCell(rs.getString("LineNetAmt"));
+	            }
+
+	            pdf.add(table);
+	            pdf.close();
+
+	            response.setContentType("application/pdf");
+	            response.setHeader("Content-Disposition",
+	                    "attachment; filename=" + docNo + "_Report.pdf");
+
+	            baos.writeTo(response.getOutputStream());
+
 	        } catch (Exception e) {
-	            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-	            response.setContentType("text/plain; charset=UTF-8");
-	            response.getWriter().println("Error: " + e.getMessage());
+	            e.printStackTrace();
+	            response.getWriter().write("Error generating PDF");
 	        }
 	    }
-
-	    /** --- Helpers --- */
-
-	    private static String val(String s) { return (s == null || s.trim().isEmpty()) ? null : s.trim(); }
-	    private static int parseInt(String s, int d) { try { return Integer.parseInt(s); } catch (Exception e){ return d; } }
-	    private static Timestamp toTs(String ymd) { return Timestamp.valueOf(LocalDate.parse(ymd).atStartOfDay()); }
-	    private static Timestamp toTsInclusiveEnd(String ymd) {
-	        return Timestamp.valueOf(LocalDate.parse(ymd).plusDays(1).atStartOfDay().minusNanos(1_000_000));
-	    }
-	    private static String esc(Object o) { return o == null ? "" :
-	            o.toString().replace("&","&amp;").replace("<","&lt;").replace(">","&gt;")
-	            .replace("\"","&quot;").replace("'","&#39;"); }
-	    private static String th(String s){ return "<th>" + esc(s) + "</th>"; }
-	    private static String td(Object o){ return "<td>" + esc(o) + "</td>"; }
-	    private static String fmtDate(Timestamp ts){ return ts == null ? "" : ts.toLocalDateTime().toLocalDate().toString(); }
 	}
-	

@@ -2,7 +2,7 @@ package org.vijaytech.textile;
 
 
 
-import java.io.BufferedReader;
+import java.io.BufferedReader; 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
@@ -30,6 +30,8 @@ import org.syvasoft.tallyfrontcrusher.model.TF_MBPartner;
 import org.syvasoft.tallyfrontcrusher.model.TF_MOrder;
 import org.syvasoft.tallyfrontcrusher.model.TF_MOrderLine;
 import org.syvasoft.tallyfrontcrusher.model.TF_MProduct;
+import org.vijaytech.textile.utils.GenerateTextileBillPDF;
+import org.vijaytech.textile.utils.WhatsAppSender;
 
 
 public class SalesServlet extends HttpServlet {
@@ -195,6 +197,41 @@ public class SalesServlet extends HttpServlet {
 	             throw new AdempiereException("❌ Could not complete order: " + ordH.getProcessMsg());
 	         }
 	         ordH.saveEx();
+	         
+	      // ===== NEW: generate PDF and send WhatsApp =====
+	         try {
+	             // Generate PDF (returns filePath + publicUrl)
+	             String pdfInfo = GenerateTextileBillPDF.generate(ordH.get_ID(), ctx);
+
+	             // determine customer phone to send: try partner phone from order, fallback to posted phone variable
+	             String phoneToSend = phone;
+	             try {
+	                 if (ordH.getC_BPartner_ID() > 0) {
+	                     org.syvasoft.tallyfrontcrusher.model.TF_MBPartner bpObj = new org.syvasoft.tallyfrontcrusher.model.TF_MBPartner(ctx, ordH.getC_BPartner_ID(), null);
+	                     String bpPhone = bpObj.getPhone();
+	                     if (bpPhone != null && bpPhone.trim().length() > 0) phoneToSend = bpPhone;
+	                 }
+	             } catch (Exception e) {
+	                 // ignore, fallback to posted phone
+	             }
+
+	             // normalize phone: remove spaces, plus signs
+	             if (phoneToSend != null) phoneToSend = phoneToSend.replaceAll("[\\s\\+\\-\\(\\)]","");
+
+	             // caption for the document
+	             String caption = "Invoice #" + (ordH.getDocumentNo() != null ? ordH.getDocumentNo() : ordH.get_ID());
+
+	             // Send via WhatsApp Cloud API
+	             try {
+	                 WhatsAppSender.sendDocument(phoneToSend, pdfInfo, caption);
+	             } catch (Exception waex) {
+	                 // log error but do not fail the entire request
+	                 waex.printStackTrace();
+	             }
+	         } catch (Exception exPdf) {
+	             // log PDF generation error; preserve normal response
+	             exPdf.printStackTrace();
+	         }
 	        
 	         response.getWriter().write("{\"status\":\"success\"}");
 	     } catch (Exception e) {
