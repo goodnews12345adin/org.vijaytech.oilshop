@@ -40,6 +40,12 @@ Integer AD_Org_ID = (Integer) session.getAttribute("AD_Org_ID");
         .table th, .table td { vertical-align: middle !important; }
         .total-box { font-size: 1.1rem; font-weight: 500; }
         .table input { min-width: 80px; }
+        .total-box, 
+.total-box span, 
+.total-box strong {
+    color: #000 !important;
+}
+        
     </style>
 </head>
 
@@ -116,7 +122,7 @@ Integer AD_Org_ID = (Integer) session.getAttribute("AD_Org_ID");
             <button id="recalculate" class="btn btn-primary btn-sm">Recalculate</button>
             <button id="send-btn" class="btn btn-success btn-sm">Send</button>
         </div>
-
+			
         <div class="mt-3 text-end total-box">
             <div>Subtotal: ₹<span id="subtotal">0.00</span></div>
             <div>Total: ₹<strong id="grand-total">0.00</strong></div>
@@ -157,75 +163,78 @@ $(document).ready(function() {
 
     // ➕ Add product row
     function addRow(Id, name, unit, qty, rate) {
-        const tr = document.createElement('tr');
-        // console.log("Adding Row for Prod ID:", Id);
+    const tr = document.createElement('tr');
+    console.log("Adding Row for Prod ID:", Id);
 
-        const tdIndex = document.createElement('td');
-        const tdDesc = document.createElement('td');
-        const tdUom = document.createElement('td');
-        const tdQty = document.createElement('td');
-        const tdRate = document.createElement('td');
-        const tdAmount = document.createElement('td');
-        const tdAction = document.createElement('td');
+    const tdIndex = document.createElement('td');
+    const tdDesc = document.createElement('td');
+    const tdUom = document.createElement('td');
+    const tdQty = document.createElement('td');
+    const tdRate = document.createElement('td');
+    const tdAmount = document.createElement('td');
+    const tdAction = document.createElement('td');
 
-        tdAmount.className = 'amount text-end';
-        tdAction.className = 'text-center';
+    tdAmount.className = 'amount text-end';
+    tdAction.className = 'text-center';
 
-        const inputDesc = Object.assign(document.createElement('input'), {
-            className: 'form-control form-control-sm desc',
-            value: name
-        });
-        const inputProdId = Object.assign(document.createElement('input'), {
-            type: 'hidden',
-            className: 'ProdId',
-            value: Id
-        });
-        const inputUom = Object.assign(document.createElement('input'), {
-            className: 'form-control form-control-sm uom',
-            value: unit
-        });
-        const inputQty = Object.assign(document.createElement('input'), {
-            type: 'number',
-            className: 'form-control form-control-sm qty',
-            value: qty
-        });
-        const inputRate = Object.assign(document.createElement('input'), {
-            type: 'number',
-            className: 'form-control form-control-sm rate',
-            value: rate
-        });
-        const btnRemove = Object.assign(document.createElement('button'), {
-            className: 'btn btn-sm btn-danger remove-row',
-            textContent: '×'
-        });
+    const inputDesc = Object.assign(document.createElement('input'), {
+        className: 'form-control form-control-sm desc',
+        value: name
+    });
+    const inputProdId = Object.assign(document.createElement('input'), {
+        type: 'hidden',
+        className: 'ProdId',
+        value: Id
+    });
+    const inputUom = Object.assign(document.createElement('input'), {
+        className: 'form-control form-control-sm uom',
+        value: unit
+    });
+    const inputQty = Object.assign(document.createElement('input'), {
+        type: 'number',
+        className: 'form-control form-control-sm qty',
+        value: qty
+    });
+    const inputRate = Object.assign(document.createElement('input'), {
+        type: 'number',
+        className: 'form-control form-control-sm rate',
+        value: rate
+    });
+    const btnRemove = Object.assign(document.createElement('button'), {
+        className: 'btn btn-sm btn-danger remove-row',
+        textContent: '×'
+    });
 
-        tdDesc.appendChild(inputDesc);
-        tdDesc.appendChild(inputProdId);
-        tdUom.appendChild(inputUom);
-        tdQty.appendChild(inputQty);
-        tdRate.appendChild(inputRate);
-        tdAmount.textContent = (qty * rate).toFixed(2);
-        tdAction.appendChild(btnRemove);
+    tdDesc.appendChild(inputDesc);
+    tdDesc.appendChild(inputProdId);
+    tdUom.appendChild(inputUom);
+    tdQty.appendChild(inputQty);
+    tdRate.appendChild(inputRate);
+    tdAmount.textContent = (qty * rate).toFixed(2);
+    tdAction.appendChild(btnRemove);
+    [tdIndex, tdDesc, tdUom, tdQty, tdRate, tdAmount, tdAction].forEach(td => tr.appendChild(td));
+    itemsBody.appendChild(tr);
 
-        [tdIndex, tdDesc, tdUom, tdQty, tdRate, tdAmount, tdAction].forEach(td => tr.appendChild(td));
-        itemsBody.appendChild(tr);
+    // FIX ADDED HERE — set the row index
+    tdIndex.textContent = itemsBody.children.length;
 
-        function updateRowAmount() {
-            const q = parseFloat(inputQty.value) || 0;
-            const r = parseFloat(inputRate.value) || 0;
-            const amt = q * r;
-            tdAmount.textContent = amt.toFixed(2);
-            recalculate();
-        }
-
-        btnRemove.addEventListener('click', () => {
-            tr.remove();
-            recalculate();
-        });
-
-        [inputQty, inputRate].forEach(inp => inp.addEventListener('input', updateRowAmount));
-        updateRowAmount();
+    function updateRowAmount() {
+        const q = parseFloat(inputQty.value) || 0;
+        const r = parseFloat(inputRate.value) || 0;
+        const amt = q * r;
+        tdAmount.textContent = amt.toFixed(2);
+        recalculate();
     }
+
+    btnRemove.addEventListener('click', () => {
+        tr.remove();
+        recalculate();
+    });
+
+    [inputQty, inputRate].forEach(inp => inp.addEventListener('input', updateRowAmount));
+    updateRowAmount();
+}
+
 
     // 🧵 On product select
     $('#manual-product').change(function() {
@@ -283,18 +292,26 @@ $(document).ready(function() {
 
         $.ajax({
             type: "POST",
-            url: "<%= request.getContextPath() %>/SalesServlet",
+            url: "<%= request.getContextPath() %>/SalesSaveServlet",
             data: JSON.stringify({ salesData: data }),
             contentType: "application/json; charset=utf-8",
             success: function(response) {
-                alert("Sales saved successfully!");
-                console.log(response);
+
+                console.log("Server Response:", response);
+
+                if (response.pdfUrl) {
+                    // OPEN PDF IN NEW TAB
+                    window.open(response.pdfUrl, "_blank");
+                } else {
+                    alert("PDF not generated!");
+                }
             },
             error: function(xhr, status, error) {
                 alert("Error saving sales: " + xhr.responseText);
                 console.error(error);
             }
         });
+
     });
 
     $('#recalculate').click(recalculate);

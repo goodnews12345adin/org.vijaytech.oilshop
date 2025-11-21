@@ -2,13 +2,20 @@ package org.vijaytech.textile;
 
 
 
-import java.io.BufferedReader; 
+import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.net.URLEncoder;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +28,7 @@ import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MOrder;
 import org.compiere.model.MProduct;
 import org.compiere.model.Query;
+import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Trx;
 import org.json.JSONArray;
@@ -71,8 +79,9 @@ public class SalesServlet extends HttpServlet {
 	          
 	                p.put("name", pro.getM_Product().getName());
 	                p.put("rate", pro.getPrice());
-	                p.put("uom", pro.getC_UOM_ID());
+	                p.put("uom", pro.getC_UOM().getName());
 	                p.put("prodId", pro.get_ID());
+//	                p.put("Hsn", pro.geth);
 	                productData.add(p);
 	            }
 	            System.out.println("product data :"+productData);
@@ -168,7 +177,7 @@ public class SalesServlet extends HttpServlet {
 	             JSONObject item = items.getJSONObject(i);
 	             int prodId = item.getInt("prodId");
 	             String product = item.getString("product");
-	             int unit = item.getInt("unit");
+	             String unit = item.getString("unit");
 	             BigDecimal qty = item.getBigDecimal("qty");
 	             BigDecimal rate = item.getBigDecimal("rate").setScale(2, RoundingMode.HALF_UP);
 	             BigDecimal amount = item.getBigDecimal("amount").setScale(2, RoundingMode.HALF_UP);
@@ -180,7 +189,7 @@ public class SalesServlet extends HttpServlet {
 	             MProduct prod = new MProduct(ctx, priceList.getM_Product_ID(), null);
 	             ordLine.setC_Order_ID(ordH.get_ID());
 	             ordLine.setM_Product_ID(prod.get_ID());
-	             ordLine.setC_UOM_ID(unit);
+	             ordLine.setC_UOM_ID(prod.getC_UOM_ID());
 	             ordLine.setQty(qty);
 	             ordLine.setQtyOrdered(qty);
 	             ordLine.setPrice(rate);
@@ -199,7 +208,7 @@ public class SalesServlet extends HttpServlet {
 	         ordH.saveEx();
 	         
 	      // ===== NEW: generate PDF and send WhatsApp =====
-	         try {
+//	         try {
 	             // Generate PDF (returns filePath + publicUrl)
 	             String pdfInfo = GenerateTextileBillPDF.generate(ordH.get_ID(), ctx);
 
@@ -228,10 +237,8 @@ public class SalesServlet extends HttpServlet {
 	                 // log error but do not fail the entire request
 	                 waex.printStackTrace();
 	             }
-	         } catch (Exception exPdf) {
-	             // log PDF generation error; preserve normal response
-	             exPdf.printStackTrace();
-	         }
+	        	 
+	        	 
 	        
 	         response.getWriter().write("{\"status\":\"success\"}");
 	     } catch (Exception e) {
@@ -239,8 +246,7 @@ public class SalesServlet extends HttpServlet {
 	            e.printStackTrace();
 	            response.setStatus(500);
 	            response.getWriter().write("{\"error\":\"" + e.getMessage().replace("\"","'") + "\"}");
-	        } 
-	       
+	        }
 	 }
 }
 	 

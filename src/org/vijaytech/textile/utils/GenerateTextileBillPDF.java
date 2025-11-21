@@ -2,6 +2,7 @@ package org.vijaytech.textile.utils;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -9,9 +10,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 
 import org.compiere.util.DB;
+import org.json.JSONArray;
 
 import com.lowagie.text.Document;
 import com.lowagie.text.Font;
@@ -156,4 +159,5 @@ public class GenerateTextileBillPDF {
 	        c.setPadding(5);
 	        t.addCell(c);
 	    }
+	    
 	}

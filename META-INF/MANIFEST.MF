@@ -18,7 +18,8 @@ Require-Bundle: org.adempiere.base;bundle-version="0.0.0",
  org.eclipse.jetty.servlet-api,
  wrapped.io.opencensus.opencensus-api,
  org.compiere.db.postgresql.provider;bundle-version="10.0.0",
- wrapped.org.apache.poi.poi-ooxml
+ wrapped.org.apache.poi.poi-ooxml,
+ com.google.gson;bundle-version="2.9.0"
 Import-Package: com.lowagie.text,
  com.lowagie.text.pdf,
  javax.servlet;version="2.5.0",

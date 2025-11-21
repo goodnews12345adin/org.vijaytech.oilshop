@@ -92,6 +92,25 @@
     <url-pattern>/PrintPurchaseReportServlet</url-pattern>
 </servlet-mapping>
 
+<servlet>
+    <servlet-name>SalesSaveServlet</servlet-name>
+    <servlet-class>org.vijaytech.textile.SalesSaveServlet</servlet-class>
+</servlet>
+
+<servlet-mapping>
+    <servlet-name>SalesSaveServlet</servlet-name>
+    <url-pattern>/SalesSaveServlet</url-pattern>
+</servlet-mapping>
+<servlet>
+    <servlet-name>InvoicePDFServlet</servlet-name>
+    <servlet-class>org.vijaytech.textile.utils.InvoicePDFServlet</servlet-class>
+</servlet>
+
+<servlet-mapping>
+    <servlet-name>InvoicePDFServlet</servlet-name>
+    <url-pattern>/InvoicePDFServlet</url-pattern>
+</servlet-mapping>
+
 <!-- <servlet>
     <servlet-name>SaveRentServlet</servlet-name>
     <servlet-class>org.syvasoft.sprmobileapp.SaveRateCardServlet.SaveRentServlet</servlet-class>
