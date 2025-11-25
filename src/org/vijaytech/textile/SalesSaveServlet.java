@@ -152,7 +152,8 @@ public class SalesSaveServlet extends HttpServlet {
             TF_MOrderLine ordLine = new TF_MOrderLine(ctx, 0, null);
 
             // prodId = M_Product_ID (coming from the UI)
-            MProduct prod = new MProduct(ctx, prodId, null);
+            MPriceListUOM priceList = new MPriceListUOM(ctx, prodId, null);
+            MProduct prod = new MProduct(ctx, priceList.getM_Product_ID(), null);
 
             ordLine.setC_Order_ID(ordH.get_ID());
             ordLine.setM_Product_ID(prod.get_ID());
