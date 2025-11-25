@@ -51,7 +51,6 @@ import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 
-@WebServlet("/SalesSaveServlet")
 public class SalesSaveServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
