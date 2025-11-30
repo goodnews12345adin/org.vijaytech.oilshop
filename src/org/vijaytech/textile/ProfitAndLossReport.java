@@ -3,17 +3,27 @@ package org.vijaytech.textile;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
+import org.compiere.model.MProduct;
+import org.compiere.model.MProductCategory;
+import org.compiere.model.Query;
 import org.compiere.util.DB;
+import org.compiere.util.Env;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.syvasoft.tallyfrontcrusher.model.TF_MProduct;
+import org.syvasoft.tallyfrontcrusher.model.TF_MProductCategory;
 
 public class ProfitAndLossReport extends  HttpServlet{
 
@@ -24,6 +34,50 @@ public class ProfitAndLossReport extends  HttpServlet{
 	            throws ServletException, IOException {
 
 	        String action = req.getParameter("action");
+	        HttpSession session = req.getSession(false);
+	        int AD_Org_ID = Integer.parseInt(session.getAttribute("AD_Org_ID").toString());
+	        int AD_Client_ID = Integer.parseInt(session.getAttribute("AD_Client_ID").toString());
+	        if (session == null || session.getAttribute("ctx") == null) {
+	            resp.getWriter().write("{\"error\":\"Session expired\"}");
+	            return;
+	        }
+
+	        Properties ctx = (Properties) session.getAttribute("ctx");
+	        if (ctx == null) ctx = Env.getCtx();
+	        
+	        resp.setContentType("application/json");
+	        resp.getWriter().write("{\"message\":\"GET OK\"}");
+	        
+	        List<TF_MProduct> product = new Query(ctx, TF_MProduct.Table_Name, "WeighmentEnabled ='Y'", null)
+	        		.setClient_ID()
+	        		.list();
+	        
+	        List<TF_MProductCategory> cats = new Query(ctx, TF_MProductCategory.Table_Name, "IsActive='Y'", null)
+                    .setClient_ID()
+                    .list();
+	        
+	        List<Map<String, Object>> categoryList = new ArrayList<>();
+	        List<Map<String, Object>> productList = new ArrayList<>();
+
+	        // CATEGORY LIST
+	        for (MProductCategory c : cats) {
+	            Map<String, Object> m = new HashMap<>();
+	            m.put("id", c.getM_Product_Category_ID());
+	            m.put("name", c.getName());
+	            categoryList.add(m);   // <-- FIXED (was categoryList.put)
+	        }
+
+	        // PRODUCT LIST
+	        for (TF_MProduct p : product) {
+	            Map<String, Object> m = new HashMap<>();
+	            m.put("id", p.getM_Product_ID());            // <-- FIXED (you used category id!)
+	            m.put("name", p.getName());
+	            m.put("categoryId", p.getM_Product_Category_ID());  // helpful for dependent dropdown
+	            productList.add(m);
+	        }
+
+	        // SET TO JSP
+	       
 
 	        if ("excel".equalsIgnoreCase(action)) {
 	            resp.setContentType("text/plain");
@@ -36,9 +90,11 @@ public class ProfitAndLossReport extends  HttpServlet{
 	            resp.getWriter().write("PDF download will be implemented");
 	            return;
 	        }
-
-	        resp.setContentType("application/json");
-	        resp.getWriter().write("{\"message\":\"GET OK\"}");
+	        
+	       
+	        
+	        req.setAttribute("categoryList", categoryList);
+	        req.setAttribute("productList", productList);
 	        RequestDispatcher rd = req.getRequestDispatcher("/pages/profitandloss.jsp");
 		    rd.forward(req, resp);
 	    }
