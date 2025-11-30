@@ -16,6 +16,7 @@ import org.syvasoft.tallyfrontcrusher.model.MPriceListUOM;
 import org.syvasoft.tallyfrontcrusher.model.TF_MBPartner;
 import org.syvasoft.tallyfrontcrusher.model.TF_MOrder;
 import org.syvasoft.tallyfrontcrusher.model.TF_MOrderLine;
+import org.syvasoft.tallyfrontcrusher.model.TF_MProduct;
 
 public class PurchaseServlet extends HttpServlet {
 
@@ -43,20 +44,20 @@ public class PurchaseServlet extends HttpServlet {
 	    if ("getProducts".equalsIgnoreCase(action)) {
 	        try {
 	            // FIX: also filter by client to avoid cross-tenant reads
-	            List<MPriceListUOM> prodList = new Query(ctx, MPriceListUOM.Table_Name,
-	                    "IsSOTrx='N' AND AD_Org_ID=?", null)
+	            List<TF_MProduct> prodList = new Query(ctx, TF_MProduct.Table_Name,
+	                    "IsPurchased='Y' AND IsSold ='N' AND AD_Org_ID=?", null)
 	                    .setClient_ID() // adds AD_Client filter
 	                    .setParameters(1000000) // your org
 	                    .list();
 
 	            JSONArray arr = new JSONArray();
-	            for (MPriceListUOM prod : prodList) {
+	            for (TF_MProduct prod : prodList) {
 	                JSONObject obj = new JSONObject();
 	                obj.put("id", prod.get_ID());
 	                obj.put("uom", prod.getC_UOM().getName());
 	                obj.put("uomId", prod.getC_UOM_ID());
-	                obj.put("name", prod.getM_Product().getName());
-	                obj.put("rate", prod.getPrice());
+	                obj.put("name", prod.getName());
+	                obj.put("rate", prod.getBillPrice());
 	                arr.put(obj);
 	            }
 
@@ -170,13 +171,13 @@ public class PurchaseServlet extends HttpServlet {
                 TF_MOrderLine line = new TF_MOrderLine(ctx, 0, trxName);
 
                 // Load the product via PriceListUOM entry (tenant-safe)
-                MPriceListUOM priceList = new Query(ctx, MPriceListUOM.Table_Name,
-                        "IsSOTrx='N' AND TF_PriceListUOM_ID=?", trxName)
+                TF_MProduct priceList = new Query(ctx, TF_MProduct.Table_Name,
+                        "IsSold='N' AND M_Product_ID=?", trxName)
                         .setClient_ID()
                         .setParameters(prodId)
                         .firstOnly();
                 if (priceList == null) {
-                    throw new AdempiereException("PriceListUOM not found for id=" + prodId);
+                    throw new AdempiereException("product not found for id=" + prodId);
                 }
 
                 MProduct prod = new MProduct(ctx, priceList.getM_Product_ID(), trxName);

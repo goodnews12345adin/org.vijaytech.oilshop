@@ -65,20 +65,20 @@ public class SalesServlet extends HttpServlet {
 
 
 	            // 🔹 Fetch product list
-	            List<MPriceListUOM> prodList = new Query(ctx, MPriceListUOM.Table_Name,
-	                    "IsSOTrx ='Y' AND AD_Org_ID =? ", null)
+	            List<TF_MProduct> prodList = new Query(ctx, TF_MProduct.Table_Name,
+	                    "IsSold ='Y' AND WeighmentEnabled ='Y' AND AD_Org_ID =? ", null)
 	            		.setClient_ID()
 	                    .setParameters(1000000)
 	                    .list();
 	            List<Map<String, Object>> productData = new ArrayList<>();
 
-	            for (MPriceListUOM pro : prodList) {
+	            for (TF_MProduct pro : prodList) {
 	                BigDecimal priceByUom = MPriceListUOM.getPrice(ctx, pro.get_ID(), pro.getC_UOM_ID(), 0, true);
 
 	                Map<String, Object> p = new HashMap<>();
 	          
-	                p.put("name", pro.getM_Product().getName());
-	                p.put("rate", pro.getPrice());
+	                p.put("name", pro.getName());
+	                p.put("rate", pro.getBillPrice());
 	                p.put("uom", pro.getC_UOM().getName());
 	                p.put("prodId", pro.get_ID());
 //	                p.put("Hsn", pro.geth);
@@ -185,8 +185,8 @@ public class SalesServlet extends HttpServlet {
 	             System.out.println("Qty: " + qty + ", Rate: " + rate + ", Amount: " + amount + ", prodId: " + prodId);
 
 	             TF_MOrderLine ordLine = new TF_MOrderLine(ctx, 0, null);
-	             MPriceListUOM priceList = new MPriceListUOM(ctx, prodId, null);
-	             MProduct prod = new MProduct(ctx, priceList.getM_Product_ID(), null);
+//	             MPriceListUOM priceList = new MPriceListUOM(ctx, prodId, null);
+	             TF_MProduct prod = new TF_MProduct(ctx, prodId, null);
 	             ordLine.setC_Order_ID(ordH.get_ID());
 	             ordLine.setM_Product_ID(prod.get_ID());
 	             ordLine.setC_UOM_ID(prod.getC_UOM_ID());

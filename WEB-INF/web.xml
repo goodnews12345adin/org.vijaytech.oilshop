@@ -101,6 +101,35 @@
     <servlet-name>SalesSaveServlet</servlet-name>
     <url-pattern>/SalesSaveServlet</url-pattern>
 </servlet-mapping>
+
+<servlet>
+    <servlet-name>ProductCategory</servlet-name>
+    <servlet-class>org.vijaytech.textile.ProductCategory</servlet-class>
+</servlet>
+
+<servlet-mapping>
+    <servlet-name>ProductCategory</servlet-name>
+    <url-pattern>/ProductCategory</url-pattern>
+</servlet-mapping>
+
+<servlet>
+    <servlet-name>PurchaseProduct</servlet-name>
+    <servlet-class>org.vijaytech.textile.PurchaseProduct</servlet-class>
+</servlet>
+
+<servlet-mapping>
+    <servlet-name>PurchaseProduct</servlet-name>
+    <url-pattern>/PurchaseProduct</url-pattern>
+</servlet-mapping>
+<servlet>
+    <servlet-name>ProfitAndLossReport</servlet-name>
+    <servlet-class>org.vijaytech.textile.ProfitAndLossReport</servlet-class>
+</servlet>
+
+<servlet-mapping>
+    <servlet-name>ProfitAndLossReport</servlet-name>
+    <url-pattern>/ProfitAndLossReport</url-pattern>
+</servlet-mapping>
 <servlet>
     <servlet-name>InvoicePDFServlet</servlet-name>
     <servlet-class>org.vijaytech.textile.utils.InvoicePDFServlet</servlet-class>

@@ -37,12 +37,17 @@
         <i class="bi bi-basket me-2"></i> Purchase
       </a>
     </li>
-
+	<li>
+      <a href="${pageContext.request.contextPath}/pages/productCategory.jsp" class="nav-link text-white">
+        <i class="bi bi-box-seam me-2"></i> Product category
+      </a>
+    </li>
     <li>
-      <a href="${pageContext.request.contextPath}/pages/products.jsp" class="nav-link text-white">
+      <a href="${pageContext.request.contextPath}/PurchaseProduct" class="nav-link text-white">
         <i class="bi bi-box-seam me-2"></i> Products
       </a>
     </li>
+    
 
     <li>
       <a href="${pageContext.request.contextPath}/pages/customers.jsp" class="nav-link text-white">
@@ -64,6 +69,9 @@
           </li>
           <li class="nav-item">
             <a href="${pageContext.request.contextPath}/pages/purchaseReport.jsp" class="nav-link text-white small">Purchase Report</a>
+          </li>
+          <li class="nav-item">
+            <a href="${pageContext.request.contextPath}/ProfitAndLossReport" class="nav-link text-white small">Profit-Loss Report</a>
           </li>
         </ul>
       </div>
