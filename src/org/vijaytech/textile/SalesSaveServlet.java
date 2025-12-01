@@ -38,6 +38,7 @@ import org.syvasoft.tallyfrontcrusher.model.MPriceListUOM;
 import org.syvasoft.tallyfrontcrusher.model.TF_MBPartner;
 import org.syvasoft.tallyfrontcrusher.model.TF_MOrder;
 import org.syvasoft.tallyfrontcrusher.model.TF_MOrderLine;
+import org.syvasoft.tallyfrontcrusher.model.TF_MProduct;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -47,6 +48,7 @@ import com.lowagie.text.DocumentException;
 import com.lowagie.text.Font;
 import com.lowagie.text.FontFactory;
 import com.lowagie.text.Paragraph;
+import com.lowagie.text.Rectangle;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
@@ -101,6 +103,11 @@ public class SalesSaveServlet extends HttpServlet {
         String name = customer.optString("name", "Walk-in");
         String address = customer.optString("address", "");
         String phone = customer.optString("phone", "");
+        
+        JSONObject salesDat = salesData.getJSONObject("salesData");
+        BigDecimal discount = new BigDecimal( salesDat.optString("discount"));
+        String subtotal = salesDat.optString("subtotal", "");
+        String total = salesDat.optString("total", "");
 
         System.out.println("Customer Details:");
         System.out.println("Name: " + name);
@@ -141,23 +148,24 @@ public class SalesSaveServlet extends HttpServlet {
             BigDecimal qty = new BigDecimal(item.get("qty").toString());
             BigDecimal rate = new BigDecimal(item.get("rate").toString()).setScale(2, RoundingMode.HALF_UP);
             BigDecimal amount = new BigDecimal(item.get("amount").toString()).setScale(2, RoundingMode.HALF_UP);
-
+            
             System.out.println("Item " + (i + 1) + " => Product: " + product +
                     ", Unit: " + unit +
                     ", Qty: " + qty +
                     ", Rate: " + rate +
                     ", Amount: " + amount +
-                    ", prodId: " + prodId);
+                    ", prodId: " + prodId+
+                    ",discount "+discount);
 
             TF_MOrderLine ordLine = new TF_MOrderLine(ctx, 0, null);
 
             // prodId = M_Product_ID (coming from the UI)
-            MPriceListUOM priceList = new MPriceListUOM(ctx, prodId, null);
-            MProduct prod = new MProduct(ctx, priceList.getM_Product_ID(), null);
-
+//            MPriceListUOM priceList = new MPriceListUOM(ctx, prodId, null);
+            TF_MProduct prod = new TF_MProduct(ctx,prodId, null);
             ordLine.setC_Order_ID(ordH.get_ID());
             ordLine.setM_Product_ID(prod.get_ID());
             ordLine.setC_UOM_ID(prod.getC_UOM_ID());
+            ordLine.setDiscount(discount);
             ordLine.setQty(qty);
             ordLine.setQtyOrdered(qty);
             ordLine.setPrice(rate);
@@ -216,28 +224,54 @@ public class SalesSaveServlet extends HttpServlet {
         // 1) FETCH ORDER HEADER
         // ===================================================================
         String sqlHeader =
-                "SELECT o.documentno, bp.name, bp.taxid, " +
-                "       coalesce(l.address1,'') || " +
-                "       CASE WHEN l.city IS NOT NULL THEN ', ' || l.city ELSE '' END || " +
-                "       CASE WHEN l.postal IS NOT NULL THEN '-' || l.postal ELSE '' END AS address, " +
-                "       o.dateordered " +
-                "FROM c_order o " +
-                "JOIN c_bpartner bp ON bp.c_bpartner_id = o.c_bpartner_id " +
-                "LEFT JOIN c_bpartner_location bpl ON (bpl.c_bpartner_id = bp.c_bpartner_id AND bpl.isbillto = 'Y') " +
-                "LEFT JOIN c_location l ON l.c_location_id = bpl.c_location_id " +
-                "WHERE o.c_order_id = ?";
+            "SELECT o.documentno, " +
+            "       bp.name AS customer_name, " +
+            "       bp.taxid AS customer_gstin, " +
+            "       COALESCE(l.address1,'') || " +
+            "       CASE WHEN l.address2 IS NOT NULL THEN ', ' || l.address2 ELSE '' END || " +
+            "       CASE WHEN l.city IS NOT NULL THEN ', ' || l.city ELSE '' END || " +
+            "       CASE WHEN l.postal IS NOT NULL THEN '-' || l.postal ELSE '' END AS customer_address, " +
+            "       o.dateordered, " +
+
+            "       org.name AS org_name, " +
+            "       COALESCE(orgloc.address1,'') || " +
+            "       CASE WHEN orgloc.address2 IS NOT NULL THEN ', ' || orgloc.address2 ELSE '' END || " +
+            "       CASE WHEN orgloc.city IS NOT NULL THEN ', ' || orgloc.city ELSE '' END || " +
+            "       CASE WHEN orgloc.postal IS NOT NULL THEN '-' || orgloc.postal ELSE '' END AS org_address, " +
+
+            "       oi.taxid AS org_gstin, " +
+            "       oi.phone AS org_phone, " +
+            "       oi.email AS org_email " +
+
+            "FROM c_order o " +
+            "JOIN c_bpartner bp ON bp.c_bpartner_id = o.c_bpartner_id " +
+            "LEFT JOIN c_bpartner_location bpl ON (bpl.c_bpartner_id = bp.c_bpartner_id AND bpl.isbillto = 'Y') " +
+            "LEFT JOIN c_location l ON l.c_location_id = bpl.c_location_id " +
+            "JOIN ad_org org ON org.ad_org_id = o.ad_org_id " +
+            "JOIN ad_orginfo oi ON oi.ad_org_id = org.ad_org_id " +
+            "LEFT JOIN c_location orgloc ON orgloc.c_location_id = org.c_location_id " +
+            "WHERE o.c_order_id = ?";
 
         PreparedStatement ps = DB.prepareStatement(sqlHeader, null);
         ps.setInt(1, orderId);
         ResultSet rs = ps.executeQuery();
 
-        String customer = "", gst = "", address = "", docNo = "", date = "";
+        // Header variables
+        String docNo="", customer="", customerGST="", customerAddr="", date="";
+        String orgName="", orgAddress="", orgGST="", orgPhone="", orgEmail="";
+
         if (rs.next()) {
             docNo = rs.getString("documentno");
-            customer = rs.getString("name");
-            gst = rs.getString("taxid");
-            address = rs.getString("address");
+            customer = rs.getString("customer_name");
+            customerGST = rs.getString("customer_gstin");
+            customerAddr = rs.getString("customer_address");
             date = String.valueOf(rs.getTimestamp("dateordered"));
+
+            orgName = rs.getString("org_name");
+            orgAddress = rs.getString("org_address");
+            orgGST = rs.getString("org_gstin");
+            orgPhone = rs.getString("org_phone");
+            orgEmail = rs.getString("org_email");
         }
         rs.close();
         ps.close();
@@ -246,13 +280,13 @@ public class SalesSaveServlet extends HttpServlet {
         // 2) FETCH ORDER LINES
         // ===================================================================
         String sqlLines =
-                "SELECT p.name AS item, p.hsncode, ol.qtyordered, ol.priceactual, " +
-                "       (ol.qtyordered * ol.priceactual) AS amount, " +
-                "       u.x12de355 AS uom " +
-                "FROM c_orderline ol " +
-                "JOIN m_product p ON p.m_product_id = ol.m_product_id " +
-                "JOIN c_uom u ON u.c_uom_id = ol.c_uom_id " +
-                "WHERE ol.c_order_id = ?";
+            "SELECT p.name AS item, p.hsncode, ol.qtyordered, ol.priceactual, " +
+            "       (ol.qtyordered * ol.priceactual) AS amount, " +
+            "       u.x12de355 AS uom " +
+            "FROM c_orderline ol " +
+            "JOIN m_product p ON p.m_product_id = ol.m_product_id " +
+            "JOIN c_uom u ON u.c_uom_id = ol.c_uom_id " +
+            "WHERE ol.c_order_id = ?";
 
         PreparedStatement ps2 = DB.prepareStatement(sqlLines, null);
         ps2.setInt(1, orderId);
@@ -270,16 +304,16 @@ public class SalesSaveServlet extends HttpServlet {
             m.put("amount", rs2.getBigDecimal("amount"));
             m.put("uom", rs2.getString("uom"));
 
-            if (rs2.getBigDecimal("amount") != null) {
+            if (rs2.getBigDecimal("amount") != null)
                 total = total.add(rs2.getBigDecimal("amount"));
-            }
+
             lines.add(m);
         }
         rs2.close();
         ps2.close();
 
         // ===================================================================
-        // 3) GENERATE PDF (OpenPDF)
+        // 3) GENERATE PDF
         // ===================================================================
         Document doc = new Document();
         try {
@@ -290,21 +324,45 @@ public class SalesSaveServlet extends HttpServlet {
             Font bold = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
             Font normal = FontFactory.getFont(FontFactory.HELVETICA, 10);
 
-            // TITLE
-            doc.add(new Paragraph("TEXTILE BILL", header));
+            // ===========================================================
+            //  TWO-COLUMN HEADER
+            // ===========================================================
+            PdfPTable headerTable = new PdfPTable(2);
+            headerTable.setWidthPercentage(100);
+            headerTable.setWidths(new float[]{1, 1});
+
+            PdfPCell left = new PdfPCell();
+            left.setBorder(Rectangle.NO_BORDER);
+
+            PdfPCell right = new PdfPCell();
+            right.setBorder(Rectangle.NO_BORDER);
+
+            // LEFT SIDE (Customer + Bill Info)
+            left.addElement(new Paragraph("Bill No : " + docNo, bold));
+            left.addElement(new Paragraph("Date : " + date, normal));
+            left.addElement(new Paragraph("Customer : " + customer, bold));
+            left.addElement(new Paragraph("Address : " + customerAddr, normal));
+            left.addElement(new Paragraph("GSTIN : " + customerGST, normal));
+
+            // RIGHT SIDE (Company Info)
+            right.addElement(new Paragraph(orgName, header));
+            right.addElement(new Paragraph(orgAddress, normal));
+
+            if (orgGST != null) right.addElement(new Paragraph("GSTIN : " + orgGST, normal));
+            if (orgPhone != null) right.addElement(new Paragraph("Phone : " + orgPhone, normal));
+            if (orgEmail != null) right.addElement(new Paragraph("Email : " + orgEmail, normal));
+
+            headerTable.addCell(left);
+            headerTable.addCell(right);
+
+            doc.add(headerTable);
             doc.add(new Paragraph(" "));
 
-            // CUSTOMER INFO
-            doc.add(new Paragraph("Bill No : " + Objects.toString(docNo, ""), bold));
-            doc.add(new Paragraph("Date : " + Objects.toString(date, ""), normal));
-            doc.add(new Paragraph("Customer : " + Objects.toString(customer, ""), bold));
-            doc.add(new Paragraph("Address : " + Objects.toString(address, ""), normal));
-            doc.add(new Paragraph("GSTIN : " + Objects.toString(gst, ""), normal));
-            doc.add(new Paragraph(" "));
-
-            // TABLE
+            // ===========================================================
+            //  TABLE LINES
+            // ===========================================================
             PdfPTable table = new PdfPTable(5);
-            table.setWidths(new float[]{4, 2, 1, 1.5f, 2});
+            table.setWidths(new float[]{4, 2, 1.3f, 1.3f, 2});
             table.setWidthPercentage(100);
 
             addHeader(table, "Item");
@@ -314,29 +372,26 @@ public class SalesSaveServlet extends HttpServlet {
             addHeader(table, "Amount");
 
             for (Map<String, Object> l : lines) {
-                addCell(table, Objects.toString(l.get("item"), ""), normal);
-                addCell(table, Objects.toString(l.get("hsn"), ""), normal);
+                addCell(table, String.valueOf(l.get("item")), normal);
+                addCell(table, String.valueOf(l.get("hsn")), normal);
 
-                BigDecimal q = (BigDecimal) l.get("qty");
-                BigDecimal r = (BigDecimal) l.get("rate");
-                BigDecimal a = (BigDecimal) l.get("amount");
-
-                addCell(table, q != null ? q.toPlainString() : "", normal);
-                addCell(table, r != null ? r.toPlainString() : "", normal);
-                addCell(table, a != null ? a.toPlainString() : "", normal);
+                addCell(table, ((BigDecimal) l.get("qty")).toPlainString(), normal);
+                addCell(table, ((BigDecimal) l.get("rate")).toPlainString(), normal);
+                addCell(table, ((BigDecimal) l.get("amount")).toPlainString(), normal);
             }
 
             doc.add(table);
 
+            // ===========================================================
+            // TOTAL
+            // ===========================================================
             doc.add(new Paragraph(" "));
             doc.add(new Paragraph("Total Amount : ₹ " + total.toPlainString(), header));
 
-        } catch (DocumentException e) {
+        } catch (Exception e) {
             throw new IOException("Error generating PDF", e);
         } finally {
-            if (doc.isOpen()) {
-                doc.close();
-            }
+            if (doc.isOpen()) doc.close();
         }
     }
 

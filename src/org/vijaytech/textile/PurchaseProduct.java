@@ -220,6 +220,7 @@ public class PurchaseProduct extends HttpServlet {
                 }
             }
 //            product.s
+            product.setIsSummary(false);
             product.setProductType(MProduct.PRODUCTTYPE_Item);
             product.setC_TaxCategory_ID(1000000);
             product.setIsStocked(true);

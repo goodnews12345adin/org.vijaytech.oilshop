@@ -66,17 +66,17 @@ public class SalesServlet extends HttpServlet {
 
 	            // 🔹 Fetch product list
 	            List<TF_MProduct> prodList = new Query(ctx, TF_MProduct.Table_Name,
-	                    "IsSold ='Y' AND WeighmentEnabled ='Y' AND AD_Org_ID =? ", null)
+	                    "IsSold ='Y' AND WeighmentEnabled ='Y' AND AD_Org_ID =? AND IsSummary='N' ", null)
 	            		.setClient_ID()
 	                    .setParameters(1000000)
 	                    .list();
 	            List<Map<String, Object>> productData = new ArrayList<>();
 
 	            for (TF_MProduct pro : prodList) {
-	                BigDecimal priceByUom = MPriceListUOM.getPrice(ctx, pro.get_ID(), pro.getC_UOM_ID(), 0, true);
+//	                BigDecimal priceByUom = MPriceListUOM.getPrice(ctx, pro.get_ID(), pro.getC_UOM_ID(), 0, true);
 
 	                Map<String, Object> p = new HashMap<>();
-	          
+	                p.put("value", pro.getValue());
 	                p.put("name", pro.getName());
 	                p.put("rate", pro.getBillPrice());
 	                p.put("uom", pro.getC_UOM().getName());

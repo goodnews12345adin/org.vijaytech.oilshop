@@ -534,14 +534,14 @@ function gotoPage(page) {
 	    });
 
 	    // PAGE TOTAL
-	    let pt = calculatePageTotals(rows);
+	   /*  let pt = calculatePageTotals(rows);
 	    table += "<tr style='font-weight:bold;background:#f2f2f2;'>";
 	    table += "<td colspan='3'>PAGE TOTAL</td>";
 	    table += "<td>" + format(pt.salesAmount) + "</td>";
 	    table += "<td></td>";
 	    table += "<td>" + format(pt.purchaseAmount) + "</td>";
 	    table += "<td>" + format(pt.profit) + "</td>";
-	    table += "</tr>";
+	    table += "</tr>"; */
 
 	    // GRAND TOTAL
 	    table += "<tr style='font-weight:bold;background:#d1d1d1;'>";
@@ -589,14 +589,14 @@ function gotoPage(page) {
 	    });
 
 	    // PAGE TOTAL
-	    let pt = calculatePageTotals(rows);
+	   /*  let pt = calculatePageTotals(rows);
 	    html += "<tr style='font-weight:bold;background:#f2f2f2'>";
 	    html += "<td colspan='3'>PAGE TOTAL</td>";
 	    html += "<td style='text-align:right'>" + format(pt.salesAmount) + "</td>";
 	    html += "<td></td>";
 	    html += "<td style='text-align:right'>" + format(pt.purchaseAmount) + "</td>";
 	    html += "<td style='text-align:right'>" + format(pt.profit) + "</td>";
-	    html += "</tr>";
+	    html += "</tr>"; */
 
 	    // GRAND TOTAL
 	    html += "<tr style='font-weight:bold;background:#d1d1d1'>";

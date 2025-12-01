@@ -1,9 +1,9 @@
 <%@page import="java.util.Map"%>
 <%@page import="java.util.List"%>
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@page import="org.vijaytech.textile.Organization"%>
-<%@page import="java.util.List"%>
-<%@ page import="java.util.Properties" %>
+<%@page import="java.util.Properties"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+
 <%
 HttpSession session1 = request.getSession(false);
 Properties ctx = null;
@@ -25,297 +25,375 @@ if (role == null) {
 
 List<Organization> orgList = (List<Organization>) session.getAttribute("orgList");
 Integer AD_Org_ID = (Integer) session.getAttribute("AD_Org_ID");
+
+// ORG NAME FROM SESSION
+String orgName = (String) session.getAttribute("orgName");
+if (orgName == null) orgName = "";
+
+// PRODUCT LIST
+List<Map<String, Object>> productList =
+       (List<Map<String, Object>>) request.getAttribute("productList");
 %>
+
 <!doctype html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <title>${pageTitle}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <style>
-        body { background-color: #f9fafb; font-family: "Inter", "Roboto", sans-serif; min-height: 100vh; }
-        .invoice-box { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 20px; }
-        .border-dashed { border: 1px dashed #ccc; padding: 10px; border-radius: 6px; }
-        .table th, .table td { vertical-align: middle !important; }
-        .total-box { font-size: 1.1rem; font-weight: 500; }
-        .table input { min-width: 80px; }
-        .total-box, 
-.total-box span, 
-.total-box strong {
-    color: #000 !important;
+<meta charset="UTF-8">
+<title><%= orgName %> - Sales Invoice</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+<style>
+body { background-color: #f9fafb; font-family: "Inter", "Roboto", sans-serif; }
+.invoice-box { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 20px; }
+.border-dashed { border: 1px dashed #ccc; padding: 10px; border-radius: 6px; }
+.table th, .table td { vertical-align: middle !important; }
+.total-box, .total-box span, .total-box strong { color: #000 !important; }
+
+#loader {
+    display:none; position: fixed; top:0; left:0; width:100%; height:100%;
+    background: rgba(0,0,0,0.4); z-index:9999;
 }
-        
-    </style>
+#loader div {
+    position: absolute; top:50%; left:50%;
+    transform:translate(-50%, -50%);
+    padding:20px 30px; background:#fff;
+    font-size:18px; border-radius:10px;
+}
+</style>
+
 </head>
 
 <body class="bg-light py-4">
-<%-- <%@ include file="header.jsp" %> --%>
+
 <%@ include file="sidebar.jsp" %>
 
 <div class="container mt-4">
-    <div class="invoice-box">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h4 class="mb-0">${orgName}</h4>
-                <div>Date: <strong id="invoice-date"></strong></div>
-            </div>
-            <div class="text-end">
-                <h5 class="mb-0">Sales Invoice</h5>
-            </div>
-        </div>
+<div class="invoice-box">
 
-        <div class="row mb-3">
-            <div class="col-md-6">
-                <div class="border-dashed">
-                    <strong>Bill To</strong>
-                    <input class="form-control mt-2" id="cust-name" placeholder="Customer Name">
-                    <input class="form-control mt-2" id="cust-address" placeholder="Address">
-                    <input class="form-control mt-2" id="cust-phone" placeholder="Phone / GSTIN">
-                </div>
-
-                <div class="mt-3">
-                    <strong>Select Product</strong>
-                    <select id="manual-product" class="form-select form-select-sm mt-2">
-                        <option value="">--Select Product--</option>
-                        <%
-                            List<Map<String, Object>> productList = (List<Map<String, Object>>) request.getAttribute("productList");
-                            if (productList != null && !productList.isEmpty()) {
-                                for (Map<String, Object> p : productList) {
-                                    String name = (p.get("name") != null) ? p.get("name").toString().trim() : "";
-                                    String rate = (p.get("rate") != null) ? p.get("rate").toString().trim() : "0";
-                                    String uom = (p.get("uom") != null) ? p.get("uom").toString().trim() : "";
-                                    String prodId = (p.get("prodId") != null) ? p.get("prodId").toString().trim() : "0";
-                        %>
-                        <option 
-                            value="<%= name %>|<%= rate %>|<%= uom %>"
-                            data-prodid="<%= prodId %>">
-                            <%= name %> - ₹<%= rate %> / <%= uom %>
-                        </option>
-                        <%
-                                }
-                            }
-                        %>
-                    </select>
-                </div>
-            </div>
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="mb-0"><%= orgName %></h4>
+            <div>Date: <strong id="invoice-date"></strong></div>
         </div>
-
-        <div class="table-responsive">
-            <table class="table table-sm table-bordered align-middle" id="items-table">
-                <thead class="table-light">
-                    <tr>
-                        <th>#</th>
-                        <th>Product</th>
-                        <th>Unit</th>
-                        <th>Qty</th>
-                        <th>Rate (₹)</th>
-                        <th>Amount (₹)</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="items-body"></tbody>
-            </table>
-        </div>
-
-        <div class="text-end mt-3">
-            <button id="recalculate" class="btn btn-primary btn-sm">Recalculate</button>
-            <button id="send-btn" class="btn btn-success btn-sm">Send</button>
-        </div>
-			
-        <div class="mt-3 text-end total-box">
-            <div>Subtotal: ₹<span id="subtotal">0.00</span></div>
-            <div>Total: ₹<strong id="grand-total">0.00</strong></div>
+        <div class="text-end">
+            <h5 class="mb-0">Sales Invoice</h5>
         </div>
     </div>
+
+    <!-- BILL TO -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+
+            <div class="border-dashed">
+                <strong>Bill To</strong>
+                <input class="form-control mt-2" id="cust-name" placeholder="Customer Name">
+                <input class="form-control mt-2" id="cust-address" placeholder="Address">
+                <input class="form-control mt-2" id="cust-phone" placeholder="Phone / GSTIN">
+            </div>
+
+            <!-- PRODUCT SELECT -->
+            <div class="mt-3">
+                <strong>Select Product</strong>
+                <select id="manual-product" class="form-select form-select-sm mt-2">
+                    <option value="">--Select Product--</option>
+
+                    <%
+                    if (productList != null) {
+                        for (Map<String,Object> p : productList) {
+                            String name  = (p.get("name")  != null) ? p.get("name").toString() : "";
+                            String rate  = (p.get("rate")  != null) ? p.get("rate").toString() : "0";
+                            String uom   = (p.get("uom")   != null) ? p.get("uom").toString()  : "";
+                            String prodId= (p.get("prodId")!= null) ? p.get("prodId").toString(): "0";
+                            String search= (p.get("search")!= null) ? p.get("search").toString(): "";
+                    %>
+
+                    <option 
+                        value="<%= name %>|<%= rate %>|<%= uom %>"
+                        data-prodid="<%= prodId %>"
+                        data-search="<%= search %>"
+                    >
+                        <%= search %> - <%= name %> - ₹<%= rate %> / <%= uom %>
+                    </option>
+
+                    <% } } %>
+                </select>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- PRODUCT TABLE -->
+    <div class="table-responsive">
+        <table class="table table-sm table-bordered align-middle" id="items-table">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>Product</th>
+                    <th>Unit</th>
+                    <th>Qty</th>
+                    <th>Rate (₹)</th>
+                    <th>Amount (₹)</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="items-body"></tbody>
+        </table>
+    </div>
+
+    <!-- BUTTONS -->
+    <div class="text-end mt-3">
+        <button id="recalculate" class="btn btn-primary btn-sm">Recalculate</button>
+        <button id="send-btn" class="btn btn-success btn-sm">Send</button>
+    </div>
+
+    <!-- TOTAL SECTION + DISCOUNT -->
+    <div class="mt-4 text-end total-box">
+
+        <div>Subtotal: ₹<span id="subtotal">0.00</span></div>
+
+        <div class="mt-2">
+            Discount:
+            <input type="number" id="discount"
+                   class="form-control form-control-sm d-inline-block"
+                   style="width:120px; display:inline-block;"
+                   value="0">
+        </div>
+
+        <div class="mt-2">
+            Total: ₹<strong id="grand-total">0.00</strong>
+        </div>
+    </div>
+
 </div>
 
+<!-- LOADER -->
+<div id="loader">
+    <div>Please wait... Processing</div>
+</div>
+
+</div> <!-- END container -->
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
-$(document).ready(function() {
-    $('#manual-product').select2({
+$(function(){
+
+    document.getElementById("invoice-date").textContent =
+        new Date().toLocaleDateString("en-GB");
+
+    $("#manual-product").select2({
         placeholder: "--Select Product--",
+        width: "100%",
         allowClear: true,
-        width: '100%'
+        matcher: function(params, data) {
+            if (!params.term) return data;
+            let term  = params.term.toLowerCase();
+            let text  = (data.text || "").toLowerCase();
+            let sKey  = ($(data.element).data("search") || "").toLowerCase();
+            if (text.includes(term) || sKey.includes(term)) return data;
+            return null;
+        }
     });
 
-    document.getElementById('invoice-date').textContent = new Date().toLocaleDateString();
-
-    const itemsBody = document.getElementById('items-body');
-
-    // 🧮 Recalculate totals
-    function recalculate() {
-        let subtotal = 0;
-        itemsBody.querySelectorAll('tr').forEach((tr, i) => {
-            tr.querySelector('td:first-child').textContent = i + 1;
-            const qty = parseFloat(tr.querySelector('.qty').value) || 0;
-            const rate = parseFloat(tr.querySelector('.rate').value) || 0;
-            const amt = qty * rate;
-            tr.querySelector('.amount').textContent = amt.toFixed(2);
-            subtotal += amt;
-        });
-        document.getElementById('subtotal').textContent = subtotal.toFixed(2);
-        document.getElementById('grand-total').textContent = subtotal.toFixed(2);
-    }
-
-    // ➕ Add product row
+    // ======================================================
+    // PURE DOM ADD ROW FUNCTION (YOUR VERSION)
+    // ======================================================
     function addRow(Id, name, unit, qty, rate) {
-    const tr = document.createElement('tr');
-    console.log("Adding Row for Prod ID:", Id);
+        const tr = document.createElement('tr');
 
-    const tdIndex = document.createElement('td');
-    const tdDesc = document.createElement('td');
-    const tdUom = document.createElement('td');
-    const tdQty = document.createElement('td');
-    const tdRate = document.createElement('td');
-    const tdAmount = document.createElement('td');
-    const tdAction = document.createElement('td');
+        const tdIndex = document.createElement('td');
+        const tdDesc  = document.createElement('td');
+        const tdUom   = document.createElement('td');
+        const tdQty   = document.createElement('td');
+        const tdRate  = document.createElement('td');
+        const tdAmount= document.createElement('td');
+        const tdAction= document.createElement('td');
 
-    tdAmount.className = 'amount text-end';
-    tdAction.className = 'text-center';
+        tdAmount.className = 'amount text-end';
+        tdAction.className = 'text-center';
 
-    const inputDesc = Object.assign(document.createElement('input'), {
-        className: 'form-control form-control-sm desc',
-        value: name
-    });
-    const inputProdId = Object.assign(document.createElement('input'), {
-        type: 'hidden',
-        className: 'ProdId',
-        value: Id
-    });
-    const inputUom = Object.assign(document.createElement('input'), {
-        className: 'form-control form-control-sm uom',
-        value: unit
-    });
-    const inputQty = Object.assign(document.createElement('input'), {
-        type: 'number',
-        className: 'form-control form-control-sm qty',
-        value: qty
-    });
-    const inputRate = Object.assign(document.createElement('input'), {
-        type: 'number',
-        className: 'form-control form-control-sm rate',
-        value: rate
-    });
-    const btnRemove = Object.assign(document.createElement('button'), {
-        className: 'btn btn-sm btn-danger remove-row',
-        textContent: '×'
-    });
+        const inputDesc = document.createElement('input');
+        inputDesc.className = 'form-control form-control-sm desc';
+        inputDesc.value = name;
 
-    tdDesc.appendChild(inputDesc);
-    tdDesc.appendChild(inputProdId);
-    tdUom.appendChild(inputUom);
-    tdQty.appendChild(inputQty);
-    tdRate.appendChild(inputRate);
-    tdAmount.textContent = (qty * rate).toFixed(2);
-    tdAction.appendChild(btnRemove);
-    [tdIndex, tdDesc, tdUom, tdQty, tdRate, tdAmount, tdAction].forEach(td => tr.appendChild(td));
-    itemsBody.appendChild(tr);
+        const inputProdId = document.createElement('input');
+        inputProdId.type = 'hidden';
+        inputProdId.className = 'ProdId';
+        inputProdId.value = Id;
 
-    // FIX ADDED HERE — set the row index
-    tdIndex.textContent = itemsBody.children.length;
+        const inputUom = document.createElement('input');
+        inputUom.className = 'form-control form-control-sm uom';
+        inputUom.value = unit;
 
-    function updateRowAmount() {
-        const q = parseFloat(inputQty.value) || 0;
-        const r = parseFloat(inputRate.value) || 0;
-        const amt = q * r;
-        tdAmount.textContent = amt.toFixed(2);
-        recalculate();
-    }
+        const inputQty = document.createElement('input');
+        inputQty.type = 'number';
+        inputQty.className = 'form-control form-control-sm qty';
+        inputQty.value = qty;
 
-    btnRemove.addEventListener('click', () => {
-        tr.remove();
-        recalculate();
-    });
+        const inputRate = document.createElement('input');
+        inputRate.type = 'number';
+        inputRate.className = 'form-control form-control-sm rate';
+        inputRate.value = rate;
 
-    [inputQty, inputRate].forEach(inp => inp.addEventListener('input', updateRowAmount));
-    updateRowAmount();
-}
+        const btnRemove = document.createElement('button');
+        btnRemove.className = 'btn btn-sm btn-danger remove-row';
+        btnRemove.textContent = '×';
 
+        tdDesc.appendChild(inputDesc);
+        tdDesc.appendChild(inputProdId);
+        tdUom.appendChild(inputUom);
+        tdQty.appendChild(inputQty);
+        tdRate.appendChild(inputRate);
+        tdAmount.textContent = (qty * rate).toFixed(2);
+        tdAction.appendChild(btnRemove);
 
-    // 🧵 On product select
-    $('#manual-product').change(function() {
-        const val = this.value.trim();
-        if (!val) return;
+        tr.appendChild(tdIndex);
+        tr.appendChild(tdDesc);
+        tr.appendChild(tdUom);
+        tr.appendChild(tdQty);
+        tr.appendChild(tdRate);
+        tr.appendChild(tdAmount);
+        tr.appendChild(tdAction);
 
-        const [name, rateStr, unit] = val.split('|');
-        const rate = parseFloat(rateStr) || 0;
-        const selectedOption = this.options[this.selectedIndex];
-        const prodId = selectedOption?.dataset?.prodid || "0";
+        document.getElementById("items-body").appendChild(tr);
 
-        console.log('Selected:', { prodId, name, rate, unit });
+        tdIndex.textContent = document.querySelectorAll("#items-body tr").length;
 
-        if (!name) {
-            alert('Invalid product data');
-            return;
+        function updateRowAmount() {
+            const q = parseFloat(inputQty.value) || 0;
+            const r = parseFloat(inputRate.value) || 0;
+            tdAmount.textContent = (q * r).toFixed(2);
+            recalc();
         }
 
-        const rows = Array.from(itemsBody.querySelectorAll('tr'));
-        let existingRow = rows.find(row => row.querySelector('.desc')?.value.trim().toLowerCase() === name.toLowerCase());
+        btnRemove.addEventListener('click', () => {
+            tr.remove();
+            recalc();
+        });
 
-        if (existingRow) {
-            const qtyInput = existingRow.querySelector('.qty');
-            qtyInput.value = parseFloat(qtyInput.value || 0) + 1;
-            recalculate();
+        inputQty.addEventListener('input', updateRowAmount);
+        inputRate.addEventListener('input', updateRowAmount);
+
+        updateRowAmount();
+    }
+
+    // ======================================================
+    // RECALCULATE TOTALS (WORKS WITH DISCOUNT)
+    // ======================================================
+    function recalc(){
+        let subtotal = 0;
+
+        $("#items-body tr").each(function(i){
+            $(this).find("td:first").text(i+1);
+
+            let qty = parseFloat($(this).find(".qty").val()) || 0;
+            let rate= parseFloat($(this).find(".rate").val()) || 0;
+
+            let amt = qty * rate;
+            $(this).find(".amount").text(amt.toFixed(2));
+
+            subtotal += amt;
+        });
+
+        $("#subtotal").text(subtotal.toFixed(2));
+
+        let discount = parseFloat($("#discount").val()) || 0;
+
+        let total = subtotal - discount;
+        if (total < 0) total = 0;
+
+        $("#grand-total").text(total.toFixed(2));
+    }
+
+    $("#discount").on("input", recalc);
+    $("#recalculate").click(recalc);
+
+    // ======================================================
+    // PRODUCT SELECT EVENT
+    // ======================================================
+    $("#manual-product").change(function(){
+        let val = this.value;
+        if(!val) return;
+
+        let [name, rateStr, unit] = val.split("|");
+        let rate = parseFloat(rateStr) || 0;
+        let prodId = $(this).find(":selected").data("prodid") || "0";
+
+        let exist = [...document.querySelectorAll("#items-body tr")].find(row =>
+            row.querySelector(".desc").value.trim().toLowerCase() === name.toLowerCase()
+        );
+
+        if(exist){
+            let q = exist.querySelector(".qty");
+            q.value = (parseFloat(q.value) || 0) + 1;
+            recalc();
         } else {
             addRow(prodId, name, unit, 1, rate);
         }
 
-        $(this).val('').trigger('change');
+        $(this).val("").trigger("change");
     });
 
-    // 🧾 Send data
-    $('#send-btn').click(function() {
+    // ======================================================
+    // SEND TO SERVLET
+    // ======================================================
+    $("#send-btn").click(function(){
+
         const data = {
-            customer: {
+            discount: parseFloat($("#discount").val()) || 0,
+            subtotal: $("#subtotal").text(),
+            total: $("#grand-total").text(),
+            customer:{
                 name: $("#cust-name").val(),
                 address: $("#cust-address").val(),
                 phone: $("#cust-phone").val()
             },
-            items: $("#items-body tr").map(function() {
-                const $row = $(this);
-                return {
-                    prodId: $row.find(".ProdId").val(),
-                    product: $row.find(".desc").val(),
-                    unit: $row.find(".uom").val(),
-                    qty: parseFloat($row.find(".qty").val()) || 0,
-                    rate: parseFloat($row.find(".rate").val()) || 0,
-                    amount: parseFloat($row.find(".amount").text()) || 0
+            items: $("#items-body tr").map(function(){
+                const $r=$(this);
+                return{
+                    prodId:$r.find(".ProdId").val(),
+                    product:$r.find(".desc").val(),
+                    unit:$r.find(".uom").val(),
+                    qty:parseFloat($r.find(".qty").val())||0,
+                    rate:parseFloat($r.find(".rate").val())||0,
+                    amount:parseFloat($r.find(".amount").text())||0
                 };
             }).get()
         };
 
-        console.log("Sending JSON:", JSON.stringify({ salesData: data }, null, 2));
-
         $.ajax({
-            type: "POST",
-            url: "<%= request.getContextPath() %>/SalesSaveServlet",
-            data: JSON.stringify({ salesData: data }),
-            contentType: "application/json; charset=utf-8",
-            success: function(response) {
+            type:"POST",
+            url:"<%= request.getContextPath() %>/SalesSaveServlet",
+            data:JSON.stringify({salesData:data}),
+            contentType:"application/json; charset=utf-8",
 
-                console.log("Server Response:", response);
+            beforeSend:function(){ $("#loader").show(); },
 
-                if (response.pdfUrl) {
-                    // OPEN PDF IN NEW TAB
+            success:function(response){
+                if(response.pdfUrl){
                     window.open(response.pdfUrl, "_blank");
                 } else {
                     alert("PDF not generated!");
                 }
             },
-            error: function(xhr, status, error) {
-                alert("Error saving sales: " + xhr.responseText);
-                console.error(error);
-            }
+
+            error:function(xhr){
+                alert("Error: "+xhr.responseText);
+            },
+
+            complete:function(){ $("#loader").hide(); }
         });
 
     });
 
-    $('#recalculate').click(recalculate);
 });
 </script>
+
 </body>
 </html>
