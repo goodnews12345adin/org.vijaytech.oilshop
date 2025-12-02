@@ -104,10 +104,9 @@ public class SalesSaveServlet extends HttpServlet {
         String address = customer.optString("address", "");
         String phone = customer.optString("phone", "");
         
-        JSONObject salesDat = salesData.getJSONObject("salesData");
-        BigDecimal discount = new BigDecimal( salesDat.optString("discount"));
-        String subtotal = salesDat.optString("subtotal", "");
-        String total = salesDat.optString("total", "");
+        BigDecimal discount = new BigDecimal( salesData.optString("discount"));
+        String subtotal = salesData.optString("subtotal", "");
+        String total = salesData.optString("total", "");
 
         System.out.println("Customer Details:");
         System.out.println("Name: " + name);
@@ -122,6 +121,7 @@ public class SalesSaveServlet extends HttpServlet {
         TF_MBPartner bp = new TF_MBPartner(ctx, 1005586, null); // existing partner
 
         TF_MOrder ordH = new TF_MOrder(ctx, 0, null);
+//        ordH.setAD_Client_ID();
         ordH.setAD_Org_ID(1000000);
         ordH.setBPartner(bp);
         ordH.setC_DocType_ID(1000041);
@@ -162,10 +162,11 @@ public class SalesSaveServlet extends HttpServlet {
             // prodId = M_Product_ID (coming from the UI)
 //            MPriceListUOM priceList = new MPriceListUOM(ctx, prodId, null);
             TF_MProduct prod = new TF_MProduct(ctx,prodId, null);
+//            ordLine.setAD_Org_ID(i)
             ordLine.setC_Order_ID(ordH.get_ID());
             ordLine.setM_Product_ID(prod.get_ID());
             ordLine.setC_UOM_ID(prod.getC_UOM_ID());
-            ordLine.setDiscount(discount);
+            ordLine.setDiscount();
             ordLine.setQty(qty);
             ordLine.setQtyOrdered(qty);
             ordLine.setPrice(rate);
@@ -185,7 +186,7 @@ public class SalesSaveServlet extends HttpServlet {
 
         // ===================== PDF GENERATION =====================
 
-        String filename = "invoice_" + ordH.get_ID() + ".pdf";
+        String filename = "invoice_" + ordH.getDocumentNo() + ".pdf";
 
         String invoicesFolder = req.getServletContext().getRealPath("/invoices");
         if (invoicesFolder == null) {
@@ -220,9 +221,9 @@ public class SalesSaveServlet extends HttpServlet {
             outFile.getParentFile().mkdirs();
         }
 
-        // ===================================================================
-        // 1) FETCH ORDER HEADER
-        // ===================================================================
+        // --------------------------------------------------------------
+        // FETCH HEADER
+        // --------------------------------------------------------------
         String sqlHeader =
             "SELECT o.documentno, " +
             "       bp.name AS customer_name, " +
@@ -249,14 +250,13 @@ public class SalesSaveServlet extends HttpServlet {
             "LEFT JOIN c_location l ON l.c_location_id = bpl.c_location_id " +
             "JOIN ad_org org ON org.ad_org_id = o.ad_org_id " +
             "JOIN ad_orginfo oi ON oi.ad_org_id = org.ad_org_id " +
-            "LEFT JOIN c_location orgloc ON orgloc.c_location_id = org.c_location_id " +
+            "LEFT JOIN c_location orgloc ON orgloc.c_location_id = oi.c_location_id " +
             "WHERE o.c_order_id = ?";
 
         PreparedStatement ps = DB.prepareStatement(sqlHeader, null);
         ps.setInt(1, orderId);
         ResultSet rs = ps.executeQuery();
 
-        // Header variables
         String docNo="", customer="", customerGST="", customerAddr="", date="";
         String orgName="", orgAddress="", orgGST="", orgPhone="", orgEmail="";
 
@@ -276,124 +276,138 @@ public class SalesSaveServlet extends HttpServlet {
         rs.close();
         ps.close();
 
-        // ===================================================================
-        // 2) FETCH ORDER LINES
-        // ===================================================================
+        // --------------------------------------------------------------
+        // FETCH LINES (WITH DISCOUNT)
+        // --------------------------------------------------------------
         String sqlLines =
             "SELECT p.name AS item, p.hsncode, ol.qtyordered, ol.priceactual, " +
-            "       (ol.qtyordered * ol.priceactual) AS amount, " +
-            "       u.x12de355 AS uom " +
+            "       ol.discount, " +
+            "       (ol.qtyordered * ol.priceactual) AS grossamount " +
             "FROM c_orderline ol " +
             "JOIN m_product p ON p.m_product_id = ol.m_product_id " +
-            "JOIN c_uom u ON u.c_uom_id = ol.c_uom_id " +
             "WHERE ol.c_order_id = ?";
 
         PreparedStatement ps2 = DB.prepareStatement(sqlLines, null);
         ps2.setInt(1, orderId);
         ResultSet rs2 = ps2.executeQuery();
 
-        List<Map<String, Object>> lines = new ArrayList<>();
-        BigDecimal total = BigDecimal.ZERO;
+        class Line {
+            String item;
+            BigDecimal qty, rate, discount, gross, discAmt, netAmt;
+        }
+        List<Line> lines = new ArrayList<>();
+
+        BigDecimal subTotal = BigDecimal.ZERO;
+        BigDecimal totalDiscount = BigDecimal.ZERO;
+        BigDecimal grandTotal = BigDecimal.ZERO;
 
         while (rs2.next()) {
-            Map<String, Object> m = new HashMap<>();
-            m.put("item", rs2.getString("item"));
-            m.put("hsn", rs2.getString("hsncode"));
-            m.put("qty", rs2.getBigDecimal("qtyordered"));
-            m.put("rate", rs2.getBigDecimal("priceactual"));
-            m.put("amount", rs2.getBigDecimal("amount"));
-            m.put("uom", rs2.getString("uom"));
 
-            if (rs2.getBigDecimal("amount") != null)
-                total = total.add(rs2.getBigDecimal("amount"));
+            Line ln = new Line();
+            ln.item = rs2.getString("item");
+            ln.qty = rs2.getBigDecimal("qtyordered");
+            ln.rate = rs2.getBigDecimal("priceactual");
+            ln.discount = rs2.getBigDecimal("discount");
+            ln.gross = ln.qty.multiply(ln.rate);
 
-            lines.add(m);
+            // discount amount = gross * discount / 100
+            ln.discAmt = ln.discount;//ln.gross.multiply(ln.discount).divide(new BigDecimal("100"));
+            ln.netAmt = ln.gross.subtract(ln.discAmt);
+
+            subTotal = subTotal.add(ln.gross);
+            totalDiscount = totalDiscount.add(ln.discAmt);
+            grandTotal = grandTotal.add(ln.netAmt);
+
+            lines.add(ln);
         }
         rs2.close();
         ps2.close();
 
-        // ===================================================================
-        // 3) GENERATE PDF
-        // ===================================================================
-        Document doc = new Document();
+        // --------------------------------------------------------------
+        // 80mm PDF START
+        // --------------------------------------------------------------
+        Rectangle receiptSize = new Rectangle(227, 1200);
+        Document doc = new Document(receiptSize, 5, 5, 5, 5);
+
         try {
             PdfWriter.getInstance(doc, new FileOutputStream(outFile));
             doc.open();
 
-            Font header = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14);
-            Font bold = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
-            Font normal = FontFactory.getFont(FontFactory.HELVETICA, 10);
+            Font bold = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8);
+            Font normal = FontFactory.getFont(FontFactory.HELVETICA, 7);
 
-            // ===========================================================
-            //  TWO-COLUMN HEADER
-            // ===========================================================
-            PdfPTable headerTable = new PdfPTable(2);
-            headerTable.setWidthPercentage(100);
-            headerTable.setWidths(new float[]{1, 1});
+            // HEADER
+            Paragraph title = new Paragraph(orgName + "\n", bold);
+            title.setAlignment(Paragraph.ALIGN_CENTER);
+            doc.add(title);
 
-            PdfPCell left = new PdfPCell();
-            left.setBorder(Rectangle.NO_BORDER);
+            Paragraph addr = new Paragraph(orgAddress + "\n", normal);
+            addr.setAlignment(Paragraph.ALIGN_CENTER);
+            doc.add(addr);
 
-            PdfPCell right = new PdfPCell();
-            right.setBorder(Rectangle.NO_BORDER);
+            doc.add(new Paragraph("GSTIN: " + orgGST, normal));
+            doc.add(new Paragraph("Phone: " + orgPhone, normal));
+            doc.add(new Paragraph("----------------------------------------", normal));
 
-            // LEFT SIDE (Customer + Bill Info)
-            left.addElement(new Paragraph("Bill No : " + docNo, bold));
-            left.addElement(new Paragraph("Date : " + date, normal));
-            left.addElement(new Paragraph("Customer : " + customer, bold));
-            left.addElement(new Paragraph("Address : " + customerAddr, normal));
-            left.addElement(new Paragraph("GSTIN : " + customerGST, normal));
+            doc.add(new Paragraph("Bill No: " + docNo, normal));
+            doc.add(new Paragraph("Date   : " + date, normal));
+            doc.add(new Paragraph("Customer: " + customer, normal));
+            doc.add(new Paragraph(customerAddr, normal));
+            doc.add(new Paragraph("GSTIN: " + customerGST, normal));
 
-            // RIGHT SIDE (Company Info)
-            right.addElement(new Paragraph(orgName, header));
-            right.addElement(new Paragraph(orgAddress, normal));
+            doc.add(new Paragraph("----------------------------------------", normal));
 
-            if (orgGST != null) right.addElement(new Paragraph("GSTIN : " + orgGST, normal));
-            if (orgPhone != null) right.addElement(new Paragraph("Phone : " + orgPhone, normal));
-            if (orgEmail != null) right.addElement(new Paragraph("Email : " + orgEmail, normal));
-
-            headerTable.addCell(left);
-            headerTable.addCell(right);
-
-            doc.add(headerTable);
-            doc.add(new Paragraph(" "));
-
-            // ===========================================================
-            //  TABLE LINES
-            // ===========================================================
+            // --------------------------------------------------------------
+            //  ITEMS TABLE (5 COLUMNS NOW)
+            // --------------------------------------------------------------
             PdfPTable table = new PdfPTable(5);
-            table.setWidths(new float[]{4, 2, 1.3f, 1.3f, 2});
             table.setWidthPercentage(100);
+            table.setWidths(new float[]{3f, 1f, 1f, 1f, 1.5f});
 
             addHeader(table, "Item");
-            addHeader(table, "HSN");
             addHeader(table, "Qty");
             addHeader(table, "Rate");
-            addHeader(table, "Amount");
+            addHeader(table, "Disc");
+            addHeader(table, "Amt");
 
-            for (Map<String, Object> l : lines) {
-                addCell(table, String.valueOf(l.get("item")), normal);
-                addCell(table, String.valueOf(l.get("hsn")), normal);
+            for (Line ln : lines) {
 
-                addCell(table, ((BigDecimal) l.get("qty")).toPlainString(), normal);
-                addCell(table, ((BigDecimal) l.get("rate")).toPlainString(), normal);
-                addCell(table, ((BigDecimal) l.get("amount")).toPlainString(), normal);
+                addCell(table, ln.item, normal);
+                addCell(table, ln.qty.stripTrailingZeros().toPlainString(), normal);
+                addCell(table, ln.rate.toPlainString(), normal);
+                addCell(table, ln.discAmt.setScale(2, BigDecimal.ROUND_HALF_UP).toPlainString(), normal);
+                addCell(table, ln.netAmt.setScale(2, BigDecimal.ROUND_HALF_UP).toPlainString(), normal);
             }
 
             doc.add(table);
 
-            // ===========================================================
-            // TOTAL
-            // ===========================================================
-            doc.add(new Paragraph(" "));
-            doc.add(new Paragraph("Total Amount : ₹ " + total.toPlainString(), header));
+            doc.add(new Paragraph("----------------------------------------", normal));
+
+            // --------------------------------------------------------------
+            //  SUMMARY TOTALS
+            // --------------------------------------------------------------
+            doc.add(new Paragraph("Sub Total     : ₹ " + subTotal.setScale(2), normal));
+            doc.add(new Paragraph("Discount      : ₹ " + totalDiscount.setScale(2), normal));
+
+            Paragraph gTot = new Paragraph("Grand Total   : ₹ " + grandTotal.setScale(2), bold);
+            gTot.setAlignment(Paragraph.ALIGN_RIGHT);
+            doc.add(gTot);
+
+            doc.add(new Paragraph("----------------------------------------", normal));
+
+            Paragraph thanks = new Paragraph("Thank you! Visit again.", normal);
+            thanks.setAlignment(Paragraph.ALIGN_CENTER);
+            doc.add(thanks);
 
         } catch (Exception e) {
-            throw new IOException("Error generating PDF", e);
+            throw new AdempiereException("Error generating 80mm PDF", e);
+
         } finally {
             if (doc.isOpen()) doc.close();
         }
     }
+
+
 
     private static void addHeader(PdfPTable t, String text) {
         PdfPCell c = new PdfPCell(new Paragraph(text,

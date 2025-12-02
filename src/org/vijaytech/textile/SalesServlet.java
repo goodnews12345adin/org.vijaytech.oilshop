@@ -210,7 +210,18 @@ public class SalesServlet extends HttpServlet {
 	      // ===== NEW: generate PDF and send WhatsApp =====
 //	         try {
 	             // Generate PDF (returns filePath + publicUrl)
-	             String pdfInfo = GenerateTextileBillPDF.generate(ordH.get_ID(), ctx);
+	         String filename = "invoice_" + ordH.getDocumentNo() + ".pdf";
+
+	         String invoicesFolder = request.getServletContext().getRealPath("/invoices");
+	         if (invoicesFolder == null) {
+	             // fallback if running from packed WAR with no realPath
+	             invoicesFolder = System.getProperty("user.dir") + File.separator + "invoices";
+	         }
+	         Files.createDirectories(Paths.get(invoicesFolder));
+
+	         File pdfFile = new File(invoicesFolder, filename);
+	         
+	             String pdfInfo = GenerateTextileBillPDF.generate(pdfFile,ordH.get_ID(), ctx);
 
 	             // determine customer phone to send: try partner phone from order, fallback to posted phone variable
 	             String phoneToSend = phone;
