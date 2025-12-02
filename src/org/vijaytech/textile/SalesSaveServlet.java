@@ -39,6 +39,7 @@ import org.syvasoft.tallyfrontcrusher.model.TF_MBPartner;
 import org.syvasoft.tallyfrontcrusher.model.TF_MOrder;
 import org.syvasoft.tallyfrontcrusher.model.TF_MOrderLine;
 import org.syvasoft.tallyfrontcrusher.model.TF_MProduct;
+import org.vijaytech.textile.utils.GenerateTextileBillPDF;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -86,8 +87,6 @@ public class SalesSaveServlet extends HttpServlet {
         JSONObject salesData = root.getJSONObject("salesData");
 
         Properties ctx = (Properties) session.getAttribute("ctx");
-        Env.setCtx(ctx);
-
         if (ctx == null) ctx = Env.getCtx();
 
         // 🧩 Ensure mandatory context keys exist
@@ -123,7 +122,6 @@ public class SalesSaveServlet extends HttpServlet {
         TF_MBPartner bp = new TF_MBPartner(ctx, 1005586, null); // existing partner
 
         TF_MOrder ordH = new TF_MOrder(ctx, 0, null);
-//        ordH.setAD_Client_ID();
         ordH.setAD_Org_ID(1000000);
         ordH.setBPartner(bp);
         ordH.setC_DocType_ID(1000041);
@@ -164,7 +162,7 @@ public class SalesSaveServlet extends HttpServlet {
             // prodId = M_Product_ID (coming from the UI)
 //            MPriceListUOM priceList = new MPriceListUOM(ctx, prodId, null);
             TF_MProduct prod = new TF_MProduct(ctx,prodId, null);
-//            ordLine.setAD_Org_ID(i)
+//            ordLine.setAD_Org_ID();
             ordLine.setC_Order_ID(ordH.get_ID());
             ordLine.setM_Product_ID(prod.get_ID());
             ordLine.setC_UOM_ID(prod.getC_UOM_ID());
@@ -199,12 +197,14 @@ public class SalesSaveServlet extends HttpServlet {
 
         File pdfFile = new File(invoicesFolder, filename);
 
-        try {
-            generateInvoicePDF(pdfFile, ordH.get_ID());
-        } catch (IOException | SQLException e) {
-            e.printStackTrace();
-            throw new ServletException("Error generating invoice PDF", e);
-        }
+      
+        	try {
+				GenerateTextileBillPDF.generate(pdfFile, ordH.get_ID(), ctx);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+        
 
         // 4️⃣ Return JSON with PDF URL (served by InvoicePDFServlet)
         String pdfUrl = req.getContextPath() + "/InvoicePDFServlet?file=" +
@@ -217,7 +217,8 @@ public class SalesSaveServlet extends HttpServlet {
     // ---------------------------------------------------------------------
     // 🔵 PDF GENERATOR (OpenPDF)
     // ---------------------------------------------------------------------
-    private void generateInvoicePDF(File outFile, int orderId) throws IOException, SQLException {
+    @SuppressWarnings("unused")
+	private void generateInvoicePDF(File outFile, int orderId) throws IOException, SQLException {
 
         if (outFile.getParentFile() != null && !outFile.getParentFile().exists()) {
             outFile.getParentFile().mkdirs();

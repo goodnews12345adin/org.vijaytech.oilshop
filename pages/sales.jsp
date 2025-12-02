@@ -386,28 +386,25 @@ $(function(){
         };
 
         $.ajax({
-            type:"POST",
-            url:"<%= request.getContextPath() %>/SalesSaveServlet",
-            // This is the CRITICAL FIX: The entire 'data' object is the payload.
-            data:JSON.stringify(data), 
-            contentType:"application/json; charset=utf-8",
+            type: "POST",
+            url: "<%= request.getContextPath() %>/SalesServlet",
+            data: JSON.stringify({ salesData: data }),
+            contentType: "application/json; charset=utf-8",
+            success: function(response) {
 
-            beforeSend:function(){ $("#loader").show(); },
+                console.log("Server Response:", response);
 
-            success:function(response){
-                if(response.pdfUrl){
+                if (response.pdfUrl) {
+                    // OPEN PDF IN NEW TAB
                     window.open(response.pdfUrl, "_blank");
-                    // Optionally clear the form after success here
                 } else {
-                    alert("PDF not generated! Response was missing pdfUrl.");
+                    alert("PDF not generated!");
                 }
             },
-
-            error:function(xhr){
-                alert("Error: " + xhr.status + " " + xhr.statusText + "\nDetails: " + xhr.responseText);
-            },
-
-            complete:function(){ $("#loader").hide(); }
+            error: function(xhr, status, error) {
+                alert("Error saving sales: " + xhr.responseText);
+                console.error(error);
+            }
         });
 
     });
