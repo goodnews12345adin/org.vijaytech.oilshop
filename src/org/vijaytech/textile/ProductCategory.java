@@ -27,14 +27,14 @@ public class ProductCategory extends HttpServlet{
 
 	        HttpSession session = req.getSession(false);
 	        System.out.println("data income");
-	        // 🔒 SESSION CHECK
+	        // ðŸ”’ SESSION CHECK
 	        if (session == null || session.getAttribute("ctx") == null) {
 	            resp.getWriter().write("{\"error\":\"Session expired\"}");
 	            return;
 	        }
 
 	        // ============================
-	        // 1️⃣ Read JSON Body
+	        // 1ï¸�âƒ£ Read JSON Body
 	        // ============================
 	        StringBuilder sb = new StringBuilder();
 	        try (BufferedReader reader = req.getReader()) {
@@ -44,7 +44,7 @@ public class ProductCategory extends HttpServlet{
 	        }
 
 	        String jsonInput = sb.toString();
-	        System.out.println("📥 Received JSON: " + jsonInput);
+	        System.out.println("ðŸ“¥ Received JSON: " + jsonInput);
 
 	        JSONObject json = new JSONObject(jsonInput);
 
@@ -59,9 +59,11 @@ public class ProductCategory extends HttpServlet{
 	        }
 
 	        // ============================
-	        // 2️⃣ Get Context
+	        // 2ï¸�âƒ£ Get Context
 	        // ============================
 	        Properties ctx = (Properties) session.getAttribute("ctx");
+	         Env.setCtx(ctx);
+
 	        if (ctx == null)
 	            ctx = Env.getCtx();
 
@@ -75,7 +77,7 @@ public class ProductCategory extends HttpServlet{
 	            Env.setContext(ctx, "#M_Warehouse_ID", 1000113);
 
 	        // ============================
-	        // 3️⃣ SAVE PRODUCT CATEGORY
+	        // 3ï¸�âƒ£ SAVE PRODUCT CATEGORY
 	        // ============================
 	        try {
 	            TF_MProductCategory category = new TF_MProductCategory(ctx, 0, null);
@@ -84,7 +86,7 @@ public class ProductCategory extends HttpServlet{
 	            category.setValue(value);
 	            category.setDescription(description);
 
-	            category.saveEx();  // 🚀 saves to database
+	            category.saveEx();  // ðŸš€ saves to database
 
 	            JSONObject success = new JSONObject();
 	            success.put("success", true);
@@ -92,7 +94,7 @@ public class ProductCategory extends HttpServlet{
 	            success.put("M_Product_Category_ID", category.get_ID());
 
 	            resp.getWriter().write(success.toString());
-	            System.out.println("✅ Category saved successfully");
+	            System.out.println("âœ… Category saved successfully");
 
 	        } catch (Exception e) {
 	            e.printStackTrace();

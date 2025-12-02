@@ -31,6 +31,7 @@ public class PurchaseServlet extends HttpServlet {
 	    }
 
 	    Properties ctx = (Properties) session.getAttribute("ctx");
+        Env.setCtx(ctx);
 
 	    // FIX: ensure mandatory context keys (guards cross-tenant/context lost during reads)
 	    if (Env.getAD_Client_ID(ctx) == 0) Env.setContext(ctx, "#AD_Client_ID", 1000000);

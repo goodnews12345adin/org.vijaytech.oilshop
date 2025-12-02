@@ -86,6 +86,8 @@ public class SalesSaveServlet extends HttpServlet {
         JSONObject salesData = root.getJSONObject("salesData");
 
         Properties ctx = (Properties) session.getAttribute("ctx");
+        Env.setCtx(ctx);
+
         if (ctx == null) ctx = Env.getCtx();
 
         // 🧩 Ensure mandatory context keys exist

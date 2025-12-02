@@ -44,7 +44,8 @@ public class ProfitAndLossReport extends  HttpServlet{
 
 	        Properties ctx = (Properties) session.getAttribute("ctx");
 	        if (ctx == null) ctx = Env.getCtx();
-	        
+	         Env.setCtx(ctx);
+
 	        resp.setContentType("application/json");
 	        resp.getWriter().write("{\"message\":\"GET OK\"}");
 	        

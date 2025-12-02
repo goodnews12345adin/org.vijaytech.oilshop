@@ -10,7 +10,7 @@
 
   <style>
     body { font-family: Arial, sans-serif; padding:20px; background:#f4f4f4 }
-    .card { background:#fff; padding:18px; border-radius:6px; max-width:850px; margin:auto; box-shadow:0 1px 3px rgba(0,0,0,0.2) }
+    .card { background:#fff; padding:18px; border-radius:6px; max-width:100%; margin:auto; box-shadow:0 1px 3px rgba(0,0,0,0.2) }
     h2 { margin-top:0 }
     .row { margin-top:12px }
     label { font-size:13px; font-weight:bold }

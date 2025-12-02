@@ -1,7 +1,7 @@
-<!-- ===== Footer Section ===== -->
+<%-- <!-- ===== Footer Section ===== -->
 <footer class="footer mt-auto py-3 bg-white border-top shadow-sm">
   <div class="container text-center text-muted small">
-    <span>&copy;<%--  <%= java.time.Year.now() %> --%> MyApp ERP Portal. All rights reserved.</span>
+    <span>&copy; <%= java.time.Year.now() %> MyApp ERP Portal. All rights reserved.</span>
     <br>
     <span>Developed by <a href="#" class="text-decoration-none text-primary fw-semibold">Vijay Tech</a></span>
   </div>
@@ -32,3 +32,4 @@
     }
   }
 </style>
+ --%>

@@ -93,16 +93,6 @@
 </servlet-mapping>
 
 <servlet>
-    <servlet-name>SalesSaveServlet</servlet-name>
-    <servlet-class>org.vijaytech.textile.SalesSaveServlet</servlet-class>
-</servlet>
-
-<servlet-mapping>
-    <servlet-name>SalesSaveServlet</servlet-name>
-    <url-pattern>/SalesSaveServlet</url-pattern>
-</servlet-mapping>
-
-<servlet>
     <servlet-name>ProductCategory</servlet-name>
     <servlet-class>org.vijaytech.textile.ProductCategory</servlet-class>
 </servlet>
@@ -140,62 +130,12 @@
     <url-pattern>/InvoicePDFServlet</url-pattern>
 </servlet-mapping>
 
-<!-- <servlet>
-    <servlet-name>SaveRentServlet</servlet-name>
-    <servlet-class>org.syvasoft.sprmobileapp.SaveRateCardServlet.SaveRentServlet</servlet-class>
-</servlet>
-
-<servlet-mapping>
-    <servlet-name>SaveRentServlet</servlet-name>
-    <url-pattern>/SaveRentServlet</url-pattern>
-</servlet-mapping>
-
- 
- <servlet>
-    <servlet-name>QuotationSaveServlet</servlet-name>
-    <servlet-class>org.syvasoft.sprmobileapp.SaveRateCardServlet.QuotationSaveServlet</servlet-class>
-</servlet>
-<servlet-mapping>
-    <servlet-name>QuotationSaveServlet</servlet-name>
-    <url-pattern>/QuotationSaveServlet</url-pattern>
-</servlet-mapping>
- 
-  <servlet>
-    <servlet-name>Quotation</servlet-name>
-    <servlet-class>org.syvasoft.sprmobileapp.SaveRateCardServlet.Quotation</servlet-class>
-</servlet>
-<servlet-mapping>
-    <servlet-name>Quotation</servlet-name>
-    <url-pattern>/Quotation</url-pattern>
-</servlet-mapping>
- 
- 
 <servlet>
-  <servlet-name>StatusComplete</servlet-name>
-  <servlet-class>org.syvasoft.sprmobileapp.SaveRateCardServlet.StatusComplete</servlet-class>
+    <servlet-name>SalesSaveServlet</servlet-name>
+    <servlet-class>org.vijaytech.textile.SalesSaveServlet</servlet-class>
 </servlet>
-
 <servlet-mapping>
-  <servlet-name>StatusComplete</servlet-name>
-  <url-pattern>/StatusComplete</url-pattern>
+    <servlet-name>SalesSaveServlet</servlet-name>
+    <url-pattern>/SalesSaveServlet</url-pattern>
 </servlet-mapping>
-<servlet>
-  <servlet-name>WhatsAppCheckServlet</servlet-name>
-  <servlet-class>org.syvasoft.sprmobileapp.SaveRateCardServlet.WhatsAppCheckServlet</servlet-class>
-</servlet>
-
-<servlet-mapping>
-  <servlet-name>WhatsAppCheckServlet</servlet-name>
-  <url-pattern>/WhatsAppCheckServlet</url-pattern>
-</servlet-mapping>
-
-<servlet>
-  <servlet-name>TaxIdToCustomer</servlet-name>
-  <servlet-class>org.syvasoft.sprmobileapp.SaveRateCardServlet.TaxIdToCustomer</servlet-class>
-</servlet>
-
-<servlet-mapping>
-  <servlet-name>TaxIdToCustomer</servlet-name>
-  <url-pattern>/TaxIdToCustomer</url-pattern>
-</servlet-mapping> -->
 </web-app>

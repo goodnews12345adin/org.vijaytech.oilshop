@@ -105,21 +105,54 @@ function loadReport(event){
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(json)
     })
-    .then(r => r.json())
-    .then(data => renderTable(data, json.summary))
+    .then(r => {
+        if (!r.ok) {
+            throw new Error("HTTP " + r.status);
+        }
+        return r.json();
+    })
+    .then(data => {
+        console.log("Report JSON:", data);   // <--- see in browser dev tools
+        renderTable(data, json.summary);
+    })
     .catch(err => {
+        console.error(err);
         document.getElementById("reportArea").innerHTML =
-            "<div class='alert alert-danger'>Error loading report</div>";
+            "<div class='alert alert-danger'>Error loading report: " + err + "</div>";
     });
+}
+
+// -------------------------
+// Normalize data → rows[]
+// -------------------------
+function getRowsArray(data){
+    if (Array.isArray(data)) {
+        return data;
+    }
+    if (data && Array.isArray(data.rows)) {
+        return data.rows;
+    }
+    if (data && Array.isArray(data.list)) {
+        return data.list;
+    }
+    return [];
 }
 
 // -------------------------
 // Render HTML Table
 // -------------------------
 function renderTable(data, summaryMode){
-    if (data.error){
+    if (data && data.error){
         document.getElementById("reportArea").innerHTML =
             `<div class='alert alert-danger'>${data.error}</div>`;
+        return;
+    }
+
+    const rows = getRowsArray(data);
+
+    if (!rows || rows.length === 0){
+        document.getElementById("reportArea").innerHTML =
+            "<div class='alert alert-warning'>No records found for selected criteria.</div>";
         return;
     }
 
@@ -142,21 +175,30 @@ function renderTable(data, summaryMode){
     <tbody>
     `;
 
-    data.forEach(row => {
+    rows.forEach(row => {
+        // support both camelCase & PascalCase JSON keys
+        const date      = row.Date       || row.date       || "";
+        const docNo     = row.DocumentNo || row.documentNo || row.DocNo || row.docNo || "";
+        const bpName    = row.BPartner   || row.bpartner   || row.bpName || row.BPName || "";
+        const product   = row.Product    || row.product    || "";
+        const qty       = row.Qty        ?? row.qty        ?? "";
+        const price     = row.Price      ?? row.price      ?? "";
+        const amount    = row.Amount     ?? row.amount     ?? "";
+
         html += "<tr>";
-        html += `<td>${row.Date}</td>`;
+        html += `<td>${date}</td>`;
 
         html += summaryMode === "N"
-                ? `<td>${row.DocumentNo}</td>`
+                ? `<td>${docNo}</td>`
                 : `<td></td>`;
 
         html += `
-            <td>${row.BPartner}</td>
-            <td>${row.Product}</td>
-            <td class='text-end'>${row.Qty}</td>
-            <td class='text-end'>${row.Price}</td>
-            <td class='text-end'>${row.Amount}</td>
-            <td><span class='pdf-icon' onclick="openPDF('${row.DocumentNo}')">📄</span></td>
+            <td>${bpName}</td>
+            <td>${product}</td>
+            <td class='text-end'>${qty}</td>
+            <td class='text-end'>${price}</td>
+            <td class='text-end'>${amount}</td>
+            <td><span class='pdf-icon' onclick="openPDF('${docNo}')">📄</span></td>
         `;
         html += "</tr>";
     });
@@ -186,7 +228,7 @@ function openPDF(documentNo){
     }
 
     window.open(
-        "<%=request.getContextPath()%>/SingleInvoicePDF?docNo=" + documentNo,
+        "<%=request.getContextPath()%>/SingleInvoicePDF?docNo=" + encodeURIComponent(documentNo),
         "_blank"
     );
 }

@@ -1,7 +1,5 @@
 package org.vijaytech.textile;
 
-
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -41,7 +39,6 @@ import org.syvasoft.tallyfrontcrusher.model.TF_MProduct;
 import org.vijaytech.textile.utils.GenerateTextileBillPDF;
 import org.vijaytech.textile.utils.WhatsAppSender;
 
-
 public class SalesServlet extends HttpServlet {
 
 	 @Override
@@ -58,6 +55,7 @@ public class SalesServlet extends HttpServlet {
 
 	        try {
 	            Properties ctx = (Properties) session.getAttribute("ctx");
+	            Env.setCtx(ctx);
 
 	            // 🔹 Get org/client info
 	            int AD_Org_ID = Integer.parseInt(session.getAttribute("AD_Org_ID").toString());
@@ -201,7 +199,6 @@ public class SalesServlet extends HttpServlet {
 	      // ✅ Properly Complete the Document
 	         ordH.setDocAction(MOrder.DOCACTION_Complete);
 	         
-
 	         if (!ordH.processIt(MOrder.DOCACTION_Complete)) {
 	             throw new AdempiereException("❌ Could not complete order: " + ordH.getProcessMsg());
 	         }
@@ -221,46 +218,39 @@ public class SalesServlet extends HttpServlet {
 
 	         File pdfFile = new File(invoicesFolder, filename);
 	         
-	             String pdfInfo = GenerateTextileBillPDF.generate(pdfFile,ordH.get_ID(), ctx);
+	         String pdfInfo = GenerateTextileBillPDF.generate(pdfFile,ordH.get_ID(), ctx);
 
-	             // determine customer phone to send: try partner phone from order, fallback to posted phone variable
-	             String phoneToSend = phone;
-	             try {
-	                 if (ordH.getC_BPartner_ID() > 0) {
-	                     org.syvasoft.tallyfrontcrusher.model.TF_MBPartner bpObj = new org.syvasoft.tallyfrontcrusher.model.TF_MBPartner(ctx, ordH.getC_BPartner_ID(), null);
-	                     String bpPhone = bpObj.getPhone();
-	                     if (bpPhone != null && bpPhone.trim().length() > 0) phoneToSend = bpPhone;
-	                 }
-	             } catch (Exception e) {
-	                 // ignore, fallback to posted phone
+	         // determine customer phone to send: try partner phone from order, fallback to posted phone variable
+	         String phoneToSend = phone;
+	         try {
+	             if (ordH.getC_BPartner_ID() > 0) {
+	                 org.syvasoft.tallyfrontcrusher.model.TF_MBPartner bpObj = new org.syvasoft.tallyfrontcrusher.model.TF_MBPartner(ctx, ordH.getC_BPartner_ID(), null);
+	                 String bpPhone = bpObj.getPhone();
+	                 if (bpPhone != null && bpPhone.trim().length() > 0) phoneToSend = bpPhone;
 	             }
+	         } catch (Exception e) {
+	             // ignore, fallback to posted phone
+	         }
 
-	             // normalize phone: remove spaces, plus signs
-	             if (phoneToSend != null) phoneToSend = phoneToSend.replaceAll("[\\s\\+\\-\\(\\)]","");
+	         // normalize phone: remove spaces, plus signs
+	         if (phoneToSend != null) phoneToSend = phoneToSend.replaceAll("[\\s\\+\\-\\(\\)]","");
 
-	             // caption for the document
-	             String caption = "Invoice #" + (ordH.getDocumentNo() != null ? ordH.getDocumentNo() : ordH.get_ID());
+	         // caption for the document
+	         String caption = "Invoice #" + (ordH.getDocumentNo() != null ? ordH.getDocumentNo() : ordH.get_ID());
 
-	             // Send via WhatsApp Cloud API
-	             try {
-	                 WhatsAppSender.sendDocument(phoneToSend, pdfInfo, caption);
-	             } catch (Exception waex) {
-	                 // log error but do not fail the entire request
-	                 waex.printStackTrace();
-	             }
+	         // Send via SmartGrowth WhatsApp Campaign API (wrapped inside WhatsAppSender.sendDocument)
+	         try {
+	             WhatsAppSender.sendDocument(phoneToSend, pdfInfo, caption);
+	         } catch (Exception waex) {
+	             // log error but do not fail the entire request
+	             waex.printStackTrace();
+	         }
 	        	 
-	        	 
-	        
 	         response.getWriter().write("{\"status\":\"success\"}");
 	     } catch (Exception e) {
-	       
 	            e.printStackTrace();
 	            response.setStatus(500);
 	            response.getWriter().write("{\"error\":\"" + e.getMessage().replace("\"","'") + "\"}");
 	        }
 	 }
 }
-	 
-
-
-

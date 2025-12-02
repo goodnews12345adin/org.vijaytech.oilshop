@@ -4,7 +4,6 @@
 <head>
 <title>Purchase Entry</title>
 
-<!-- ✅ CSS & JS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"/>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -12,10 +11,13 @@
 
 <style>
   body { background-color: #f8f9fa; }
-  .main-content { margin-left: 220px; padding: 20px; }
+  .main-content { margin-left: 0; padding: 20px; }
   h4 { font-weight: 600; margin-bottom: 20px; }
-  table th, table td { vertical-align: middle; }
+  /* Ensure table elements are correctly aligned */
+  .table th, .table td { vertical-align: middle; }
+  /* Fix Select2 width issue inside tables */
   .select2-container { width: 100% !important; }
+  .table-responsive .select2-container { min-width: 150px; } 
 </style>
 </head>
 
@@ -27,7 +29,6 @@
     <h4>Purchase Entry</h4>
 
     <form id="purchase-form" class="card p-3 shadow-sm bg-white">
-      <!-- ✅ Supplier -->
       <div class="row mb-3">
         <div class="col-md-4">
           <label class="form-label">Supplier</label>
@@ -47,7 +48,6 @@
         </div>
       </div>
 
-      <!-- ✅ Purchase Items Table -->
       <div class="table-responsive">
         <table class="table table-bordered table-sm align-middle" id="purchase-items">
           <thead class="table-light">
@@ -112,12 +112,13 @@ $(document).ready(function() {
     const $row = $(`
       <tr>
         <td>
-          <select class="form-select form-select-sm prod-id"></select>
-          <input type="hidden" class="uom-id" name="uomid" value="">
-          <input type="hidden" class="uom" name="uom" value="">
+          <select class="form-select form-select-sm prod-id" style="width: 100%;"></select>
+          <input type="hidden" class="prod-name" value="">
+          <input type="hidden" class="uom-id" value="">
+          <input type="hidden" class="uom" value="">
         </td>
-        <td><input type="number" min="1" class="form-control form-control-sm qty" value="1" name="qty"></td>
-        <td><input type="number" step="0.01" class="form-control form-control-sm rate" value="0" name="rate"></td>
+        <td><input type="number" min="1" class="form-control form-control-sm qty" value="1"></td>
+        <td><input type="number" step="0.01" class="form-control form-control-sm rate" value="0"></td>
         <td class="amount text-end">0.00</td>
         <td><button type="button" class="btn btn-outline-danger btn-sm remove">X</button></td>
       </tr>
@@ -140,9 +141,11 @@ $(document).ready(function() {
   $(document).on("change", ".prod-id", function() {
     const $row = $(this).closest("tr");
     const prodId = $(this).val();
+    const prodName = $(this).find('option:selected').text();
 
     if (!prodId) {
       $row.find(".rate").val(0);
+      $row.find(".prod-name").val("");
       $row.find(".uom-id").val("");
       $row.find(".uom").val("");
       $row.find(".amount").text("0.00");
@@ -152,6 +155,7 @@ $(document).ready(function() {
 
     const product = products.find(p => p.id == prodId);
     if (product) {
+      $row.find(".prod-name").val(prodName); // Store product name
       $row.find(".rate").val(product.rate || 0);
       $row.find(".uom").val(product.uom || "");
       $row.find(".uom-id").val(product.uomId || "");
@@ -184,7 +188,8 @@ $(document).ready(function() {
 
   // ✅ Remove row
   $(document).on("click", ".remove", function() {
-    $(this).closest("tr").find(".prod-id").select2('destroy');
+    // Correctly destroy Select2 instance before removing the element
+    $(this).closest("tr").find(".prod-id").select2('destroy'); 
     $(this).closest("tr").remove();
     updateTotal();
   });
@@ -202,6 +207,7 @@ $(document).ready(function() {
 
         return {
           prodId: prodId,
+          product: $r.find(".prod-name").val(), // Added product name
           uom: $r.find(".uom").val(),
           uomId: $r.find(".uom-id").val(),
           qty: parseFloat($r.find(".qty").val()) || 0,
@@ -213,22 +219,36 @@ $(document).ready(function() {
 
     if (!data.supplierId) return alert("⚠️ Please select a supplier.");
     if (data.items.length === 0) return alert("⚠️ Please add at least one item.");
+    
+    // Check if any quantity or rate is zero
+    const invalidItem = data.items.find(item => item.qty <= 0 || item.rate <= 0);
+    if (invalidItem) return alert("⚠️ Quantity and Rate must be greater than zero for all items.");
 
     console.log("Submitting Purchase Data:", data);
+
+    // Encapsulate the final data object for the servlet
+    const finalPayload = { 
+        purchaseData: data 
+    };
 
     $.ajax({
       url: "<%= request.getContextPath() %>/PurchaseServlet",
       type: "POST",
-      data: JSON.stringify({ purchaseData: data }),
+      data: JSON.stringify(finalPayload),
       contentType: "application/json; charset=utf-8",
       success: function(res) {
         alert("✅ Purchase saved successfully!");
+        // Clear form after successful submission
         $("#items-body").empty();
         $("#supplier").val('').trigger('change');
         updateTotal();
+        
+        // Optional: Reload the page or redirect if res contains a URL/DocNo
       },
       error: function(xhr) {
-        alert("❌ Error saving purchase: " + xhr.responseText);
+        // Use responseText for detailed server error
+        const errorMsg = xhr.responseText || "Unknown error";
+        alert("❌ Error saving purchase: " + errorMsg);
       }
     });
   });

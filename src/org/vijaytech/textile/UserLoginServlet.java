@@ -20,6 +20,7 @@ public class UserLoginServlet extends HttpServlet {
     private Properties setiDempiereContext(HttpServletRequest request) {
         HttpSession session = request.getSession(true);  // Create new session if missing
         Properties ctx = new Properties();               // Avoid sharing Env.getCtx()
+        Env.setCtx(ctx);
 
         int clientID = MSysConfig.getIntValue("CLIENT_ID", 1000000);
         int userID   = 0;   // Hardcoded fallback

@@ -5,34 +5,35 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 
 <%
-HttpSession session1 = request.getSession(false);
-Properties ctx = null;
+    // --- JSP Scriptlet Block for Session and Data Retrieval ---
+    HttpSession session1 = request.getSession(false);
+    Properties ctx = null;
 
-if (session1 != null) {
-    ctx = (Properties) session1.getAttribute("ctx");
-}
+    if (session1 != null) {
+        ctx = (Properties) session1.getAttribute("ctx");
+    }
 
-if (ctx == null) {
-    response.sendRedirect("userlogin.jsp?error=session_expired");
-    return;
-}
+    if (ctx == null) {
+        response.sendRedirect("userlogin.jsp?error=session_expired");
+        return;
+    }
 
-String role = (String) session1.getAttribute("userRole");
-if (role == null) {
-    role = "user";
-    session1.setAttribute("userRole", role);
-}
+    String role = (String) session1.getAttribute("userRole");
+    if (role == null) {
+        role = "user";
+        session1.setAttribute("userRole", role);
+    }
 
-List<Organization> orgList = (List<Organization>) session.getAttribute("orgList");
-Integer AD_Org_ID = (Integer) session.getAttribute("AD_Org_ID");
+    // Unused: List<Organization> orgList = (List<Organization>) session.getAttribute("orgList");
+    // Unused: Integer AD_Org_ID = (Integer) session.getAttribute("AD_Org_ID");
 
-// ORG NAME FROM SESSION
-String orgName = (String) session.getAttribute("orgName");
-if (orgName == null) orgName = "";
+    // ORG NAME FROM SESSION
+    String orgName = (String) session1.getAttribute("orgName");
+    if (orgName == null) orgName = "";
 
-// PRODUCT LIST
-List<Map<String, Object>> productList =
-       (List<Map<String, Object>>) request.getAttribute("productList");
+    // PRODUCT LIST
+    List<Map<String, Object>> productList =
+           (List<Map<String, Object>>) request.getAttribute("productList");
 %>
 
 <!doctype html>
@@ -47,11 +48,17 @@ List<Map<String, Object>> productList =
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
 <style>
+/* --- Custom Styles --- */
 body { background-color: #f9fafb; font-family: "Inter", "Roboto", sans-serif; }
 .invoice-box { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 20px; }
 .border-dashed { border: 1px dashed #ccc; padding: 10px; border-radius: 6px; }
 .table th, .table td { vertical-align: middle !important; }
 .total-box, .total-box span, .total-box strong { color: #000 !important; }
+
+/* FIX: ADDED CUSTOM CSS FOR SELECT2 DROPDOWN WIDTH */
+.select2-dropdown-full-width {
+    max-width: 500px !important;
+}
 
 #loader {
     display:none; position: fixed; top:0; left:0; width:100%; height:100%;
@@ -74,7 +81,6 @@ body { background-color: #f9fafb; font-family: "Inter", "Roboto", sans-serif; }
 <div class="container mt-4">
 <div class="invoice-box">
 
-    <!-- HEADER -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h4 class="mb-0"><%= orgName %></h4>
@@ -85,7 +91,6 @@ body { background-color: #f9fafb; font-family: "Inter", "Roboto", sans-serif; }
         </div>
     </div>
 
-    <!-- BILL TO -->
     <div class="row mb-3">
         <div class="col-md-6">
 
@@ -96,7 +101,6 @@ body { background-color: #f9fafb; font-family: "Inter", "Roboto", sans-serif; }
                 <input class="form-control mt-2" id="cust-phone" placeholder="Phone / GSTIN">
             </div>
 
-            <!-- PRODUCT SELECT -->
             <div class="mt-3">
                 <strong>Select Product</strong>
                 <select id="manual-product" class="form-select form-select-sm mt-2">
@@ -111,7 +115,6 @@ body { background-color: #f9fafb; font-family: "Inter", "Roboto", sans-serif; }
                             String prodId= (p.get("prodId")!= null) ? p.get("prodId").toString(): "0";
                             String search= (p.get("search")!= null) ? p.get("search").toString(): "";
                     %>
-
                     <option 
                         value="<%= name %>|<%= rate %>|<%= uom %>"
                         data-prodid="<%= prodId %>"
@@ -119,7 +122,6 @@ body { background-color: #f9fafb; font-family: "Inter", "Roboto", sans-serif; }
                     >
                         <%= search %> - <%= name %> - ₹<%= rate %> / <%= uom %>
                     </option>
-
                     <% } } %>
                 </select>
             </div>
@@ -127,7 +129,6 @@ body { background-color: #f9fafb; font-family: "Inter", "Roboto", sans-serif; }
         </div>
     </div>
 
-    <!-- PRODUCT TABLE -->
     <div class="table-responsive">
         <table class="table table-sm table-bordered align-middle" id="items-table">
             <thead class="table-light">
@@ -145,13 +146,11 @@ body { background-color: #f9fafb; font-family: "Inter", "Roboto", sans-serif; }
         </table>
     </div>
 
-    <!-- BUTTONS -->
     <div class="text-end mt-3">
         <button id="recalculate" class="btn btn-primary btn-sm">Recalculate</button>
         <button id="send-btn" class="btn btn-success btn-sm">Send</button>
     </div>
 
-    <!-- TOTAL SECTION + DISCOUNT -->
     <div class="mt-4 text-end total-box">
 
         <div>Subtotal: ₹<span id="subtotal">0.00</span></div>
@@ -171,26 +170,27 @@ body { background-color: #f9fafb; font-family: "Inter", "Roboto", sans-serif; }
 
 </div>
 
-<!-- LOADER -->
 <div id="loader">
     <div>Please wait... Processing</div>
 </div>
 
-</div> <!-- END container -->
+</div> 
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
 $(function(){
+    
+    // --- Initialization ---
+    document.getElementById("invoice-date").textContent = new Date().toLocaleDateString("en-GB");
 
-    document.getElementById("invoice-date").textContent =
-        new Date().toLocaleDateString("en-GB");
-
+    // Initialize Select2 with Custom Search Matcher
     $("#manual-product").select2({
         placeholder: "--Select Product--",
         width: "100%",
         allowClear: true,
+        dropdownCssClass: "select2-dropdown-full-width",
         matcher: function(params, data) {
             if (!params.term) return data;
             let term  = params.term.toLowerCase();
@@ -202,11 +202,16 @@ $(function(){
     });
 
     // ======================================================
-    // PURE DOM ADD ROW FUNCTION (YOUR VERSION)
+    // CORE FUNCTIONS
     // ======================================================
+
+    /**
+     * Adds a new item row to the sales table.
+     */
     function addRow(Id, name, unit, qty, rate) {
         const tr = document.createElement('tr');
 
+        // Create cells
         const tdIndex = document.createElement('td');
         const tdDesc  = document.createElement('td');
         const tdUom   = document.createElement('td');
@@ -218,6 +223,7 @@ $(function(){
         tdAmount.className = 'amount text-end';
         tdAction.className = 'text-center';
 
+        // Create inputs for data fields
         const inputDesc = document.createElement('input');
         inputDesc.className = 'form-control form-control-sm desc';
         inputDesc.value = name;
@@ -245,14 +251,15 @@ $(function(){
         btnRemove.className = 'btn btn-sm btn-danger remove-row';
         btnRemove.textContent = '×';
 
+        // Append inputs to cells
         tdDesc.appendChild(inputDesc);
         tdDesc.appendChild(inputProdId);
         tdUom.appendChild(inputUom);
         tdQty.appendChild(inputQty);
         tdRate.appendChild(inputRate);
-        tdAmount.textContent = (qty * rate).toFixed(2);
         tdAction.appendChild(btnRemove);
 
+        // Append cells to row
         tr.appendChild(tdIndex);
         tr.appendChild(tdDesc);
         tr.appendChild(tdUom);
@@ -265,6 +272,7 @@ $(function(){
 
         tdIndex.textContent = document.querySelectorAll("#items-body tr").length;
 
+        // Event listener functions
         function updateRowAmount() {
             const q = parseFloat(inputQty.value) || 0;
             const r = parseFloat(inputRate.value) || 0;
@@ -280,16 +288,18 @@ $(function(){
         inputQty.addEventListener('input', updateRowAmount);
         inputRate.addEventListener('input', updateRowAmount);
 
+        // Initial calculation
         updateRowAmount();
     }
 
-    // ======================================================
-    // RECALCULATE TOTALS (WORKS WITH DISCOUNT)
-    // ======================================================
+    /**
+     * Recalculates all totals (Subtotal, Discount, Grand Total) and updates row indices.
+     */
     function recalc(){
         let subtotal = 0;
 
         $("#items-body tr").each(function(i){
+            // Update row index number
             $(this).find("td:first").text(i+1);
 
             let qty = parseFloat($(this).find(".qty").val()) || 0;
@@ -311,12 +321,16 @@ $(function(){
         $("#grand-total").text(total.toFixed(2));
     }
 
+    // ======================================================
+    // EVENT HANDLERS
+    // ======================================================
+
     $("#discount").on("input", recalc);
     $("#recalculate").click(recalc);
 
-    // ======================================================
-    // PRODUCT SELECT EVENT
-    // ======================================================
+    /**
+     * Handles product selection from the dropdown.
+     */
     $("#manual-product").change(function(){
         let val = this.value;
         if(!val) return;
@@ -325,24 +339,28 @@ $(function(){
         let rate = parseFloat(rateStr) || 0;
         let prodId = $(this).find(":selected").data("prodid") || "0";
 
+        // Check if the product already exists in the table
         let exist = [...document.querySelectorAll("#items-body tr")].find(row =>
             row.querySelector(".desc").value.trim().toLowerCase() === name.toLowerCase()
         );
 
         if(exist){
+            // If exists, increment quantity
             let q = exist.querySelector(".qty");
             q.value = (parseFloat(q.value) || 0) + 1;
             recalc();
         } else {
+            // If new, add a new row
             addRow(prodId, name, unit, 1, rate);
         }
 
+        // Reset dropdown selection
         $(this).val("").trigger("change");
     });
 
-    // ======================================================
-    // SEND TO SERVLET
-    // ======================================================
+    /**
+     * Sends the invoice data via AJAX to the SalesSaveServlet.
+     */
     $("#send-btn").click(function(){
 
         const data = {
@@ -370,7 +388,8 @@ $(function(){
         $.ajax({
             type:"POST",
             url:"<%= request.getContextPath() %>/SalesSaveServlet",
-            data:JSON.stringify({salesData:data}),
+            // This is the CRITICAL FIX: The entire 'data' object is the payload.
+            data:JSON.stringify(data), 
             contentType:"application/json; charset=utf-8",
 
             beforeSend:function(){ $("#loader").show(); },
@@ -378,13 +397,14 @@ $(function(){
             success:function(response){
                 if(response.pdfUrl){
                     window.open(response.pdfUrl, "_blank");
+                    // Optionally clear the form after success here
                 } else {
-                    alert("PDF not generated!");
+                    alert("PDF not generated! Response was missing pdfUrl.");
                 }
             },
 
             error:function(xhr){
-                alert("Error: "+xhr.responseText);
+                alert("Error: " + xhr.status + " " + xhr.statusText + "\nDetails: " + xhr.responseText);
             },
 
             complete:function(){ $("#loader").hide(); }

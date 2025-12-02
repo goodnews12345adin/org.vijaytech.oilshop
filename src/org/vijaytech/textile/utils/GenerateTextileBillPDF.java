@@ -2,245 +2,232 @@ package org.vijaytech.textile.utils;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Properties;
+import java.awt.Color; // ✅ Use java.awt.Color
 
-import org.adempiere.exceptions.AdempiereException;
 import org.compiere.util.DB;
-import org.json.JSONArray;
 
 import com.lowagie.text.Document;
+import com.lowagie.text.Element;
 import com.lowagie.text.Font;
 import com.lowagie.text.FontFactory;
+import com.lowagie.text.Image;
+import com.lowagie.text.PageSize;
 import com.lowagie.text.Paragraph;
-import com.lowagie.text.Rectangle;
+import com.lowagie.text.Phrase;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 
 public class GenerateTextileBillPDF {
 
-	 public static String generate(File pdfFile, int orderId, Properties ctx) throws Exception {
+	// Color theme based on your logo
+	private static final Color COLOR_PRIMARY = new Color(251, 176, 52); // Yellow-Orange
+	private static final Color COLOR_ACCENT = new Color(194, 24, 91); // Pink Magenta
+	private static final Color COLOR_LIGHT = new Color(255, 235, 215);
 
-	        // --- PDF STORAGE LOCATION ---
-//	        String base = System.getProperty("user.dir") + "/pdf-bills/";
-//	        File dir = new File(base);
-//	        if (!dir.exists()) dir.mkdirs();
+	// ✅ Removed invalid generic <COLOR_ACCENT>
+	public static String generate(File pdfFile, int orderId, Properties ctx) throws Exception {
 
-//	        String file = base + "" + orderId + ".pdf";
+		if (pdfFile.getParentFile() != null && !pdfFile.getParentFile().exists()) {
+			pdfFile.getParentFile().mkdirs();
+		}
 
-	            if (pdfFile.getParentFile() != null && !pdfFile.getParentFile().exists()) {
-	            	pdfFile.getParentFile().mkdirs();
-	            }
+		// FETCH BILL HEADER
+		String sql = "SELECT o.documentno, o.dateordered, " + "bp.name, bp.phone, "
+				+ "COALESCE(l.address1,'') AS cust_addr, " + "org.name AS org_name, "
+				+ "oi.taxid AS gst, oi.phone AS org_phone, " + "COALESCE(loc.address1,'') AS org_addr "
+				+ "FROM c_order o " + "JOIN c_bpartner bp ON bp.c_bpartner_id = o.c_bpartner_id "
+				+ "LEFT JOIN c_bpartner_location bpl ON (bpl.c_bpartner_id = bp.c_bpartner_id AND bpl.isbillto = 'Y') "
+				+ "LEFT JOIN c_location l ON l.c_location_id = bpl.c_location_id "
+				+ "JOIN ad_org org ON org.ad_org_id = o.ad_org_id "
+				+ "JOIN ad_orginfo oi ON oi.ad_org_id = org.ad_org_id "
+				+ "LEFT JOIN c_location loc ON loc.c_location_id = oi.c_location_id " + "WHERE o.c_order_id = ?";
 
-	            // --------------------------------------------------------------
-	            // FETCH HEADER
-	            // --------------------------------------------------------------
-	            String sqlHeader =
-	                "SELECT o.documentno, " +
-	                "       bp.name AS customer_name, " +
-	                "       bp.taxid AS customer_gstin, " +
-	                "       COALESCE(l.address1,'') || " +
-	                "       CASE WHEN l.address2 IS NOT NULL THEN ', ' || l.address2 ELSE '' END || " +
-	                "       CASE WHEN l.city IS NOT NULL THEN ', ' || l.city ELSE '' END || " +
-	                "       CASE WHEN l.postal IS NOT NULL THEN '-' || l.postal ELSE '' END AS customer_address, " +
-	                "       o.dateordered, " +
+		PreparedStatement ps = DB.prepareStatement(sql, null);
+		ps.setInt(1, orderId);
+		ResultSet rs = ps.executeQuery();
 
-	                "       org.name AS org_name, " +
-	                "       COALESCE(orgloc.address1,'') || " +
-	                "       CASE WHEN orgloc.address2 IS NOT NULL THEN ', ' || orgloc.address2 ELSE '' END || " +
-	                "       CASE WHEN orgloc.city IS NOT NULL THEN ', ' || orgloc.city ELSE '' END || " +
-	                "       CASE WHEN orgloc.postal IS NOT NULL THEN '-' || orgloc.postal ELSE '' END AS org_address, " +
+		String billNo = "", billDate = "", custName = "", custPhone = "", custAddr = "";
+		String orgName = "", orgGST = "", orgPhone = "", orgAddr = "";
 
-	                "       oi.taxid AS org_gstin, " +
-	                "       oi.phone AS org_phone, " +
-	                "       oi.email AS org_email " +
+		if (rs.next()) {
+			billNo = rs.getString("documentno");
+			Timestamp ts = rs.getTimestamp("dateordered");
+			billDate = ts != null ? ts.toString() : "";
+			custName = rs.getString("name");
+			custPhone = rs.getString("phone");
+			custAddr = rs.getString("cust_addr");
+			orgName = rs.getString("org_name");
+			orgGST = rs.getString("gst");
+			orgPhone = rs.getString("org_phone");
+			orgAddr = rs.getString("org_addr");
+		}
+		rs.close();
+		ps.close();
 
-	                "FROM c_order o " +
-	                "JOIN c_bpartner bp ON bp.c_bpartner_id = o.c_bpartner_id " +
-	                "LEFT JOIN c_bpartner_location bpl ON (bpl.c_bpartner_id = bp.c_bpartner_id AND bpl.isbillto = 'Y') " +
-	                "LEFT JOIN c_location l ON l.c_location_id = bpl.c_location_id " +
-	                "JOIN ad_org org ON org.ad_org_id = o.ad_org_id " +
-	                "JOIN ad_orginfo oi ON oi.ad_org_id = org.ad_org_id " +
-	                "LEFT JOIN c_location orgloc ON orgloc.c_location_id = oi.c_location_id " +
-	                "WHERE o.c_order_id = ?";
+		// FETCH ITEMS
+		String sql2 = "SELECT p.name, p.value, p.hsncode, " + "ol.qtyordered, ol.priceactual " + "FROM c_orderline ol "
+				+ "JOIN m_product p ON p.m_product_id = ol.m_product_id " + "WHERE ol.c_order_id = ?";
 
-	            PreparedStatement ps = DB.prepareStatement(sqlHeader, null);
-	            ps.setInt(1, orderId);
-	            ResultSet rs = ps.executeQuery();
+		PreparedStatement ps2 = DB.prepareStatement(sql2, null);
+		ps2.setInt(1, orderId);
+		ResultSet rs2 = ps2.executeQuery();
 
-	            String docNo="", customer="", customerGST="", customerAddr="", date="";
-	            String orgName="", orgAddress="", orgGST="", orgPhone="", orgEmail="";
+		class Item {
+			String name, code, hsn;
+			BigDecimal qty, rate, amt, gst;
+		}
+		List<Item> items = new ArrayList<>();
+		BigDecimal total = BigDecimal.ZERO;
+		BigDecimal gstTotal = BigDecimal.ZERO;
 
-	            if (rs.next()) {
-	                docNo = rs.getString("documentno");
-	                customer = rs.getString("customer_name");
-	                customerGST = rs.getString("customer_gstin");
-	                customerAddr = rs.getString("customer_address");
-	                date = String.valueOf(rs.getTimestamp("dateordered"));
+		while (rs2.next()) {
+			Item it = new Item();
+			it.name = rs2.getString(1);
+			it.code = rs2.getString(2);
+			it.hsn = rs2.getString(3);
+			it.qty = rs2.getBigDecimal(4);
+			it.rate = rs2.getBigDecimal(5);
 
-	                orgName = rs.getString("org_name");
-	                orgAddress = rs.getString("org_address");
-	                orgGST = rs.getString("org_gstin");
-	                orgPhone = rs.getString("org_phone");
-	                orgEmail = rs.getString("org_email");
-	            }
-	            rs.close();
-	            ps.close();
+			if (it.qty == null)
+				it.qty = BigDecimal.ZERO;
+			if (it.rate == null)
+				it.rate = BigDecimal.ZERO;
 
-	            // --------------------------------------------------------------
-	            // FETCH LINES (WITH DISCOUNT)
-	            // --------------------------------------------------------------
-	            String sqlLines =
-	                "SELECT p.name AS item, p.hsncode, ol.qtyordered, ol.priceactual, " +
-	                "       ol.discount, " +
-	                "       (ol.qtyordered * ol.priceactual) AS grossamount " +
-	                "FROM c_orderline ol " +
-	                "JOIN m_product p ON p.m_product_id = ol.m_product_id " +
-	                "WHERE ol.c_order_id = ?";
+			it.amt = it.qty.multiply(it.rate);
+			it.gst = it.amt.multiply(new BigDecimal("0.05")); // 5% GST textile
 
-	            PreparedStatement ps2 = DB.prepareStatement(sqlLines, null);
-	            ps2.setInt(1, orderId);
-	            ResultSet rs2 = ps2.executeQuery();
+			total = total.add(it.amt);
+			gstTotal = gstTotal.add(it.gst);
 
-	            class Line {
-	                String item;
-	                BigDecimal qty, rate, discount, gross, discAmt, netAmt;
-	            }
-	            List<Line> lines = new ArrayList<>();
+			items.add(it);
+		}
+		rs2.close();
+		ps2.close();
 
-	            BigDecimal subTotal = BigDecimal.ZERO;
-	            BigDecimal totalDiscount = BigDecimal.ZERO;
-	            BigDecimal grandTotal = BigDecimal.ZERO;
+		// PDF START
+		Document doc = new Document(PageSize.A4, 30, 30, 30, 30);
+		PdfWriter.getInstance(doc, new FileOutputStream(pdfFile));
+		doc.open();
 
-	            while (rs2.next()) {
+		Font bigTitle = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 22, COLOR_ACCENT);
+		Font bold = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11);
+		Font normal = FontFactory.getFont(FontFactory.HELVETICA, 10);
 
-	                Line ln = new Line();
-	                ln.item = rs2.getString("item");
-	                ln.qty = rs2.getBigDecimal("qtyordered");
-	                ln.rate = rs2.getBigDecimal("priceactual");
-	                ln.discount = rs2.getBigDecimal("discount");
-	                ln.gross = ln.qty.multiply(ln.rate);
+		// ===== LOGO + TITLE =====
+		try {
+			Image logo = Image.getInstance("src/main/webapp/images/happylady_logo.png");
+			logo.scaleAbsolute(140, 60);
+			doc.add(logo);
+		} catch (Exception e) {
+			// Ignore logo errors
+		}
 
-	                // discount amount = gross * discount / 100
-	                ln.discAmt = ln.discount;//ln.gross.multiply(ln.discount).divide(new BigDecimal("100"));
-	                ln.netAmt = ln.gross.subtract(ln.discAmt);
+		Paragraph title = new Paragraph("Happy Lady Fashion", bigTitle);
+		title.setAlignment(Element.ALIGN_RIGHT);
+		doc.add(title);
 
-	                subTotal = subTotal.add(ln.gross);
-	                totalDiscount = totalDiscount.add(ln.discAmt);
-	                grandTotal = grandTotal.add(ln.netAmt);
+		Paragraph shop = new Paragraph(orgAddr + "\nGSTIN: " + orgGST + "\nPhone: " + orgPhone, normal);
+		shop.setAlignment(Element.ALIGN_RIGHT);
+		doc.add(shop);
 
-	                lines.add(ln);
-	            }
-	            rs2.close();
-	            ps2.close();
+		doc.add(new Paragraph("\n"));
 
-	            // --------------------------------------------------------------
-	            // 80mm PDF START
-	            // --------------------------------------------------------------
-	            Rectangle receiptSize = new Rectangle(227, 1200);
-	            Document doc = new Document(receiptSize, 5, 5, 5, 5);
+		// ===== BILL INFO =====
+		PdfPTable info = new PdfPTable(2);
+		info.setWidthPercentage(100);
 
-	            try {
-	                PdfWriter.getInstance(doc, new FileOutputStream(pdfFile));
-	                doc.open();
+		info.addCell(cell("Bill No:", bold));
+		info.addCell(cell(billNo, normal));
 
-	                Font bold = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8);
-	                Font normal = FontFactory.getFont(FontFactory.HELVETICA, 7);
+		info.addCell(cell("Bill Date:", bold));
+		info.addCell(cell(billDate, normal));
 
-	                // HEADER
-	                Paragraph title = new Paragraph(orgName + "\n", bold);
-	                title.setAlignment(Paragraph.ALIGN_CENTER);
-	                doc.add(title);
+		info.addCell(cell("Customer:", bold));
+		info.addCell(cell(custName, normal));
 
-	                Paragraph addr = new Paragraph(orgAddress + "\n", normal);
-	                addr.setAlignment(Paragraph.ALIGN_CENTER);
-	                doc.add(addr);
+		info.addCell(cell("Phone:", bold));
+		info.addCell(cell(custPhone, normal));
 
-	                doc.add(new Paragraph("GSTIN: " + orgGST, normal));
-	                doc.add(new Paragraph("Phone: " + orgPhone, normal));
-	                doc.add(new Paragraph("----------------------------------------", normal));
+		info.addCell(cell("Address:", bold));
+		info.addCell(cell(custAddr, normal));
 
-	                doc.add(new Paragraph("Bill No: " + docNo, normal));
-	                doc.add(new Paragraph("Date   : " + date, normal));
-	                doc.add(new Paragraph("Customer: " + customer, normal));
-	                doc.add(new Paragraph(customerAddr, normal));
-	                doc.add(new Paragraph("GSTIN: " + customerGST, normal));
+		doc.add(info);
 
-	                doc.add(new Paragraph("----------------------------------------", normal));
+		doc.add(new Paragraph("\n"));
 
-	                // --------------------------------------------------------------
-	                //  ITEMS TABLE (5 COLUMNS NOW)
-	                // --------------------------------------------------------------
-	                PdfPTable table = new PdfPTable(5);
-	                table.setWidthPercentage(100);
-	                table.setWidths(new float[]{3f, 1f, 1f, 1f, 1.5f});
+		// ===== ITEM TABLE =====
+		PdfPTable table = new PdfPTable(6);
+		table.setWidthPercentage(100);
+		table.setWidths(new float[] { 4, 1, 1, 1, 1, 1.2f });
 
-	                addHeader(table, "Item");
-	                addHeader(table, "Qty");
-	                addHeader(table, "Rate");
-	                addHeader(table, "Disc");
-	                addHeader(table, "Amt");
+		table.addCell(header("Item"));
+		table.addCell(header("Qty"));
+		table.addCell(header("Rate"));
+		table.addCell(header("Amount"));
+		table.addCell(header("HSN"));
+		table.addCell(header("GST 5%"));
 
-	                for (Line ln : lines) {
+		for (Item it : items) {
+			table.addCell(cell(it.name, normal));
+			table.addCell(cell(it.qty.toPlainString(), normal));
+			table.addCell(cell(it.rate.setScale(2, BigDecimal.ROUND_HALF_UP).toPlainString(), normal));
+			table.addCell(cell(it.amt.setScale(2, BigDecimal.ROUND_HALF_UP).toPlainString(), normal));
+			table.addCell(cell(it.hsn != null ? it.hsn : "", normal));
+			table.addCell(cell(it.gst.setScale(2, BigDecimal.ROUND_HALF_UP).toPlainString(), normal));
+		}
 
-	                    addCell(table, ln.item, normal);
-	                    addCell(table, ln.qty.stripTrailingZeros().toPlainString(), normal);
-	                    addCell(table, ln.rate.toPlainString(), normal);
-	                    addCell(table, ln.discAmt.setScale(2, BigDecimal.ROUND_HALF_UP).toPlainString(), normal);
-	                    addCell(table, ln.netAmt.setScale(2, BigDecimal.ROUND_HALF_UP).toPlainString(), normal);
-	                }
+		doc.add(table);
 
-	                doc.add(table);
+		doc.add(new Paragraph("\n"));
 
-	                doc.add(new Paragraph("----------------------------------------", normal));
+		// ===== TOTAL =====
+		BigDecimal grandTotal = total.add(gstTotal);
 
-	                // --------------------------------------------------------------
-	                //  SUMMARY TOTALS
-	                // --------------------------------------------------------------
-	                doc.add(new Paragraph("Sub Total     : ₹ " + subTotal.setScale(2), normal));
-	                doc.add(new Paragraph("Discount      : ₹ " + totalDiscount.setScale(2), normal));
+		Paragraph t = new Paragraph("Subtotal: ₹ " + total.setScale(2, BigDecimal.ROUND_HALF_UP), bold);
+		t.setAlignment(Element.ALIGN_RIGHT);
+		doc.add(t);
 
-	                Paragraph gTot = new Paragraph("Grand Total   : ₹ " + grandTotal.setScale(2), bold);
-	                gTot.setAlignment(Paragraph.ALIGN_RIGHT);
-	                doc.add(gTot);
+		Paragraph g = new Paragraph("GST (5%): ₹ " + gstTotal.setScale(2, BigDecimal.ROUND_HALF_UP), bold);
+		g.setAlignment(Element.ALIGN_RIGHT);
+		doc.add(g);
 
-	                doc.add(new Paragraph("----------------------------------------", normal));
+		Paragraph gt = new Paragraph("Grand Total: ₹ " + grandTotal.setScale(2, BigDecimal.ROUND_HALF_UP), bigTitle);
+		gt.setAlignment(Element.ALIGN_RIGHT);
+		doc.add(gt);
 
-	                Paragraph thanks = new Paragraph("Thank you! Visit again.", normal);
-	                thanks.setAlignment(Paragraph.ALIGN_CENTER);
-	                doc.add(thanks);
+		doc.add(new Paragraph("\n"));
 
-	            } catch (Exception e) {
-	                throw new AdempiereException("Error generating 80mm PDF", e);
+		// ===== TEXTILE FOOTER =====
+		Paragraph terms = new Paragraph("No return/exchange without bill.\n" + "Color may vary slightly.\n"
+				+ "Thank you for shopping at Happy Lady Fashion ❤️", normal);
+		terms.setAlignment(Element.ALIGN_CENTER);
+		doc.add(terms);
 
-	            } finally {
-	                if (doc.isOpen()) doc.close();
-	            }
+		doc.close();
 
-	        return pdfFile.getAbsolutePath();
-	    }
-
-	    private static void addHeader(PdfPTable t, String text) {
-	        PdfPCell c = new PdfPCell(new Paragraph(text, 
-	                       FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10)));
-	        c.setPadding(5);
-	        t.addCell(c);
-	    }
-
-	    private static void addCell(PdfPTable t, String text, Font f) {
-	        PdfPCell c = new PdfPCell(new Paragraph(text, f));
-	        c.setPadding(5);
-	        t.addCell(c);
-	    }
-	    
+		return pdfFile.getAbsolutePath();
 	}
+
+	private static PdfPCell header(String text) {
+		// ✅ Use java.awt.Color.WHITE
+		Font font = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, Color.WHITE);
+		PdfPCell c = new PdfPCell(new Phrase(text, font));
+		c.setBackgroundColor(COLOR_ACCENT); // Color accent background
+		c.setPadding(6);
+		return c;
+	}
+
+	private static PdfPCell cell(String text, Font f) {
+		PdfPCell c = new PdfPCell(new Phrase(text != null ? text : "", f));
+		c.setPadding(6);
+		return c;
+	}
+}

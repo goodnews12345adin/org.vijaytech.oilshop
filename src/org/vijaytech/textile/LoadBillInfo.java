@@ -38,6 +38,8 @@ public class LoadBillInfo extends HttpServlet {
             }
             System.out.println("org id : "+request.getParameter("AD_Org_ID"));
             Properties ctx = (Properties) session.getAttribute("ctx");
+	         Env.setCtx(ctx);
+
             int AD_Org_ID = Integer.parseInt(request.getParameter("AD_Org_ID"));
             int AD_Client_ID = Integer.parseInt(session.getAttribute("AD_Client_ID").toString());
             String barcode = request.getParameter("barcode"); // optional

@@ -53,6 +53,7 @@ public class PurchaseProduct extends HttpServlet {
 
         Properties ctx = (Properties) session.getAttribute("ctx");
         if (ctx == null) ctx = Env.getCtx();
+        Env.setCtx(ctx);
 
         try {
             // Load active product categories
