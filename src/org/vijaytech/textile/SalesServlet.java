@@ -58,7 +58,7 @@ public class SalesServlet extends HttpServlet {
 
             // 🔹 Fetch product list
             List<TF_MProduct> prodList = new Query(ctx, TF_MProduct.Table_Name,
-                    "IsSold ='Y' AND WeighmentEnabled ='Y' AND AD_Org_ID = ? AND IsSummary='N' ", null)
+                    "IsSold ='Y' AND WeighmentEnabled ='Y' AND  isActive ='Y' AND ProductType ='I' AND AD_Org_ID = ? ", null)
                     .setClient_ID()
                     .setParameters(AD_Org_ID)
                     .list();
@@ -219,7 +219,8 @@ public class SalesServlet extends HttpServlet {
                         ",discount " + discount);
 
                 TF_MProduct prod = new TF_MProduct(ctx, prodId, null);
-
+                prod.setBillPrice(rate);
+                prod.saveEx();
                 if (prod.getAD_Client_ID() != adClientId) {
                     throw new AdempiereException("Product " + prod.getName() + " belongs to another tenant!");
                 }

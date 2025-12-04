@@ -18,9 +18,9 @@ public class WhatsAppSender {
     private static final String API_ENDPOINT = "https://newapp.smartgrowthai.com/send/campaign";
 
     // Defaults for your invoice use-case (you can change these as needed)
-    private static final String DEFAULT_TEMPLATE_ID   = "7667676877878";     // from your example
+    private static final String DEFAULT_TEMPLATE_ID   = "2330129374101343";     // from your example
     private static final String DEFAULT_API_CODE      = "undefined837069";   // your api code
-    private static final String DEFAULT_CAMPAIGN_NAME = "Textile Invoice";   // any name you like
+    private static final String DEFAULT_CAMPAIGN_NAME = "newdemo";   // any name you like
     private static final String DEFAULT_FILENAME      = "Invoice.pdf";       // name shown in WhatsApp
 
     /**
@@ -37,28 +37,50 @@ public class WhatsAppSender {
         if (publicPdfUrl == null || publicPdfUrl.trim().isEmpty()) {
             throw new IllegalArgumentException("Missing pdf url");
         }
+        
+//        String phone = "9965445949"; // input
 
+        phone = phone.replaceAll("[^0-9]", ""); // remove spaces, +, -, etc.
+
+        // If phone starts with "91" → do NOT append
+        if (phone.startsWith("91")) {
+            // already correct
+        }
+        // If phone has 10 digits → add Indian prefix
+        else if (phone.length() == 10) {
+            phone = "91" + phone;
+        }
         // Single recipient
         List<String> phoneNumbers = Collections.singletonList(phone);
 
         // Use caption as first body param (template body param #1)
-        List<String> bodyParams = (caption != null && !caption.trim().isEmpty())
-                ? Collections.singletonList(caption)
-                : Collections.emptyList();
+//        List<String> bodyParams = (caption != null && !caption.trim().isEmpty())
+//                ? Collections.singletonList(caption)
+//                : Collections.emptyList();
+        
+        String appNumber = "APP12345";
+        String joinDate = "12-Dec-2025";
+
+        List<String> bodyParams = new java.util.ArrayList<>();
+        bodyParams.add(appNumber);   // {{1}}
+        bodyParams.add(joinDate);    // {{2}}
+
 
         // No header params by default (customize if your template requires)
         List<String> headerParams = Collections.emptyList();
 
-        sendCampaign(
-                DEFAULT_TEMPLATE_ID,
-                DEFAULT_API_CODE,
-                DEFAULT_CAMPAIGN_NAME,
-                DEFAULT_FILENAME,
-                phoneNumbers,
-                publicPdfUrl,
-                bodyParams,
-                headerParams
-        );
+        sendWithoutMedia(DEFAULT_TEMPLATE_ID, DEFAULT_API_CODE, DEFAULT_CAMPAIGN_NAME, phoneNumbers, bodyParams, headerParams);
+        
+//        sendCampaign(
+//                DEFAULT_TEMPLATE_ID,
+//                DEFAULT_API_CODE,
+//                DEFAULT_CAMPAIGN_NAME,
+//                DEFAULT_FILENAME,
+//                phoneNumbers,
+//                publicPdfUrl,
+//                bodyParams,
+//                headerParams
+//        );
     }
     
     /**
@@ -175,6 +197,55 @@ public class WhatsAppSender {
             System.out.println("API Response Body: " + response.toString());
         }
     }
+    
+    public static void sendWithoutMedia(
+            String templateId,
+            String apiCode,
+            String campaignName,
+            List<String> phoneNumbers,
+            List<String> bodyParams,
+            List<String> headerParams
+    ) throws Exception {
+
+        sendCampaign(
+                templateId,
+                apiCode,
+                campaignName,
+                "",
+                phoneNumbers,
+                "",
+                bodyParams,
+                headerParams
+        );
+    }
+
+    public static void sendWithMedia(
+            String templateId,
+            String apiCode,
+            String campaignName,
+            String filename,
+            List<String> phoneNumbers,
+            String mediaUrl,
+            List<String> bodyParams,
+            List<String> headerParams
+    ) throws Exception {
+
+        if (mediaUrl == null || mediaUrl.trim().isEmpty()) {
+            throw new IllegalArgumentException("Media URL is required for sendWithMedia()");
+        }
+
+        sendCampaign(
+                templateId,
+                apiCode,
+                campaignName,
+                filename,
+                phoneNumbers,
+                mediaUrl,
+                bodyParams,
+                headerParams
+        );
+    }
+
     
     // --- Example Usage ---
     public static void main(String[] args) {
