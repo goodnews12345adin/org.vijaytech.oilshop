@@ -1,274 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page session="true" %>
-<%@ page import="java.sql.*, javax.naming.*, javax.sql.DataSource" %>
-
-<%
-    // ===================== KPI VARIABLES =====================
-    Long todaySalesCount       = null;
-    Long todayPurchaseCount    = null;
-    Long pendingBillingCount   = null;
-    Long shippedCount          = null;
-    Long weeklySalesCount      = null;
-    Long weeklyPurchaseCount   = null;
-    Long monthlySalesCount     = null;
-    Long monthlyPurchaseCount  = null;
-
-    Double todaySalesAmount      = null;
-    Double todayPurchaseAmount   = null;
-    Double weeklySalesAmount     = null;
-    Double weeklyPurchaseAmount  = null;
-    Double monthlySalesAmount    = null;
-    Double monthlyPurchaseAmount = null;
-
-    Double todayExpenseAmount    = null;
-    Double weeklyExpenseAmount   = null;
-    Double monthlyExpenseAmount  = null;
-
-    // ===================== STRING SQL QUERIES =====================
-
-    // ---- COUNT KPIs ----
-    String SQL_TODAY_SALES_COUNT =
-        "SELECT COUNT(*) FROM SALES_ORDER WHERE DATE(order_date) = CURRENT_DATE";
-
-    String SQL_TODAY_PURCHASE_COUNT =
-        "SELECT COUNT(*) FROM PURCHASE_ORDER WHERE DATE(purchase_date) = CURRENT_DATE";
-
-    String SQL_PENDING_BILLING_COUNT =
-        "SELECT COUNT(*) FROM SALES_ORDER " +
-        "WHERE status = 'Pending Billing' AND DATE(order_date) = CURRENT_DATE";
-
-    String SQL_SHIPPED_COUNT =
-        "SELECT COUNT(*) FROM SALES_ORDER " +
-        "WHERE status = 'Shipped' AND DATE(order_date) = CURRENT_DATE";
-
-    String SQL_WEEKLY_SALES_COUNT =
-        "SELECT COUNT(*) FROM SALES_ORDER " +
-        "WHERE YEARWEEK(order_date, 1) = YEARWEEK(CURRENT_DATE, 1)";
-
-    String SQL_WEEKLY_PURCHASE_COUNT =
-        "SELECT COUNT(*) FROM PURCHASE_ORDER " +
-        "WHERE YEARWEEK(purchase_date, 1) = YEARWEEK(CURRENT_DATE, 1)";
-
-    String SQL_MONTHLY_SALES_COUNT =
-        "SELECT COUNT(*) FROM SALES_ORDER " +
-        "WHERE MONTH(order_date) = MONTH(CURRENT_DATE) " +
-        "AND YEAR(order_date) = YEAR(CURRENT_DATE)";
-
-    String SQL_MONTHLY_PURCHASE_COUNT =
-        "SELECT COUNT(*) FROM PURCHASE_ORDER " +
-        "WHERE MONTH(purchase_date) = MONTH(CURRENT_DATE) " +
-        "AND YEAR(purchase_date) = YEAR(CURRENT_DATE)";
-
-    // ---- AMOUNT KPIs (Sales / Purchase) ----
-    String SQL_TODAY_SALES_AMOUNT =
-        "SELECT SUM(total_amount) FROM SALES_ORDER " +
-        "WHERE DATE(order_date) = CURRENT_DATE";
-
-    String SQL_TODAY_PURCHASE_AMOUNT =
-        "SELECT SUM(total_amount) FROM PURCHASE_ORDER " +
-        "WHERE DATE(purchase_date) = CURRENT_DATE";
-
-    String SQL_WEEKLY_SALES_AMOUNT =
-        "SELECT SUM(total_amount) FROM SALES_ORDER " +
-        "WHERE YEARWEEK(order_date, 1) = YEARWEEK(CURRENT_DATE, 1)";
-
-    String SQL_WEEKLY_PURCHASE_AMOUNT =
-        "SELECT SUM(total_amount) FROM PURCHASE_ORDER " +
-        "WHERE YEARWEEK(purchase_date, 1) = YEARWEEK(CURRENT_DATE, 1)";
-
-    String SQL_MONTHLY_SALES_AMOUNT =
-        "SELECT SUM(total_amount) FROM SALES_ORDER " +
-        "WHERE MONTH(order_date) = MONTH(CURRENT_DATE) " +
-        "AND YEAR(order_date) = YEAR(CURRENT_DATE)";
-
-    String SQL_MONTHLY_PURCHASE_AMOUNT =
-        "SELECT SUM(total_amount) FROM PURCHASE_ORDER " +
-        "WHERE MONTH(purchase_date) = MONTH(CURRENT_DATE) " +
-        "AND YEAR(purchase_date) = YEAR(CURRENT_DATE)";
-
-    // ---- EXPENSE KPIs ----
-    String SQL_TODAY_EXPENSE_AMOUNT =
-        "SELECT SUM(amount) FROM EXPENSES " +
-        "WHERE DATE(expense_date) = CURRENT_DATE";
-
-    String SQL_WEEKLY_EXPENSE_AMOUNT =
-        "SELECT SUM(amount) FROM EXPENSES " +
-        "WHERE YEARWEEK(expense_date, 1) = YEARWEEK(CURRENT_DATE, 1)";
-
-    String SQL_MONTHLY_EXPENSE_AMOUNT =
-        "SELECT SUM(amount) FROM EXPENSES " +
-        "WHERE MONTH(expense_date) = MONTH(CURRENT_DATE) " +
-        "AND YEAR(expense_date) = YEAR(CURRENT_DATE)";
-
-    // ===================== DB EXECUTION (ONLY JSP + STRING QUERIES) =====================
-    try {
-        InitialContext ic = new InitialContext();
-        DataSource ds = (DataSource) ic.lookup("java:comp/env/jdbc/textile_db");
-
-        try (Connection conn = ds.getConnection()) {
-
-            // ============== COUNT KPIs ==============
-
-            // todaySalesCount - Today's Sales Count
-            try (PreparedStatement ps = conn.prepareStatement(SQL_TODAY_SALES_COUNT);
-                 ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) todaySalesCount = rs.getLong(1);
-            }
-
-            // todayPurchaseCount - Today's Purchase Count
-            try (PreparedStatement ps = conn.prepareStatement(SQL_TODAY_PURCHASE_COUNT);
-                 ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) todayPurchaseCount = rs.getLong(1);
-            }
-
-            // pendingBillingCount - Pending Billing (Count)
-            try (PreparedStatement ps = conn.prepareStatement(SQL_PENDING_BILLING_COUNT);
-                 ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) pendingBillingCount = rs.getLong(1);
-            }
-
-            // shippedCount - Shipped (Count)
-            try (PreparedStatement ps = conn.prepareStatement(SQL_SHIPPED_COUNT);
-                 ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) shippedCount = rs.getLong(1);
-            }
-
-            // weeklySalesCount - Weekly Sales Count
-            try (PreparedStatement ps = conn.prepareStatement(SQL_WEEKLY_SALES_COUNT);
-                 ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) weeklySalesCount = rs.getLong(1);
-            }
-
-            // weeklyPurchaseCount - Weekly Purchase Count
-            try (PreparedStatement ps = conn.prepareStatement(SQL_WEEKLY_PURCHASE_COUNT);
-                 ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) weeklyPurchaseCount = rs.getLong(1);
-            }
-
-            // monthlySalesCount - Monthly Sales Count
-            try (PreparedStatement ps = conn.prepareStatement(SQL_MONTHLY_SALES_COUNT);
-                 ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) monthlySalesCount = rs.getLong(1);
-            }
-
-            // monthlyPurchaseCount - Monthly Purchase Count
-            try (PreparedStatement ps = conn.prepareStatement(SQL_MONTHLY_PURCHASE_COUNT);
-                 ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) monthlyPurchaseCount = rs.getLong(1);
-            }
-
-            // ============== AMOUNT KPIs (Sales / Purchase) ==============
-
-            // todaySalesAmount - Today's Sales Amount
-            try (PreparedStatement ps = conn.prepareStatement(SQL_TODAY_SALES_AMOUNT);
-                 ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    todaySalesAmount = rs.getDouble(1);
-                    if (rs.wasNull()) todaySalesAmount = null;
-                }
-            }
-
-            // todayPurchaseAmount - Today's Purchase Amount
-            try (PreparedStatement ps = conn.prepareStatement(SQL_TODAY_PURCHASE_AMOUNT);
-                 ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    todayPurchaseAmount = rs.getDouble(1);
-                    if (rs.wasNull()) todayPurchaseAmount = null;
-                }
-            }
-
-            // weeklySalesAmount - Weekly Sales Amount
-            try (PreparedStatement ps = conn.prepareStatement(SQL_WEEKLY_SALES_AMOUNT);
-                 ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    weeklySalesAmount = rs.getDouble(1);
-                    if (rs.wasNull()) weeklySalesAmount = null;
-                }
-            }
-
-            // weeklyPurchaseAmount - Weekly Purchase Amount
-            try (PreparedStatement ps = conn.prepareStatement(SQL_WEEKLY_PURCHASE_AMOUNT);
-                 ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    weeklyPurchaseAmount = rs.getDouble(1);
-                    if (rs.wasNull()) weeklyPurchaseAmount = null;
-                }
-            }
-
-            // monthlySalesAmount - Monthly Sales Amount
-            try (PreparedStatement ps = conn.prepareStatement(SQL_MONTHLY_SALES_AMOUNT);
-                 ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    monthlySalesAmount = rs.getDouble(1);
-                    if (rs.wasNull()) monthlySalesAmount = null;
-                }
-            }
-
-            // monthlyPurchaseAmount - Monthly Purchase Amount
-            try (PreparedStatement ps = conn.prepareStatement(SQL_MONTHLY_PURCHASE_AMOUNT);
-                 ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    monthlyPurchaseAmount = rs.getDouble(1);
-                    if (rs.wasNull()) monthlyPurchaseAmount = null;
-                }
-            }
-
-            // ============== EXPENSE KPIs ==============
-
-            // todayExpenseAmount - Today's Expense
-            try (PreparedStatement ps = conn.prepareStatement(SQL_TODAY_EXPENSE_AMOUNT);
-                 ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    todayExpenseAmount = rs.getDouble(1);
-                    if (rs.wasNull()) todayExpenseAmount = null;
-                }
-            }
-
-            // weeklyExpenseAmount - Current Week's Expense
-            try (PreparedStatement ps = conn.prepareStatement(SQL_WEEKLY_EXPENSE_AMOUNT);
-                 ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    weeklyExpenseAmount = rs.getDouble(1);
-                    if (rs.wasNull()) weeklyExpenseAmount = null;
-                }
-            }
-
-            // monthlyExpenseAmount - Current Month's Expense
-            try (PreparedStatement ps = conn.prepareStatement(SQL_MONTHLY_EXPENSE_AMOUNT);
-                 ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    monthlyExpenseAmount = rs.getDouble(1);
-                    if (rs.wasNull()) monthlyExpenseAmount = null;
-                }
-            }
-
-        }
-
-    } catch (Exception e) {
-        e.printStackTrace();
-    }
-
-    // ===================== EXPOSE AS REQUEST ATTRIBUTES =====================
-    request.setAttribute("todaySalesCount", todaySalesCount);
-    request.setAttribute("todayPurchaseCount", todayPurchaseCount);
-    request.setAttribute("pendingBillingCount", pendingBillingCount);
-    request.setAttribute("shippedCount", shippedCount);
-    request.setAttribute("weeklySalesCount", weeklySalesCount);
-    request.setAttribute("weeklyPurchaseCount", weeklyPurchaseCount);
-    request.setAttribute("monthlySalesCount", monthlySalesCount);
-    request.setAttribute("monthlyPurchaseCount", monthlyPurchaseCount);
-
-    request.setAttribute("todaySalesAmount", todaySalesAmount);
-    request.setAttribute("todayPurchaseAmount", todayPurchaseAmount);
-    request.setAttribute("weeklySalesAmount", weeklySalesAmount);
-    request.setAttribute("weeklyPurchaseAmount", weeklyPurchaseAmount);
-    request.setAttribute("monthlySalesAmount", monthlySalesAmount);
-    request.setAttribute("monthlyPurchaseAmount", monthlyPurchaseAmount);
-
-    request.setAttribute("todayExpenseAmount", todayExpenseAmount);
-    request.setAttribute("weeklyExpenseAmount", weeklyExpenseAmount);
-    request.setAttribute("monthlyExpenseAmount", monthlyExpenseAmount);
-%>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -276,14 +7,12 @@
 <head>
 
     <meta charset="UTF-8">
-
     <title>Dashboard | Vijay Tech</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
     <style>
-        /* ========= GLOBAL VARIABLES & THEME ========= */
         :root{
             --sidebar-width: 260px;
             --navbar-height: 64px;
@@ -306,21 +35,19 @@
             --panel-border:rgba(255,255,255,0.03);
 
             --kpi-number:#19b6b0;
-            --kpi-purchase:#ffc107; /* New color for purchase KPIs */
-            --kpi-expense:#ef4444; /* New color for expense KPIs */
+            --kpi-purchase:#ffc107;
+            --kpi-expense:#ef4444;
         }
 
         * { box-sizing: border-box; }
         html, body { height: 100%; }
 
-        /* ========= BODY BACKGROUND ========= */
         body {
             margin: 0;
             padding: 0;
-            padding-top: var(--navbar-height); /* space for fixed header */
+            padding-top: var(--navbar-height);
             font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             color: #fff;
-
             background:
                 radial-gradient(ellipse at center,
                     rgba(8, 20, 58, 0.6),
@@ -328,12 +55,10 @@
                 ),
                 url('/textileapp/pages/img/bg-textile.jpg')
                 center / cover no-repeat fixed;
-
             overflow-x: auto;
             scrollbar-gutter: stable;
         }
 
-        /* ========= TOP NAVBAR (HEADER) ========= */
         .app-navbar {
             background: linear-gradient(180deg, var(--panel-dark), var(--panel-dark-2));
             border-bottom: 1px solid rgba(255,255,255,0.06);
@@ -375,7 +100,6 @@
             transform: translateY(-1px);
         }
 
-        /* ========= SIDEBAR AREA ========= */
         .app-sidebar {
             position: fixed;
             left: 0;
@@ -392,20 +116,17 @@
 
         .app-sidebar * { box-sizing: border-box; }
 
-        /* ========= MAIN CONTENT ALIGNMENT ========= */
         main.main {
             margin-left: 0;
-            padding: 24px 26px 110px; /* bottom padding so content not hidden by footer */
+            padding: 24px 26px 110px;
             min-height: calc(100vh - var(--navbar-height));
             width:100%;
         }
 
-        /* Center big dashboard inside main */
         .dashboard-outer-wrapper {
             max-width: 1320px;
             margin: 0 auto;
             margin-top: -75px;
-            
         }
 
         @media (max-width: 992px) {
@@ -422,7 +143,6 @@
             }
         }
 
-        /* ========= DASHBOARD PANEL ========= */
         .dashboard-outer {
             width: 100%;
             border-radius: var(--outer-radius);
@@ -437,7 +157,6 @@
             backdrop-filter: blur(10px);
         }
 
-        /* Top pill inside dashboard */
         .dashboard-top-pill {
             background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
             border-radius: 16px;
@@ -463,7 +182,6 @@
             border: 1px solid rgba(255,255,255,0.08);
         }
 
-        /* ========= KPI CARDS ========= */
         .kpi-row {
             display:flex;
             gap: 20px;
@@ -484,7 +202,7 @@
             position: relative;
             overflow: hidden;
         }
-        /* Custom styles for different KPI types */
+
         .kpi.sales::after{
             content:"";
             position:absolute;
@@ -494,9 +212,7 @@
                             transparent 55%);
             pointer-events:none;
         }
-        .kpi.purchase {
-            /* Inherits default background/shadow */
-        }
+
         .kpi.purchase::after{
             content:"";
             position:absolute;
@@ -506,9 +222,7 @@
                             transparent 55%);
             pointer-events:none;
         }
-        .kpi.expense {
-            /* Inherits default background/shadow */
-        }
+
         .kpi.expense::after{
             content:"";
             position:absolute;
@@ -518,6 +232,7 @@
                             transparent 55%);
             pointer-events:none;
         }
+
         .kpi.sales .kpi-number { color: var(--kpi-number); }
         .kpi.purchase .kpi-number { color: var(--kpi-purchase); }
         .kpi.expense .kpi-number { color: var(--kpi-expense); }
@@ -543,7 +258,6 @@
             .kpi-row { flex-direction:column; gap: 12px; }
         }
 
-        /* New layout for the table and expenses card */
         .dashboard-grid {
             display: grid;
             grid-template-columns: 2fr 1fr;
@@ -551,11 +265,10 @@
         }
         @media (max-width: 992px) {
             .dashboard-grid {
-                grid-template-columns: 1fr; /* Stack on smaller screens */
+                grid-template-columns: 1fr;
             }
         }
 
-        /* ========= RECENT ORDERS CARD ========= */
         .orders-card {
             background: #ffffff;
             border-radius: 12px;
@@ -583,10 +296,7 @@
             gap:8px;
         }
 
-        /* table */
-        .table-responsive {
-            padding-top: 8px;
-        }
+        .table-responsive { padding-top: 8px; }
         .soft-table thead th {
             color: #104c4a;
             font-weight: 700;
@@ -613,7 +323,6 @@
         .badge.bg-warning { background-color: #ffd43b !important; color:#082025; }
         .badge.bg-info { background-color: #12b6d7 !important; color:#06202b; }
 
-        /* ========= BUTTON STYLES ========= */
         .btn-teal {
             background: linear-gradient(135deg,#19b6b0,#15a0c6);
             color: #fff;
@@ -639,7 +348,6 @@
             color:#0f172a;
         }
 
-        /* ========= BOTTOM FOOTER (GLOBAL) ========= */
         .bottom-footer {
             position: fixed;
             left: var(--sidebar-width);
@@ -671,7 +379,6 @@
             }
         }
 
-        /* ========= SCROLLBAR ========= */
         ::-webkit-scrollbar { width: 9px; }
         ::-webkit-scrollbar-thumb {
             background: rgba(148,163,184,0.6);
@@ -683,10 +390,7 @@
 
 <body>
 
-    <%-- Fixed top header (same on every page) --%>
     <%@ include file="header.jsp" %>
-
-    <%-- Sidebar: make sure outer element has class="app-sidebar" in sidebar.jsp --%>
     <%@ include file="sidebar.jsp" %>
 
     <main class="main">
@@ -704,101 +408,124 @@
                         </span>
                         <span class="btn-outline-soft" style="display:inline-flex; align-items:center; gap:8px; border-radius:999px;">
                             <i class="bi bi-person-circle"></i>
-                            <span style="font-weight:600; color:#e2f3f3;">${sessionScope.user.username != null ? sessionScope.user.username : "admin"}</span>
+                            <span style="font-weight:600; color:#e2f3f3;">
+                                ${sessionScope.user != null && sessionScope.user.username != null ? sessionScope.user.username : "admin"}
+                            </span>
                         </span>
                     </div>
                 </div>
 
                 <div class="dashboard-inner">
 
-                    <%-- Today's Counts (Orders/Sales and Purchases) --%>
+                    <!-- Row 1: Today's Counts -->
                     <div class="kpi-row">
                         <div class="kpi sales">
                             <div class="kpi-title">Today's Sales Count</div>
-                            <div class="kpi-number">${todaySalesCount != null ? todaySalesCount : "0"}</div>
+                            <div class="kpi-number">
+                                ${todaySalesCount != null ? todaySalesCount : 0}
+                            </div>
                             <div class="kpi-sub">Total orders generated today</div>
                         </div>
                         <div class="kpi purchase">
                             <div class="kpi-title">Today's Purchase Count</div>
-                            <div class="kpi-number">${todayPurchaseCount != null ? todayPurchaseCount : "0"}</div>
+                            <div class="kpi-number">
+                                ${todayPurchaseCount != null ? todayPurchaseCount : 0}
+                            </div>
                             <div class="kpi-sub">Materials/items purchased today</div>
                         </div>
-                        <div class="kpi sales">
-                            <div class="kpi-title">Pending Billing (Count)</div>
-                            <div class="kpi-number">${pendingBillingCount != null ? pendingBillingCount : "7"}</div>
-                            <div class="kpi-sub">Awaiting customer approval</div>
-                        </div>
-                        <div class="kpi purchase">
-                            <div class="kpi-title">Shipped (Count)</div>
-                            <div class="kpi-number">${shippedCount != null ? shippedCount : "15"}</div>
-                            <div class="kpi-sub">Outbound shipments today</div>
-                        </div>
                     </div>
-                    
-                    <%-- Weekly/Monthly Counts --%>
+
+                    <!-- Row 2: Weekly / Monthly Counts -->
                     <div class="kpi-row">
                         <div class="kpi sales">
                             <div class="kpi-title">Weekly Sales Count</div>
-                            <div class="kpi-number">${weeklySalesCount != null ? weeklySalesCount : "185"}</div>
+                            <div class="kpi-number">
+                                ${weeklySalesCount != null ? weeklySalesCount : 0}
+                            </div>
                             <div class="kpi-sub">Completed sales in current week</div>
                         </div>
                         <div class="kpi purchase">
                             <div class="kpi-title">Weekly Purchase Count</div>
-                            <div class="kpi-number">${weeklyPurchaseCount != null ? weeklyPurchaseCount : "68"}</div>
+                            <div class="kpi-number">
+                                ${weeklyPurchaseCount != null ? weeklyPurchaseCount : 0}
+                            </div>
                             <div class="kpi-sub">Invoices processed this week</div>
                         </div>
                         <div class="kpi sales">
                             <div class="kpi-title">Monthly Sales Count</div>
-                            <div class="kpi-number">${monthlySalesCount != null ? monthlySalesCount : "750"}</div>
+                            <div class="kpi-number">
+                                ${monthlySalesCount != null ? monthlySalesCount : 0}
+                            </div>
                             <div class="kpi-sub">Orders completed this month</div>
                         </div>
                         <div class="kpi purchase">
                             <div class="kpi-title">Monthly Purchase Count</div>
-                            <div class="kpi-number">${monthlyPurchaseCount != null ? monthlyPurchaseCount : "290"}</div>
+                            <div class="kpi-number">
+                                ${monthlyPurchaseCount != null ? monthlyPurchaseCount : 0}
+                            </div>
                             <div class="kpi-sub">Invoices processed this month</div>
                         </div>
                     </div>
-                    
-                    <%-- Sales/Purchase Amount KPIs --%>
+
+                    <!-- Row 3: Daily/Weekly Sales & Purchase Amounts -->
                     <div class="kpi-row">
                         <div class="kpi sales">
                             <div class="kpi-title">Today's Sales Amount</div>
-                            <div class="kpi-number"><span style="font-size:1.8rem;">₹</span> ${todaySalesAmount != null ? String.format("%,.0f", todaySalesAmount) : "1,25,000"}</div>
+                            <div class="kpi-number">
+                                <span style="font-size:1.8rem;">₹</span>
+                                ${fmtTodaySalesAmount}
+                            </div>
                             <div class="kpi-sub">Total value of sales today</div>
                         </div>
                         <div class="kpi purchase">
                             <div class="kpi-title">Today's Purchase Amount</div>
-                            <div class="kpi-number"><span style="font-size:1.8rem;">₹</span> ${todayPurchaseAmount != null ? String.format("%,.0f", todayPurchaseAmount) : "85,000"}</div>
+                            <div class="kpi-number">
+                                <span style="font-size:1.8rem;">₹</span>
+                                ${fmtTodayPurchaseAmount}
+                            </div>
                             <div class="kpi-sub">Total value of procurement today</div>
                         </div>
                         <div class="kpi sales">
                             <div class="kpi-title">Weekly Sales Amount</div>
-                            <div class="kpi-number"><span style="font-size:1.8rem;">₹</span> ${weeklySalesAmount != null ? String.format("%,.0f", weeklySalesAmount) : "15,50,000"}</div>
+                            <div class="kpi-number">
+                                <span style="font-size:1.8rem;">₹</span>
+                                ${fmtWeeklySalesAmount}
+                            </div>
                             <div class="kpi-sub">Total revenue this week</div>
                         </div>
                         <div class="kpi purchase">
                             <div class="kpi-title">Weekly Purchase Amount</div>
-                            <div class="kpi-number"><span style="font-size:1.8rem;">₹</span> ${weeklyPurchaseAmount != null ? String.format("%,.0f", weeklyPurchaseAmount) : "9,80,000"}</div>
+                            <div class="kpi-number">
+                                <span style="font-size:1.8rem;">₹</span>
+                                ${fmtWeeklyPurchaseAmount}
+                            </div>
                             <div class="kpi-sub">Total spend this week</div>
                         </div>
                     </div>
-                    
-                    <%-- Monthly Sales/Purchase Amount --%>
+
+                    <!-- Row 4: Monthly Amounts -->
                     <div class="kpi-row">
                         <div class="kpi sales" style="flex:2;">
                             <div class="kpi-title">Monthly Sales Amount</div>
-                            <div class="kpi-number"><span style="font-size:1.8rem;">₹</span> ${monthlySalesAmount != null ? String.format("%,.0f", monthlySalesAmount) : "58,00,000"}</div>
+                            <div class="kpi-number">
+                                <span style="font-size:1.8rem;">₹</span>
+                                ${fmtMonthlySalesAmount}
+                            </div>
                             <div class="kpi-sub">Total revenue generated in the current month</div>
                         </div>
                         <div class="kpi purchase" style="flex:2;">
                             <div class="kpi-title">Monthly Purchase Amount</div>
-                            <div class="kpi-number"><span style="font-size:1.8rem;">₹</span> ${monthlyPurchaseAmount != null ? String.format("%,.0f", monthlyPurchaseAmount) : "35,20,000"}</div>
+                            <div class="kpi-number">
+                                <span style="font-size:1.8rem;">₹</span>
+                                ${fmtMonthlyPurchaseAmount}
+                            </div>
                             <div class="kpi-sub">Total value of all material purchases this month</div>
                         </div>
                     </div>
 
                     <div class="dashboard-grid">
-                        
+
+                        <!-- Recent Orders (static demo for now) -->
                         <div class="orders-card" style="margin-top:0;">
                             <div class="header-wrap">
                                 <div style="display:flex; align-items:center; justify-content:space-between;">
@@ -883,7 +610,10 @@
                                     </tbody>
                                 </table>
                             </div>
-                        </div><div class="orders-card" style="margin-top:0;">
+                        </div>
+
+                        <!-- Daily Expenses -->
+                        <div class="orders-card" style="margin-top:0;">
                             <div class="header-wrap">
                                 <div style="display:flex; align-items:center; justify-content:space-between;">
                                     <div>
@@ -897,33 +627,45 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div style="margin-top: 10px;">
                                 <div class="kpi expense" style="padding:12px 16px; margin-bottom: 12px;">
                                     <div class="kpi-title" style="font-size:0.85rem;">Today's Expense</div>
-                                    <div class="kpi-number" style="font-size:1.8rem;"><span style="font-size:1.4rem;">₹</span> ${todayExpenseAmount != null ? String.format("%,.0f", todayExpenseAmount) : "15,400"}</div>
+                                    <div class="kpi-number" style="font-size:1.8rem;">
+                                        <span style="font-size:1.4rem;">₹</span>
+                                        ${fmtTodayExpenseAmount}
+                                    </div>
                                     <div class="kpi-sub">Total miscellaneous payments</div>
                                 </div>
                                 <div class="kpi expense" style="padding:12px 16px; margin-bottom: 12px;">
                                     <div class="kpi-title" style="font-size:0.85rem;">Current Week's Expense</div>
-                                    <div class="kpi-number" style="font-size:1.8rem;"><span style="font-size:1.4rem;">₹</span> ${weeklyExpenseAmount != null ? String.format("%,.0f", weeklyExpenseAmount) : "85,600"}</div>
+                                    <div class="kpi-number" style="font-size:1.8rem;">
+                                        <span style="font-size:1.4rem;">₹</span>
+                                        ${fmtWeeklyExpenseAmount}
+                                    </div>
                                     <div class="kpi-sub">Total expense for the week</div>
                                 </div>
                                 <div class="kpi expense" style="padding:12px 16px;">
                                     <div class="kpi-title" style="font-size:0.85rem;">Current Month's Expense</div>
-                                    <div class="kpi-number" style="font-size:1.8rem;"><span style="font-size:1.4rem;">₹</span> ${monthlyExpenseAmount != null ? String.format("%,.0f", monthlyExpenseAmount) : "3,20,000"}</div>
+                                    <div class="kpi-number" style="font-size:1.8rem;">
+                                        <span style="font-size:1.4rem;">₹</span>
+                                        ${fmtMonthlyExpenseAmount}
+                                    </div>
                                     <div class="kpi-sub">Total operational expenses this month</div>
                                 </div>
                             </div>
                         </div>
 
-                    </div></div></div></div></main>
+                    </div>
 
-    <%-- fixed bottom footer, same for all pages --%>
+                </div>
+            </div>
+        </div>
+    </main>
+
     <%@ include file="footer.jsp" %>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
-
 </html>

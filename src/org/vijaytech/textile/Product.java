@@ -3,6 +3,7 @@ package org.vijaytech.textile;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Properties;
 
@@ -44,12 +45,13 @@ public class Product extends HttpServlet {
         resp.setCharacterEncoding("UTF-8");
 
         HttpSession session = req.getSession(false);
-        int AD_Org_ID = Integer.parseInt(session.getAttribute("AD_Org_ID").toString());
-        int AD_Client_ID = Integer.parseInt(session.getAttribute("AD_Client_ID").toString());
-        if (session == null || session.getAttribute("ctx") == null) {
+        if (session == null || session.getAttribute("ctx") == null) {  // *** FIXED: null check before use ***
             resp.getWriter().write("{\"error\":\"Session expired\"}");
             return;
         }
+
+        int AD_Org_ID = Integer.parseInt(session.getAttribute("AD_Org_ID").toString());
+        int AD_Client_ID = Integer.parseInt(session.getAttribute("AD_Client_ID").toString());
 
         Properties ctx = (Properties) session.getAttribute("ctx");
         if (ctx == null) ctx = Env.getCtx();
@@ -87,14 +89,15 @@ public class Product extends HttpServlet {
             out.put("categories", jCats);
             out.put("uoms", jUoms);
 
-            System.out.println("product data :"+out);
-            // 🔹 Set attributes to send to JSP
+            System.out.println("product data :" + out);
+
+            // Set attributes to send to JSP
             req.setAttribute("productList", jCats);
             req.setAttribute("uom", jUoms);
             req.setAttribute("orgName", Env.getContext(ctx, "#AD_Org_Name"));
             req.setAttribute("pageTitle", "Sales Dashboard");
 
-            // 🔹 Forward to JSP
+            // Forward to JSP
             RequestDispatcher rd = req.getRequestDispatcher("/pages/product.jsp");
             rd.forward(req, resp);
 
@@ -145,6 +148,8 @@ public class Product extends HttpServlet {
         if (Env.getContextAsInt(ctx, "#M_Warehouse_ID") == 0)
             Env.setContext(ctx, "#M_Warehouse_ID", 1000113);
 
+        int clientId = Env.getAD_Client_ID(ctx);   // *** NEW: use for unique check ***
+
         // AD_Org_ID from session fallback
         int sessionOrg = 0;
         try {
@@ -170,25 +175,47 @@ public class Product extends HttpServlet {
 
             int productId = json.optInt("productId", 0);
 
+            // *** NEW: Read Value & Name early ***
+            String value = json.optString("Value", null);
+            String name = json.optString("Name", null);
+            if ((name == null || name.trim().isEmpty()) && value != null) {
+                name = value;
+            }
+
+            // *** NEW: prevent duplicate product VALUE for new records ***
+            if (productId == 0 && value != null && !value.trim().isEmpty()) {
+                TF_MProduct existing = new Query(ctx, TF_MProduct.Table_Name,
+                        "AD_Client_ID=? AND Value=?", null)
+                        .setParameters(clientId, value.trim())
+                        .first();
+
+                if (existing != null && existing.get_ID() > 0) {
+                    // There is already a product with same Value for this client
+                    JSONObject out = new JSONObject();
+                    out.put("success", false);
+                    out.put("errorCode", "DUPLICATE_VALUE");
+                    out.put("message", "Product code already exists: " + value);
+                    out.put("existingProductId", existing.get_ID());
+                    resp.getWriter().write(out.toString());
+                    return;
+                }
+            }
+
             // Create or load product
             TF_MProduct product = new TF_MProduct(ctx, productId, null);
 
             // If creating new product, set default flags first
             if (productId == 0) {
                 product.setAD_Org_ID(sessionOrg > 0 ? sessionOrg : Env.getAD_Org_ID(ctx));
-           
             }
-            // Map fields: Value and Name (use Name or Value)
-            String value = json.optString("Value", null);
-            String name = json.optString("Name", null);
-            if ((name == null || name.trim().isEmpty()) && value != null) name = value;
 
-            if (value != null) product.setValue(value);
-            if (name != null) product.setName(name);
+            // Map fields: Value and Name
+            if (value != null) product.setValue(value.trim());
+            if (name != null) product.setName(name.trim());
 
             // Always set category and org if provided
             product.setM_Product_Category_ID(categoryID);
-            
+
             int orgFromJson = json.optInt("AD_Org_ID", 0);
             if (orgFromJson > 0) product.setAD_Org_ID(orgFromJson);
             else if (product.getAD_Org_ID() == 0 && sessionOrg > 0) product.setAD_Org_ID(sessionOrg);
@@ -200,10 +227,11 @@ public class Product extends HttpServlet {
                 uom = 1000083; // your default UOM id (adjust as needed)
             }
             product.setC_UOM_ID(uom);
-            
+
             // Optional fields
             if (json.has("Description")) product.setDescription(json.optString("Description", null));
             if (json.has("HSNCode")) product.set_CustomColumn("HSNCode", json.optString("HSNCode", null));
+
             if (json.has("Barcode")) {
                 String bar = json.optString("Barcode", null);
                 if (bar != null && !bar.trim().isEmpty()) {
@@ -211,36 +239,66 @@ public class Product extends HttpServlet {
                     product.setSKU(bar);
                 }
             }
-//            // Price (if provided)
+
+            // BillPrice with proper BigDecimal scale(2)
             if (json.has("BillPrice")) {
                 try {
                     double d = json.optDouble("BillPrice", 0.0);
-                     product.setBillPrice(BigDecimal.valueOf(d));
+                    BigDecimal billPrice = BigDecimal.valueOf(d).setScale(2, RoundingMode.HALF_UP);
+                    product.setBillPrice(billPrice);
                 } catch (Exception e) {
-                  throw new  AdempiereException("Please fill product price !!");
+                    throw new AdempiereException("Please fill product price !!");
                 }
             }
-//            product.s
+
+            // Qty (custom column) with scale(3)
+            if (json.has("Qty")) {
+                try {
+                    double q = json.optDouble("Qty", 0.0);
+                    BigDecimal qty = BigDecimal.valueOf(q).setScale(3, RoundingMode.HALF_UP);
+                    product.set_CustomColumn("Qty", qty);
+                } catch (Exception e) {
+                    throw new AdempiereException("Invalid Qty format!");
+                }
+            }
+
+            // Rate (custom column) with scale(2)
+            if (json.has("Rate")) {
+                try {
+                    double r = json.optDouble("Rate", 0.0);
+                    BigDecimal rate = BigDecimal.valueOf(r).setScale(2, RoundingMode.HALF_UP);
+                    product.set_CustomColumn("Rate", rate);
+                } catch (Exception e) {
+                    throw new AdempiereException("Invalid Rate format!");
+                }
+            }
+
             product.setIsSummary(false);
             product.setProductType(MProduct.PRODUCTTYPE_Item);
             product.setC_TaxCategory_ID(1000000);
             product.setIsStocked(true);
+
             String entryType = json.optString("EntryType", "").trim();
 
-            if(entryType.isEmpty()) {
+            if (entryType.isEmpty()) {
                 resp.getWriter().write("{\"error\":\"Entry Type is required\"}");
                 return;
             }
-            if(entryType.equalsIgnoreCase("Purchase")) {
+            if (entryType.equalsIgnoreCase("Purchase")) {
                 product.setIsPurchased(true);
                 product.setIsSold(false);
             }
 
-            if(entryType.equalsIgnoreCase("Sales")) {
+            if (entryType.equalsIgnoreCase("Sales")) {
                 product.setIsSold(true);
                 product.setIsPurchased(false);
             }
+
+            // WeighmentEnabled always true (Y)
+            product.set_CustomColumn("WeighmentEnabled", Boolean.TRUE);
+
             product.setIsActive(true);
+
             // Save product
             product.saveEx();
 
@@ -254,6 +312,7 @@ public class Product extends HttpServlet {
         } catch (Exception ex) {
             ex.printStackTrace();
             JSONObject err = new JSONObject();
+            err.put("success", false);
             err.put("error", ex.getMessage());
             resp.getWriter().write(err.toString());
         }
