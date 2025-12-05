@@ -103,13 +103,13 @@
 </servlet-mapping>
 
 <servlet>
-    <servlet-name>PurchaseProduct</servlet-name>
-    <servlet-class>org.vijaytech.textile.PurchaseProduct</servlet-class>
+    <servlet-name>Product</servlet-name>
+    <servlet-class>org.vijaytech.textile.Product</servlet-class>
 </servlet>
 
 <servlet-mapping>
-    <servlet-name>PurchaseProduct</servlet-name>
-    <url-pattern>/PurchaseProduct</url-pattern>
+    <servlet-name>Product</servlet-name>
+    <url-pattern>/Product</url-pattern>
 </servlet-mapping>
 <servlet>
     <servlet-name>ProfitAndLossReport</servlet-name>
@@ -137,5 +137,14 @@
 <servlet-mapping>
     <servlet-name>SalesSaveServlet</servlet-name>
     <url-pattern>/SalesSaveServlet</url-pattern>
+</servlet-mapping>
+<servlet>
+    <servlet-name>SingleInvoicePDF</servlet-name>
+    <servlet-class>org.vijaytech.textile.utils.SingleInvoicePDF</servlet-class>
+</servlet>
+
+<servlet-mapping>
+    <servlet-name>SingleInvoicePDF</servlet-name>
+    <url-pattern>/SingleInvoicePDF</url-pattern>
 </servlet-mapping>
 </web-app>

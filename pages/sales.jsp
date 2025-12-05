@@ -387,7 +387,7 @@ $(function(){
 
         $.ajax({
             type: "POST",
-            url: "<%= request.getContextPath() %>/SalesServlet",
+            url: "<%= request.getContextPath() %>/SalesSaveServlet",
             data: JSON.stringify({ salesData: data }),
             contentType: "application/json; charset=utf-8",
             success: function(response) {
@@ -397,8 +397,6 @@ $(function(){
                 if (response.pdfUrl) {
                     // OPEN PDF IN NEW TAB
                     window.open(response.pdfUrl, "_blank");
-                } else {
-                    alert("PDF not generated!");
                 }
             },
             error: function(xhr, status, error) {

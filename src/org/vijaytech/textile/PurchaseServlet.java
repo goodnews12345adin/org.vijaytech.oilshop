@@ -46,7 +46,7 @@ public class PurchaseServlet extends HttpServlet {
 	        try {
 	            // FIX: also filter by client to avoid cross-tenant reads
 	            List<TF_MProduct> prodList = new Query(ctx, TF_MProduct.Table_Name,
-	                    "IsPurchased='Y' AND IsSold ='N' AND AD_Org_ID=?", null)
+	                    "IsPurchased='Y' AND WeighmentEnabled ='Y' AND  isActive ='Y' AND ProductType ='I' AND AD_Org_ID=?", null)
 	                    .setClient_ID() // adds AD_Client filter
 	                    .setParameters(1000000) // your org
 	                    .list();

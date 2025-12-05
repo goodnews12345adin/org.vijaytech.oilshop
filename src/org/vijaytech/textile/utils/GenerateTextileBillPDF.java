@@ -33,7 +33,7 @@ public class GenerateTextileBillPDF {
 	private static final Color COLOR_LIGHT = new Color(255, 235, 215);
 
 	// ✅ Removed invalid generic <COLOR_ACCENT>
-	public static String generate(File pdfFile, int orderId, Properties ctx) throws Exception {
+	public static String generate(File pdfFile, int orderId, String phone, Properties ctx) throws Exception {
 
 		if (pdfFile.getParentFile() != null && !pdfFile.getParentFile().exists()) {
 			pdfFile.getParentFile().mkdirs();
@@ -154,7 +154,7 @@ public class GenerateTextileBillPDF {
 		info.addCell(cell(custName, normal));
 
 		info.addCell(cell("Phone:", bold));
-		info.addCell(cell(custPhone, normal));
+		info.addCell(cell(phone, normal));
 
 		info.addCell(cell("Address:", bold));
 		info.addCell(cell(custAddr, normal));

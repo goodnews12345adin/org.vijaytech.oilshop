@@ -162,7 +162,10 @@ public class SalesServlet extends HttpServlet {
             System.out.println("Name: " + name);
             System.out.println("Address: " + address);
             System.out.println("Phone: " + phone);
-
+if(phone.isEmpty() || phone.isBlank() || phone.equals(null)) {
+	throw new AdempiereException("Please fill Phone Number ");
+	
+}
             // ---- Items ----
             JSONArray items = salesData.getJSONArray("items");
             System.out.println("\nItems:");
@@ -263,7 +266,7 @@ public class SalesServlet extends HttpServlet {
             File pdfFile = new File(invoicesFolder, filename);
 
             // Generate PDF (returns some info - path / URL)
-            String pdfInfo = GenerateTextileBillPDF.generate(pdfFile, ordH.get_ID(), ctx);
+            String pdfInfo = GenerateTextileBillPDF.generate(pdfFile, ordH.get_ID(),phone, ctx);
 
             // determine customer phone to send: try partner phone from order, fallback to posted phone variable
             String phoneToSend = phone;
@@ -290,7 +293,9 @@ public class SalesServlet extends HttpServlet {
                 WhatsAppSender.sendDocument(phoneToSend, pdfInfo, caption);
             } catch (Exception waex) {
                 // log error but do not fail the entire request
+            		
                 waex.printStackTrace();
+                throw new AdempiereException("Whatts App Error");
             }
 
             response.getWriter().write("{\"status\":\"success\"}");

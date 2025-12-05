@@ -113,7 +113,11 @@ public class SalesSaveServlet extends HttpServlet {
         System.out.println("Name: " + name);
         System.out.println("Address: " + address);
         System.out.println("Phone: " + phone);
+        if(phone.isEmpty() || phone.isBlank() || phone.equals(null)) {
 
+        	throw new AdempiereException("Please fill Phone Number ");
+        	
+        }
         // ---- Items ----
         JSONArray items = salesData.getJSONArray("items");
         System.out.println("\nItems:");
@@ -180,6 +184,7 @@ public class SalesSaveServlet extends HttpServlet {
         ordH.setDocAction(MOrder.DOCACTION_Complete);
 
         if (!ordH.processIt(MOrder.DOCACTION_Complete)) {
+        	
             throw new AdempiereException("❌ Could not complete order: " + ordH.getProcessMsg());
         }
         ordH.saveEx();
@@ -199,8 +204,11 @@ public class SalesSaveServlet extends HttpServlet {
 
       
         	try {
-				GenerateTextileBillPDF.generate(pdfFile, ordH.get_ID(), ctx);
+				GenerateTextileBillPDF.generate(pdfFile, ordH.get_ID(),phone, ctx);
 			} catch (Exception e) {
+				JSONObject err = new JSONObject();
+		        err.put("success", false);
+		        err.put("message", e.getMessage());
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}

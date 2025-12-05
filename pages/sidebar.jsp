@@ -43,7 +43,7 @@
       </a>
     </li>
     <li>
-      <a href="${pageContext.request.contextPath}/PurchaseProduct" class="nav-link text-white">
+      <a href="${pageContext.request.contextPath}/Product" class="nav-link text-white">
         <i class="bi bi-box-seam me-2"></i> Products
       </a>
     </li>
@@ -68,7 +68,7 @@
 <%--             <a href="${pageContext.request.contextPath}/PrintPurchaseReportServlet" class="nav-link text-white small">Sales Report</a>
  --%>          </li>
           <li class="nav-item">
-            <a href="${pageContext.request.contextPath}/pages/purchaseReport.jsp" class="nav-link text-white small">Purchase Report</a>
+            <a href="${pageContext.request.contextPath}/PrintPurchaseReportServlet" class="nav-link text-white small">Purchase Report</a>
           </li>
           <li class="nav-item">
             <a href="${pageContext.request.contextPath}/ProfitAndLossReport" class="nav-link text-white small">Profit-Loss Report</a>

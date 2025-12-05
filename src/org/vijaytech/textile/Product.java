@@ -24,7 +24,7 @@ import org.json.JSONObject;
 import org.syvasoft.tallyfrontcrusher.model.TF_MProduct;
 import org.syvasoft.tallyfrontcrusher.model.TF_MProductCategory;
 
-public class PurchaseProduct extends HttpServlet {
+public class Product extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
 

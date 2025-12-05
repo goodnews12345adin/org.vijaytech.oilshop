@@ -249,7 +249,7 @@ document.getElementById('productForm').addEventListener('submit', function(e) {
     console.log("Submitting Payload:", payload);
 
     $.ajax({
-        url: "<%= request.getContextPath() %>/PurchaseProduct",
+        url: "<%= request.getContextPath() %>/Product",
         type: "POST",
         data: JSON.stringify(payload),
         contentType: "application/json; charset=utf-8",
