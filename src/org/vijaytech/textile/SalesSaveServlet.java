@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URLEncoder;
@@ -59,14 +60,16 @@ public class SalesSaveServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
     private Gson gson = new Gson();
-
+    
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
         resp.setContentType("application/json");
+        resp.setCharacterEncoding("UTF-8");
         HttpSession session = req.getSession(false);
-
+        PrintWriter out = resp.getWriter();
+        	try {
         // 🔒 Check login/session
         if (session == null || session.getAttribute("ctx") == null) {
             resp.sendRedirect(req.getContextPath() + "/userlogin.jsp?error=session_expired");
@@ -114,7 +117,9 @@ public class SalesSaveServlet extends HttpServlet {
         System.out.println("Address: " + address);
         System.out.println("Phone: " + phone);
         if(phone.isEmpty() || phone.isBlank() || phone.equals(null)) {
-
+        	JSONObject err = new JSONObject();
+	        err.put("error", true);
+	        err.put("massage", "Please fill Phone Number ");
         	throw new AdempiereException("Please fill Phone Number ");
         	
         }
@@ -206,9 +211,7 @@ public class SalesSaveServlet extends HttpServlet {
         	try {
 				GenerateTextileBillPDF.generate(pdfFile, ordH.get_ID(),phone, ctx);
 			} catch (Exception e) {
-				JSONObject err = new JSONObject();
-		        err.put("success", false);
-		        err.put("message", e.getMessage());
+				 out.write("{\"status\":\"error\",\"message\":\"" + e.getMessage() + "\"}");
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
@@ -220,8 +223,13 @@ public class SalesSaveServlet extends HttpServlet {
 
         resp.setContentType("application/json");
         resp.getWriter().write("{\"pdfUrl\":\"" + pdfUrl + "\"}");
+        out.write("{\"status\":\"success\",\"message\":\"Saved successfully\"}");
+        	}catch(Exception e) {
+        		out.write("{\"status\":\"error\",\"message\":\"" + e.getMessage() + "\"}");
+		        e.printStackTrace();
+        	}
     }
-
+        	
     // ---------------------------------------------------------------------
     // 🔵 PDF GENERATOR (OpenPDF)
     // ---------------------------------------------------------------------

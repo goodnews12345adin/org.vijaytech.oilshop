@@ -4,31 +4,85 @@ import java.awt.Color;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import java.sql.*;
 
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.*;
 
 import org.compiere.util.DB;
 
-import com.lowagie.text.Document;
-import com.lowagie.text.Element;
-import com.lowagie.text.Font;
-import com.lowagie.text.PageSize;
-import com.lowagie.text.Paragraph;
-import com.lowagie.text.pdf.PdfPCell;
-import com.lowagie.text.pdf.PdfPTable;
-import com.lowagie.text.pdf.PdfWriter;
+import com.lowagie.text.*;
+import com.lowagie.text.pdf.*;
 
 public class SingleInvoicePDF extends HttpServlet {
 
-	private String safe(BigDecimal bd) {
-        return (bd == null) ? " " : bd.toPlainString();
+    /* =========================================================
+       Utilities
+       ========================================================= */
+
+    private String safe(BigDecimal bd) {
+        return (bd == null) ? "" : bd.toPlainString();
     }
+
+    private PdfPCell headerCell(String text) {
+        Font f = new Font(Font.HELVETICA, 10, Font.BOLD, Color.WHITE);
+        PdfPCell c = new PdfPCell(new Phrase(text, f));
+        c.setHorizontalAlignment(Element.ALIGN_CENTER);
+        c.setBackgroundColor(new Color(40, 55, 90));
+        c.setPadding(6);
+        return c;
+    }
+
+    private PdfPCell right(BigDecimal v) {
+        PdfPCell c = new PdfPCell(new Phrase(safe(v)));
+        c.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        c.setPadding(6);
+        return c;
+    }
+
+    private void addSummaryRow(PdfPTable table, String label, BigDecimal value, Font font) {
+        PdfPCell c1 = new PdfPCell(new Phrase(label, font));
+        c1.setColspan(5);
+        c1.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        c1.setBorder(Rectangle.NO_BORDER);
+        c1.setPadding(5);
+
+        PdfPCell c2 = new PdfPCell(new Phrase("₹ " + safe(value), font));
+        c2.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        c2.setBorder(Rectangle.NO_BORDER);
+        c2.setPadding(5);
+
+        table.addCell(c1);
+        table.addCell(c2);
+    }
+
+    /* =========================================================
+       SMALL WATERMARK
+       ========================================================= */
+
+    class Watermark extends PdfPageEventHelper {
+        Font wmFont = new Font(Font.HELVETICA, 38, Font.BOLD, new Color(235, 235, 235));
+
+        @Override
+        public void onEndPage(PdfWriter writer, Document document) {
+            PdfContentByte canvas = writer.getDirectContentUnder();
+
+            Phrase watermark = new Phrase("HAPPY LADY FASHION", wmFont);
+
+            ColumnText.showTextAligned(
+                canvas,
+                Element.ALIGN_CENTER,
+                watermark,
+                document.getPageSize().getWidth() / 2,
+                document.getPageSize().getHeight() / 2,
+                40
+            );
+        }
+    }
+
+    /* =========================================================
+       MAIN SERVLET
+       ========================================================= */
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -36,214 +90,231 @@ public class SingleInvoicePDF extends HttpServlet {
 
         String doc = req.getParameter("docNo");
         if (doc == null || doc.trim().isEmpty()) {
-            resp.getWriter().write("DocumentNo is missing");
+            resp.getWriter().write("DocumentNo missing");
             return;
         }
         doc = java.net.URLDecoder.decode(doc, "UTF-8");
 
-        // -----------------------------
-        // Main SQL (without GST columns)
-        // -----------------------------
-        String sql = "SELECT i.DateInvoiced, i.DocumentNo, bp.Name AS BPartner, "
-                + "p.Name AS Product, il.QtyInvoiced, il.PriceActual, il.LineNetAmt "
-                + "FROM C_Invoice i "
-                + "JOIN C_InvoiceLine il ON i.C_Invoice_ID = il.C_Invoice_ID "
-                + "LEFT JOIN C_BPartner bp ON i.C_BPartner_ID = bp.C_BPartner_ID "
-                + "LEFT JOIN M_Product p ON il.M_Product_ID = p.M_Product_ID "
-                + "WHERE i.DocumentNo=?";
+        /* ---------------- SQL ----------------*/
 
+        String typeSql = "SELECT IsSOTrx FROM C_Invoice WHERE DocumentNo=?";
 
-        Document pdf = new Document(PageSize.A4.rotate(), 20, 20, 30, 30);
+        String sql =
+            "SELECT i.DateInvoiced, i.DocumentNo, bp.Name AS PartnerName, " +
+            "p.Name AS Product, p.HSNCode, " +
+            "il.QtyInvoiced, il.PriceActual, il.LineNetAmt " +
+            "FROM C_Invoice i " +
+            "JOIN C_InvoiceLine il ON i.C_Invoice_ID = il.C_Invoice_ID " +
+            "LEFT JOIN C_BPartner bp ON i.C_BPartner_ID = bp.C_BPartner_ID " +
+            "LEFT JOIN M_Product p ON il.M_Product_ID = p.M_Product_ID " +
+            "WHERE i.DocumentNo=?";
+
+        Document pdf = new Document(PageSize.A4, 30, 30, 30, 30);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         try {
-            PdfWriter.getInstance(pdf, baos);
+
+            PdfWriter writer = PdfWriter.getInstance(pdf, baos);
+            writer.setPageEvent(new Watermark());
             pdf.open();
 
-            // --------------------------
-            // HEADER SECTION
-          //  --------------------------
-            Paragraph header = new Paragraph("Happy Lady",
-                    new Font(Font.HELVETICA, 20, Font.BOLD));
-            header.setAlignment(Element.ALIGN_CENTER);
-            pdf.add(header);
-
-            Paragraph title = new Paragraph("Invoice Report",
-                    new Font(Font.HELVETICA, 14, Font.BOLD));
-            title.setAlignment(Element.ALIGN_CENTER);
-            pdf.add(title);
-
-            pdf.add(new Paragraph("Document No: " + doc));
-            pdf.add(new Paragraph("Generated On: " + new java.util.Date()));
-            pdf.add(new Paragraph(" "));
-
-            // --------------------------
-            // TABLE (ITEM DETAILS)
-            // --------------------------
-            PdfPTable table = new PdfPTable(new float[]{
-                    2, 2, 3, 3, 2, 2, 2,
-                    1.5f, 1.5f, 1.5f, 1.5f,
-                    1.5f, 1.5f
-            });
-            table.setWidthPercentage(100);
-
-            String[] cols = {
-                    "Date", "Doc No", "BPartner", "Product",
-                    "Qty", "Price", "Amount",
-                    "CGST%", "CGST Amt",
-                    "SGST%", "SGST Amt",
-                    "IGST%", "IGST Amt"
-            };
-            for (String c : cols) table.addCell(headerCell(c));
-
-            BigDecimal taxable = BigDecimal.ZERO;
-            BigDecimal totalCGST = BigDecimal.ZERO;
-            BigDecimal totalSGST = BigDecimal.ZERO;
-            BigDecimal totalIGST = BigDecimal.ZERO;
-            BigDecimal totalQty = BigDecimal.ZERO;
-            BigDecimal totalAmt = BigDecimal.ZERO;
-
             Connection conn = DB.getConnectionRW();
-            PreparedStatement ps = conn.prepareStatement(sql);
+
+            /* ----------------------------------------------------
+               Detect Sales / Purchase
+               ---------------------------------------------------- */
+            PreparedStatement ps = conn.prepareStatement(typeSql);
             ps.setString(1, doc);
             ResultSet rs = ps.executeQuery();
 
+            String invoiceType = "SALES";
+            if (rs.next()) {
+                invoiceType = rs.getString("IsSOTrx").equals("Y") ? "SALES" : "PURCHASE";
+            }
+
+            /* ----------------------------------------------------
+               Header
+               ---------------------------------------------------- */
+            Font fTitle = new Font(Font.HELVETICA, 20, Font.BOLD);
+            Font fSub   = new Font(Font.HELVETICA, 14, Font.BOLD);
+            Font fBold  = new Font(Font.HELVETICA, 10, Font.BOLD);
+            Font fText  = new Font(Font.HELVETICA, 10);
+
+            Paragraph comp = new Paragraph("HAPPY LADY FASHION", fTitle);
+            comp.setAlignment(Element.ALIGN_CENTER);
+            pdf.add(comp);
+
+            Paragraph inv = new Paragraph(
+                invoiceType.equals("SALES") ? "SALES INVOICE" : "PURCHASE INVOICE",
+                fSub
+            );
+            inv.setAlignment(Element.ALIGN_CENTER);
+            pdf.add(inv);
+
+            pdf.add(new Paragraph("Invoice No : " + doc, fText));
+            pdf.add(new Paragraph("Date       : " + new java.util.Date(), fText));
+            pdf.add(new Paragraph(" "));
+
+            /* ----------------------------------------------------
+               Load all rows first (forward-only safe)
+               ---------------------------------------------------- */
+            ps = conn.prepareStatement(sql);
+            ps.setString(1, doc);
+            rs = ps.executeQuery();
+
+            java.util.List<Object[]> items = new java.util.ArrayList<>();
+            String partner = "";
+
+            boolean firstRow = true;
+
             while (rs.next()) {
 
-                String product = rs.getString("Product");
-                BigDecimal qty = rs.getBigDecimal("QtyInvoiced");
-                BigDecimal price = rs.getBigDecimal("PriceActual");
-                BigDecimal amt = rs.getBigDecimal("LineNetAmt");
-
-                totalQty = totalQty.add(qty);
-                totalAmt = totalAmt.add(amt);
-                taxable = taxable.add(amt);
-
-                // -----------------------------
-                // SAFELY FETCH GST VALUES
-                // -----------------------------
-                BigDecimal cgst = BigDecimal.ZERO, cgstAmt = BigDecimal.ZERO;
-                BigDecimal sgst = BigDecimal.ZERO, sgstAmt = BigDecimal.ZERO;
-                BigDecimal igst = BigDecimal.ZERO, igstAmt = BigDecimal.ZERO;
-
-                try {
-                    String gstSql = "SELECT CGST, CGST_Amt, SGST, SGST_Amt, IGST, IGST_Amt "
-                            + "FROM C_InvoiceLine WHERE Product = ? LIMIT 1";
-                    PreparedStatement gstPS = conn.prepareStatement(gstSql);
-                    gstPS.setString(1, product);
-                    ResultSet gstRS = gstPS.executeQuery();
-
-                    if (gstRS.next()) {
-                        cgst = gstRS.getBigDecimal("CGST");
-                        cgstAmt = gstRS.getBigDecimal("CGST_Amt");
-                        sgst = gstRS.getBigDecimal("SGST");
-                        sgstAmt = gstRS.getBigDecimal("SGST_Amt");
-                        igst = gstRS.getBigDecimal("IGST");
-                        igstAmt = gstRS.getBigDecimal("IGST_Amt");
-                    }
-                } catch (Exception ignore) {
-                    // No GST columns → keep blank
+                if (firstRow) {
+                    partner = rs.getString("PartnerName");
+                    firstRow = false;
                 }
 
-                totalCGST = totalCGST.add(cgstAmt);
-                totalSGST = totalSGST.add(sgstAmt);
-                totalIGST = totalIGST.add(igstAmt);
-
-                // --------------------------
-                // ADD TABLE ROW
-                // --------------------------
-                table.addCell(rs.getTimestamp("DateInvoiced").toString());
-                table.addCell(rs.getString("DocumentNo"));
-                table.addCell(rs.getString("BPartner"));
-                table.addCell(product);
-                table.addCell(rightCell(qty));
-                table.addCell(rightCell(price));
-                table.addCell(rightCell(amt));
-
-                table.addCell(safe(cgst));
-                table.addCell(safe(cgstAmt));
-                table.addCell(safe(sgst));
-                table.addCell(safe(sgstAmt));
-                table.addCell(safe(igst));
-                table.addCell(safe(igstAmt));
+                items.add(new Object[]{
+                    rs.getString("Product"),
+                    rs.getString("HSNCode"),
+                    rs.getBigDecimal("QtyInvoiced"),
+                    rs.getBigDecimal("PriceActual"),
+                    rs.getBigDecimal("LineNetAmt")
+                });
             }
+
+            /* ----------------------------------------------------
+               Customer / Vendor box
+               ---------------------------------------------------- */
+            pdf.add(new Paragraph(
+                invoiceType.equals("SALES") ? "Bill To:" : "Vendor:",
+                fBold
+            ));
+            pdf.add(new Paragraph(partner, fText));
+            pdf.add(new Paragraph(" "));
+
+            /* ----------------------------------------------------
+               TALLY STYLE: Single complete table
+               ---------------------------------------------------- */
+
+            PdfPTable table = new PdfPTable(new float[]{0.8f, 4f, 1.2f, 1.2f, 1.4f, 1.8f});
+            table.setWidthPercentage(100);
+
+            table.addCell(headerCell("S.No"));
+            table.addCell(headerCell("Product"));
+            table.addCell(headerCell("HSN"));
+            table.addCell(headerCell("Qty"));
+            table.addCell(headerCell("Rate"));
+            table.addCell(headerCell("Amount"));
+
+            int serial = 1;
+            BigDecimal subtotal = BigDecimal.ZERO;
+
+            for (Object[] row : items) {
+
+                String product = (String) row[0];
+                String hsn     = (String) row[1];
+                BigDecimal qty = (BigDecimal) row[2];
+                BigDecimal rate= (BigDecimal) row[3];
+                BigDecimal amt = (BigDecimal) row[4];
+
+                subtotal = subtotal.add(amt);
+
+                PdfPCell sno = new PdfPCell(new Phrase("" + serial++));
+                sno.setHorizontalAlignment(Element.ALIGN_CENTER);
+                sno.setPadding(6);
+
+                table.addCell(sno);
+                table.addCell(product);
+                table.addCell(hsn == null ? "" : hsn);
+                table.addCell(right(qty));
+                table.addCell(right(rate));
+                table.addCell(right(amt));
+            }
+
+            /* ---------- Separator row ---------- */
+            PdfPCell sep = new PdfPCell(new Phrase(" "));
+            sep.setColspan(6);
+            sep.setBorder(Rectangle.TOP);
+            sep.setPadding(4);
+            table.addCell(sep);
+
+            /* ---------- SUMMARY SECTION (TALLY STYLE) ---------- */
+
+            Font totalFont = new Font(Font.HELVETICA, 10, Font.BOLD);
+            Font grandFont = new Font(Font.HELVETICA, 12, Font.BOLD);
+
+            BigDecimal discount = BigDecimal.ZERO;
+            BigDecimal taxableValue = subtotal.subtract(discount);
+
+            // GST Calculations
+            BigDecimal cgstAmt = taxableValue.multiply(new BigDecimal("0.09"));
+            BigDecimal sgstAmt = taxableValue.multiply(new BigDecimal("0.09"));
+            BigDecimal igstAmt = taxableValue.multiply(BigDecimal.ZERO);
+            BigDecimal totalGST = cgstAmt.add(sgstAmt).add(igstAmt);
+
+            addSummaryRow(table, "Subtotal", subtotal, totalFont);
+            addSummaryRow(table, "Discount", discount, totalFont);
+            addSummaryRow(table, "Taxable Value", taxableValue, totalFont);
+            addSummaryRow(table, "CGST 9%", cgstAmt, totalFont);
+            addSummaryRow(table, "SGST 9%", sgstAmt, totalFont);
+            addSummaryRow(table, "IGST 18%", igstAmt, totalFont);
+            addSummaryRow(table, "Total GST", totalGST, totalFont);
+
+            // GRAND TOTAL (Double border)
+            PdfPCell gt1 = new PdfPCell(new Phrase("GRAND TOTAL", grandFont));
+            gt1.setColspan(5);
+            gt1.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            gt1.setBorder(Rectangle.TOP | Rectangle.BOTTOM);
+            gt1.setPadding(8);
+
+            BigDecimal grandTotal = taxableValue.add(totalGST);
+            PdfPCell gt2 = new PdfPCell(new Phrase("₹ " + safe(grandTotal), grandFont));
+            gt2.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            gt2.setBorder(Rectangle.TOP | Rectangle.BOTTOM);
+            gt2.setPadding(8);
+
+            table.addCell(gt1);
+            table.addCell(gt2);
 
             pdf.add(table);
 
-            // --------------------------
-            // GST SUMMARY
-            // --------------------------
-            pdf.add(new Paragraph("\nGST Summary",
-                    new Font(Font.HELVETICA, 14, Font.BOLD)));
+            /* ----------------------------------------------------
+               Signature Section
+               ---------------------------------------------------- */
 
-            PdfPTable gst = new PdfPTable(new float[]{3, 2, 3, 3});
-            gst.setWidthPercentage(70);
+            pdf.add(new Paragraph("\n"));
+            PdfPTable sign = new PdfPTable(2);
+            sign.setWidthPercentage(100);
 
-            gst.addCell(headerCell("Type"));
-            gst.addCell(headerCell("Rate%"));
-            gst.addCell(headerCell("Taxable"));
-            gst.addCell(headerCell("Amount"));
+            PdfPCell s1 = new PdfPCell(new Phrase("Customer Signature", fText));
+            PdfPCell s2 = new PdfPCell(new Phrase("Authorized Signature", fText));
 
-            gst.addCell("CGST");
-            gst.addCell(calcRate(totalCGST, taxable));
-            gst.addCell(safe(taxable));
-            gst.addCell(safe(totalCGST));
+            s1.setBorder(Rectangle.NO_BORDER);
+            s2.setBorder(Rectangle.NO_BORDER);
 
-            gst.addCell("SGST");
-            gst.addCell(calcRate(totalSGST, taxable));
-            gst.addCell(safe(taxable));
-            gst.addCell(safe(totalSGST));
+            sign.addCell(s1);
+            sign.addCell(s2);
 
-            gst.addCell("IGST");
-            gst.addCell(calcRate(totalIGST, taxable));
-            gst.addCell(safe(taxable));
-            gst.addCell(safe(totalIGST));
+            pdf.add(sign);
 
-            pdf.add(gst);
-
-            // FOOTER
-            pdf.add(new Paragraph("\nThis is a system-generated invoice PDF.",
-                    new Font(Font.COURIER, 8)));
+            /* ----------------------------------------------------
+               Write Output
+               ---------------------------------------------------- */
 
             pdf.close();
 
             resp.setContentType("application/pdf");
             resp.setHeader("Content-Disposition",
-                    "attachment; filename=" + doc.replace("/", "_") + "_Invoice.pdf");
+                "attachment; filename=" +
+                doc.replace("/", "_") +
+                (invoiceType.equals("SALES") ? "_Sales.pdf" : "_Purchase.pdf"));
 
             baos.writeTo(resp.getOutputStream());
 
         } catch (Exception e) {
             e.printStackTrace();
-            resp.getWriter().write("Error generating PDF: " + e.getMessage());
-        }
-    }
-
-    private PdfPCell headerCell(String t) {
-        PdfPCell c = new PdfPCell(new Paragraph(t,
-                new Font(Font.HELVETICA, 10, Font.BOLD)));
-        c.setHorizontalAlignment(Element.ALIGN_CENTER);
-        c.setBackgroundColor(new Color(230, 230, 230));
-        c.setPadding(4);
-        return c;
-    }
-
-    private PdfPCell rightCell(BigDecimal v) {
-        PdfPCell c = new PdfPCell(new Paragraph(safe(v)));
-        c.setHorizontalAlignment(Element.ALIGN_RIGHT);
-        c.setPadding(4);
-        return c;
-    }
-
-    private String calcRate(BigDecimal tax, BigDecimal taxable) {
-        try {
-            if (tax == null || tax.compareTo(BigDecimal.ZERO) == 0) return " ";
-            if (taxable == null || taxable.compareTo(BigDecimal.ZERO) == 0) return " ";
-            return tax.multiply(BigDecimal.valueOf(100))
-                    .divide(taxable, 2, BigDecimal.ROUND_HALF_UP)
-                    .toPlainString();
-        } catch (Exception e) {
-            return " ";
+            resp.getWriter().write("PDF ERROR: " + e.getMessage());
         }
     }
 }

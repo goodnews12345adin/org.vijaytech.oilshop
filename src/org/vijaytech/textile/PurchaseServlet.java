@@ -173,7 +173,7 @@ public class PurchaseServlet extends HttpServlet {
 
                 // Load the product via PriceListUOM entry (tenant-safe)
                 TF_MProduct priceList = new Query(ctx, TF_MProduct.Table_Name,
-                        "IsSold='N' AND M_Product_ID=?", trxName)
+                        " M_Product_ID=?", trxName)
                         .setClient_ID()
                         .setParameters(prodId)
                         .firstOnly();

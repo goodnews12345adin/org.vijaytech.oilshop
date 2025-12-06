@@ -113,7 +113,7 @@ body { background-color: #f9fafb; font-family: "Inter", "Roboto", sans-serif; }
                             String rate  = (p.get("rate")  != null) ? p.get("rate").toString() : "0";
                             String uom   = (p.get("uom")   != null) ? p.get("uom").toString()  : "";
                             String prodId= (p.get("prodId")!= null) ? p.get("prodId").toString(): "0";
-                            String search= (p.get("search")!= null) ? p.get("search").toString(): "";
+                            String search= (p.get("value")!= null) ? p.get("value").toString(): "";
                     %>
                     <option 
                         value="<%= name %>|<%= rate %>|<%= uom %>"
@@ -173,10 +173,11 @@ body { background-color: #f9fafb; font-family: "Inter", "Roboto", sans-serif; }
 <div id="loader">
     <div>Please wait... Processing</div>
 </div>
-
+<div id="alertBox"></div>
 </div> 
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
@@ -193,12 +194,17 @@ $(function(){
         dropdownCssClass: "select2-dropdown-full-width",
         matcher: function(params, data) {
             if (!params.term) return data;
-            let term  = params.term.toLowerCase();
-            let text  = (data.text || "").toLowerCase();
-            let sKey  = ($(data.element).data("search") || "").toLowerCase();
-            if (text.includes(term) || sKey.includes(term)) return data;
+
+            let term = String(params.term).toLowerCase();   // term may be number
+            let text = String(data.text || "").toLowerCase();
+            let sKey = String($(data.element).data("search") || "").toLowerCase();
+
+            if (text.includes(term) || sKey.includes(term)) {
+                return data;
+            }
             return null;
         }
+
     });
 
     // ======================================================
@@ -357,12 +363,23 @@ $(function(){
         // Reset dropdown selection
         $(this).val("").trigger("change");
     });
+    
+    function showAlert(type, message) {
+        let alertHTML =
+            '<div class="alert alert-' + type + ' alert-dismissible fade show" role="alert">' +
+                message +
+                '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+            '</div>';
+        $("#alertBox").html(alertHTML);
+    }
+
+
 
     /**
      * Sends the invoice data via AJAX to the SalesSaveServlet.
      */
     $("#send-btn").click(function(){
-
+	$("#loader").show();
         const data = {
             discount: parseFloat($("#discount").val()) || 0,
             subtotal: $("#subtotal").text(),
@@ -391,16 +408,22 @@ $(function(){
             data: JSON.stringify({ salesData: data }),
             contentType: "application/json; charset=utf-8",
             success: function(response) {
-
+            	 if (response.status === "error") {
+            		 alert(response.message);
+            		 $("#loader").hide();
+                     return;
+                 }
                 console.log("Server Response:", response);
 
                 if (response.pdfUrl) {
                     // OPEN PDF IN NEW TAB
                     window.open(response.pdfUrl, "_blank");
                 }
+                $("#loader").hide();
             },
             error: function(xhr, status, error) {
-                alert("Error saving sales: " + xhr.responseText);
+            	alert(response.message);
+            	 $("#loader").hide();
                 console.error(error);
             }
         });

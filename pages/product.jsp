@@ -44,15 +44,15 @@
 
 <div class="card main-content">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3><%= request.getAttribute("orgName") != null ? request.getAttribute("orgName") : "Organization" %> - Product</h3>
-        <button class="btn btn-primary" id="newBtn">New Product</button>
+        <h3><%= request.getAttribute("orgName") != null ? request.getAttribute("orgName") : "Organization" %> </h3>
+        <!-- <button class="btn btn-primary" id="newBtn">New Product</button> -->
     </div>
 
     <div id="alert" style="display:none" class="alert"></div>
 
     
         <div class="card form-container">
-            <div class="card-header">Create / Edit Product</div>
+            <div class="card-header">Create Product</div>
             <div class="card-body">
 
                 <form id="productForm">
@@ -60,7 +60,7 @@
 
                     <div class="row">
                         <div class="mb-2 col-md-6">
-                            <label class="form-label" for="Value">Value (Code)</label>
+                            <label class="form-label" for="Value">Search key</label>
                             <input class="form-control" id="Value" required>
                         </div>
 
@@ -100,10 +100,6 @@
                         <div class="col-md-4">
                             <label class="form-label" for="HSNCode">HSN Code</label>
                             <input id="HSNCode" class="form-control">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label" for="Barcode">Barcode / SKU</label>
-                            <input id="Barcode" class="form-control">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label" for="BillPrice">Bill Price</label>
