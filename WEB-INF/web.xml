@@ -129,14 +129,6 @@
     <servlet-name>InvoicePDFServlet</servlet-name>
     <url-pattern>/InvoicePDFServlet</url-pattern>
 </servlet-mapping>
-<servlet>
-    <servlet-name>DashboardServlet</servlet-name>
-    <servlet-class>org.vijaytech.textile.DashboardServlet</servlet-class>
-</servlet>
-<servlet-mapping>
-    <servlet-name>DashboardServlet</servlet-name>
-    <url-pattern>/dashboard</url-pattern>
-</servlet-mapping>
 
 <servlet>
     <servlet-name>SalesSaveServlet</servlet-name>

@@ -7,6 +7,7 @@ encoding//pages/loginpage.jsp=UTF-8
 encoding//pages/textileBill.jsp=UTF-8
 encoding//src/org/vijaytech/textile/Product.java=UTF-8
 encoding//src/org/vijaytech/textile/ProductCategory.java=UTF-8
+encoding//src/org/vijaytech/textile/PurchaseServlet.java=UTF-8
 encoding//src/org/vijaytech/textile/SalesSaveServlet.java=UTF-8
 encoding//src/org/vijaytech/textile/SalesServlet.java=UTF-8
 encoding//src/org/vijaytech/textile/utils/GenerateTextileBillPDF.java=UTF-8
