@@ -7,211 +7,89 @@
 <fmt:setLocale value="en_IN" />
 
 <%
-    // ========= Get Client & Org from iDempiere Context =========
     int AD_Client_ID = Env.getAD_Client_ID(Env.getCtx());
     int AD_Org_ID    = Env.getAD_Org_ID(Env.getCtx());
 
-    // Fallback (avoid 0 -> no data)
-    if (AD_Client_ID == 0) AD_Client_ID = 1000000;   // change to your client
-    if (AD_Org_ID == 0)    AD_Org_ID    = 1000000;   // change to your org
+    if (AD_Client_ID == 0) AD_Client_ID = 1000000;
+    if (AD_Org_ID == 0)    AD_Org_ID    = 1000000;
 
-    // ========= KPI Variables =========
-    long   todaySalesCount       = 0L;
-    long   todayPurchaseCount    = 0L;
-    long   weeklySalesCount      = 0L;
-    long   weeklyPurchaseCount   = 0L;
-    long   monthlySalesCount     = 0L;
-    long   monthlyPurchaseCount  = 0L;
+    long todaySalesCount = 0L, todayPurchaseCount = 0L;
+    long weeklySalesCount = 0L, weeklyPurchaseCount = 0L;
+    long monthlySalesCount = 0L, monthlyPurchaseCount = 0L;
 
-    double todaySalesAmount      = 0.0;
-    double todayPurchaseAmount   = 0.0;
-    double weeklySalesAmount     = 0.0;
-    double weeklyPurchaseAmount  = 0.0;
-    double monthlySalesAmount    = 0.0;
-    double monthlyPurchaseAmount = 0.0;
+    double todaySalesAmount = 0, todayPurchaseAmount = 0;
+    double weeklySalesAmount = 0, weeklyPurchaseAmount = 0;
+    double monthlySalesAmount = 0, monthlyPurchaseAmount = 0;
 
-    double todayExpenseAmount    = 0.0;
-    double weeklyExpenseAmount   = 0.0;
-    double monthlyExpenseAmount  = 0.0;
+    double todayExpenseAmount = 0, weeklyExpenseAmount = 0, monthlyExpenseAmount = 0;
 
     try {
-        // ========= Base filters (C_Order) =========
-        // Sales = IsSOTrx = 'Y'
+
         String baseSales =
-            " FROM C_Order " +
-            "WHERE IsActive='Y' " +
-            "AND IsSOTrx='Y' " +
-            "AND DocStatus='CO' " +
-            "AND AD_Client_ID=" + AD_Client_ID +
-            " AND AD_Org_ID=" + AD_Org_ID + " ";
+        " FROM C_Order WHERE IsActive='Y' AND IsSOTrx='Y' AND DocStatus='CO' " +
+        "AND AD_Client_ID=" + AD_Client_ID + " AND AD_Org_ID=" + AD_Org_ID + " ";
 
-        // Purchase = IsSOTrx = 'N'
         String basePurchase =
-            " FROM C_Order " +
-            "WHERE IsActive='Y' " +
-            "AND IsSOTrx='N' " +
-            "AND DocStatus='CO' " +
-            "AND AD_Client_ID=" + AD_Client_ID +
-            " AND AD_Org_ID=" + AD_Org_ID + " ";
+        " FROM C_Order WHERE IsActive='Y' AND IsSOTrx='N' AND DocStatus='CO' " +
+        "AND AD_Client_ID=" + AD_Client_ID + " AND AD_Org_ID=" + AD_Org_ID + " ";
 
-        // ========= COUNT QUERIES =========
-        String SQL_TODAY_SALES_COUNT =
+        todaySalesCount = DB.getSQLValue(null,
+            "SELECT COUNT(*) " + baseSales + "AND DateOrdered::date = CURRENT_DATE");
+
+        todayPurchaseCount = DB.getSQLValue(null,
+            "SELECT COUNT(*) " + basePurchase + "AND DateOrdered::date = CURRENT_DATE");
+
+        weeklySalesCount = DB.getSQLValue(null,
             "SELECT COUNT(*) " + baseSales +
-            "AND DateOrdered::date = CURRENT_DATE";
+            "AND date_trunc('week', DateOrdered)=date_trunc('week',CURRENT_DATE)");
 
-        String SQL_TODAY_PURCHASE_COUNT =
+        weeklyPurchaseCount = DB.getSQLValue(null,
             "SELECT COUNT(*) " + basePurchase +
-            "AND DateOrdered::date = CURRENT_DATE";
+            "AND date_trunc('week', DateOrdered)=date_trunc('week',CURRENT_DATE)");
 
-        String SQL_WEEKLY_SALES_COUNT =
+        monthlySalesCount = DB.getSQLValue(null,
             "SELECT COUNT(*) " + baseSales +
-            "AND date_trunc('week', DateOrdered) = date_trunc('week', CURRENT_DATE)";
+            "AND date_trunc('month', DateOrdered)=date_trunc('month',CURRENT_DATE)");
 
-        String SQL_WEEKLY_PURCHASE_COUNT =
+        monthlyPurchaseCount = DB.getSQLValue(null,
             "SELECT COUNT(*) " + basePurchase +
-            "AND date_trunc('week', DateOrdered) = date_trunc('week', CURRENT_DATE)";
+            "AND date_trunc('month', DateOrdered)=date_trunc('month',CURRENT_DATE)");
 
-        String SQL_MONTHLY_SALES_COUNT =
-            "SELECT COUNT(*) " + baseSales +
-            "AND date_trunc('month', DateOrdered) = date_trunc('month', CURRENT_DATE)";
-
-        String SQL_MONTHLY_PURCHASE_COUNT =
-            "SELECT COUNT(*) " + basePurchase +
-            "AND date_trunc('month', DateOrdered) = date_trunc('month', CURRENT_DATE)";
-
-        // ========= AMOUNT QUERIES (Sales/Purchase) =========
-        String SQL_TODAY_SALES_AMOUNT =
+        todaySalesAmount = DB.getSQLValueBD(null,
             "SELECT COALESCE(SUM(GrandTotal),0) " + baseSales +
-            "AND DateOrdered::date = CURRENT_DATE";
+            "AND DateOrdered::date = CURRENT_DATE").doubleValue();
 
-        String SQL_TODAY_PURCHASE_AMOUNT =
+        todayPurchaseAmount = DB.getSQLValueBD(null,
             "SELECT COALESCE(SUM(GrandTotal),0) " + basePurchase +
-            "AND DateOrdered::date = CURRENT_DATE";
+            "AND DateOrdered::date = CURRENT_DATE").doubleValue();
 
-        String SQL_WEEKLY_SALES_AMOUNT =
+        weeklySalesAmount = DB.getSQLValueBD(null,
             "SELECT COALESCE(SUM(GrandTotal),0) " + baseSales +
-            "AND date_trunc('week', DateOrdered) = date_trunc('week', CURRENT_DATE)";
+            "AND date_trunc('week', DateOrdered)=date_trunc('week',CURRENT_DATE)").doubleValue();
 
-        String SQL_WEEKLY_PURCHASE_AMOUNT =
+        weeklyPurchaseAmount = DB.getSQLValueBD(null,
             "SELECT COALESCE(SUM(GrandTotal),0) " + basePurchase +
-            "AND date_trunc('week', DateOrdered) = date_trunc('week', CURRENT_DATE)";
+            "AND date_trunc('week', DateOrdered)=date_trunc('week',CURRENT_DATE)").doubleValue();
 
-        String SQL_MONTHLY_SALES_AMOUNT =
+        monthlySalesAmount = DB.getSQLValueBD(null,
             "SELECT COALESCE(SUM(GrandTotal),0) " + baseSales +
-            "AND date_trunc('month', DateOrdered) = date_trunc('month', CURRENT_DATE)";
+            "AND date_trunc('month', DateOrdered)=date_trunc('month',CURRENT_DATE)").doubleValue();
 
-        String SQL_MONTHLY_PURCHASE_AMOUNT =
+        monthlyPurchaseAmount = DB.getSQLValueBD(null,
             "SELECT COALESCE(SUM(GrandTotal),0) " + basePurchase +
-            "AND date_trunc('month', DateOrdered) = date_trunc('month', CURRENT_DATE)";
+            "AND date_trunc('month', DateOrdered)=date_trunc('month',CURRENT_DATE)").doubleValue();
 
-        // ========= EXPENSE QUERIES (EXPENSES table) =========
-        String SQL_TODAY_EXPENSE_AMOUNT =
-            "SELECT COALESCE(SUM(amount),0) FROM EXPENSES " +
-            "WHERE expense_date::date = CURRENT_DATE";
+        todayExpenseAmount = DB.getSQLValueBD(null,
+            "SELECT COALESCE(SUM(amount),0) FROM EXPENSES WHERE expense_date::date=CURRENT_DATE").doubleValue();
 
-        String SQL_WEEKLY_EXPENSE_AMOUNT =
-            "SELECT COALESCE(SUM(amount),0) FROM EXPENSES " +
-            "WHERE date_trunc('week', expense_date) = date_trunc('week', CURRENT_DATE)";
+        weeklyExpenseAmount = DB.getSQLValueBD(null,
+            "SELECT COALESCE(SUM(amount),0) FROM EXPENSES WHERE date_trunc('week',expense_date)=date_trunc('week',CURRENT_DATE)").doubleValue();
 
-        String SQL_MONTHLY_EXPENSE_AMOUNT =
-            "SELECT COALESCE(SUM(amount),0) FROM EXPENSES " +
-            "WHERE date_trunc('month', expense_date) = date_trunc('month', CURRENT_DATE)";
+        monthlyExpenseAmount = DB.getSQLValueBD(null,
+            "SELECT COALESCE(SUM(amount),0) FROM EXPENSES WHERE date_trunc('month',expense_date)=date_trunc('month',CURRENT_DATE)").doubleValue();
 
-        // ===== Optional: log SQLs in console =====
-        System.out.println("=== Dashboard SQL (JSP) ===");
-        System.out.println("SQL_TODAY_SALES_COUNT      = " + SQL_TODAY_SALES_COUNT);
-        System.out.println("SQL_TODAY_PURCHASE_COUNT   = " + SQL_TODAY_PURCHASE_COUNT);
-        System.out.println("SQL_WEEKLY_SALES_COUNT     = " + SQL_WEEKLY_SALES_COUNT);
-        System.out.println("SQL_WEEKLY_PURCHASE_COUNT  = " + SQL_WEEKLY_PURCHASE_COUNT);
-        System.out.println("SQL_MONTHLY_SALES_COUNT    = " + SQL_MONTHLY_SALES_COUNT);
-        System.out.println("SQL_MONTHLY_PURCHASE_COUNT = " + SQL_MONTHLY_PURCHASE_COUNT);
-        System.out.println("SQL_TODAY_SALES_AMOUNT     = " + SQL_TODAY_SALES_AMOUNT);
-        System.out.println("SQL_TODAY_PURCHASE_AMOUNT  = " + SQL_TODAY_PURCHASE_AMOUNT);
-        System.out.println("SQL_WEEKLY_SALES_AMOUNT    = " + SQL_WEEKLY_SALES_AMOUNT);
-        System.out.println("SQL_WEEKLY_PURCHASE_AMOUNT = " + SQL_WEEKLY_PURCHASE_AMOUNT);
-        System.out.println("SQL_MONTHLY_SALES_AMOUNT   = " + SQL_MONTHLY_SALES_AMOUNT);
-        System.out.println("SQL_MONTHLY_PURCHASE_AMOUNT= " + SQL_MONTHLY_PURCHASE_AMOUNT);
-        System.out.println("SQL_TODAY_EXPENSE_AMOUNT   = " + SQL_TODAY_EXPENSE_AMOUNT);
-        System.out.println("SQL_WEEKLY_EXPENSE_AMOUNT  = " + SQL_WEEKLY_EXPENSE_AMOUNT);
-        System.out.println("SQL_MONTHLY_EXPENSE_AMOUNT = " + SQL_MONTHLY_EXPENSE_AMOUNT);
+    } catch(Exception e){ e.printStackTrace(); }
 
-        // ========= EXECUTE COUNTS =========
-        int iVal;
-
-        iVal = DB.getSQLValue(null, SQL_TODAY_SALES_COUNT);
-        todaySalesCount = (iVal > 0) ? iVal : 0;
-
-        iVal = DB.getSQLValue(null, SQL_TODAY_PURCHASE_COUNT);
-        todayPurchaseCount = (iVal > 0) ? iVal : 0;
-
-        iVal = DB.getSQLValue(null, SQL_WEEKLY_SALES_COUNT);
-        weeklySalesCount = (iVal > 0) ? iVal : 0;
-
-        iVal = DB.getSQLValue(null, SQL_WEEKLY_PURCHASE_COUNT);
-        weeklyPurchaseCount = (iVal > 0) ? iVal : 0;
-
-        iVal = DB.getSQLValue(null, SQL_MONTHLY_SALES_COUNT);
-        monthlySalesCount = (iVal > 0) ? iVal : 0;
-
-        iVal = DB.getSQLValue(null, SQL_MONTHLY_PURCHASE_COUNT);
-        monthlyPurchaseCount = (iVal > 0) ? iVal : 0;
-
-        // ========= EXECUTE AMOUNTS =========
-        BigDecimal bd;
-
-        bd = DB.getSQLValueBD(null, SQL_TODAY_SALES_AMOUNT);
-        if (bd != null) todaySalesAmount = bd.doubleValue();
-
-        bd = DB.getSQLValueBD(null, SQL_TODAY_PURCHASE_AMOUNT);
-        if (bd != null) todayPurchaseAmount = bd.doubleValue();
-
-        bd = DB.getSQLValueBD(null, SQL_WEEKLY_SALES_AMOUNT);
-        if (bd != null) weeklySalesAmount = bd.doubleValue();
-
-        bd = DB.getSQLValueBD(null, SQL_WEEKLY_PURCHASE_AMOUNT);
-        if (bd != null) weeklyPurchaseAmount = bd.doubleValue();
-
-        bd = DB.getSQLValueBD(null, SQL_MONTHLY_SALES_AMOUNT);
-        if (bd != null) monthlySalesAmount = bd.doubleValue();
-
-        bd = DB.getSQLValueBD(null, SQL_MONTHLY_PURCHASE_AMOUNT);
-        if (bd != null) monthlyPurchaseAmount = bd.doubleValue();
-
-        // ========= EXECUTE EXPENSES =========
-        bd = DB.getSQLValueBD(null, SQL_TODAY_EXPENSE_AMOUNT);
-        if (bd != null) todayExpenseAmount = bd.doubleValue();
-
-        bd = DB.getSQLValueBD(null, SQL_WEEKLY_EXPENSE_AMOUNT);
-        if (bd != null) weeklyExpenseAmount = bd.doubleValue();
-
-        bd = DB.getSQLValueBD(null, SQL_MONTHLY_EXPENSE_AMOUNT);
-        if (bd != null) monthlyExpenseAmount = bd.doubleValue();
-
-        // ===== Log KPI values =====
-        System.out.println("=== Dashboard KPI Values (JSP) ===");
-        System.out.println("Client: " + AD_Client_ID + "  Org: " + AD_Org_ID);
-        System.out.println("todaySalesCount        = " + todaySalesCount);
-        System.out.println("todayPurchaseCount     = " + todayPurchaseCount);
-        System.out.println("weeklySalesCount       = " + weeklySalesCount);
-        System.out.println("weeklyPurchaseCount    = " + weeklyPurchaseCount);
-        System.out.println("monthlySalesCount      = " + monthlySalesCount);
-        System.out.println("monthlyPurchaseCount   = " + monthlyPurchaseCount);
-        System.out.println("todaySalesAmount       = " + todaySalesAmount);
-        System.out.println("todayPurchaseAmount    = " + todayPurchaseAmount);
-        System.out.println("weeklySalesAmount      = " + weeklySalesAmount);
-        System.out.println("weeklyPurchaseAmount   = " + weeklyPurchaseAmount);
-        System.out.println("monthlySalesAmount     = " + monthlySalesAmount);
-        System.out.println("monthlyPurchaseAmount  = " + monthlyPurchaseAmount);
-        System.out.println("todayExpenseAmount     = " + todayExpenseAmount);
-        System.out.println("weeklyExpenseAmount    = " + weeklyExpenseAmount);
-        System.out.println("monthlyExpenseAmount   = " + monthlyExpenseAmount);
-        System.out.println("====================================");
-
-    } catch (Exception e) {
-        e.printStackTrace();
-    }
-
-    // ========= Expose variables to EL / JSTL =========
     request.setAttribute("todaySalesCount", todaySalesCount);
     request.setAttribute("todayPurchaseCount", todayPurchaseCount);
     request.setAttribute("weeklySalesCount", weeklySalesCount);
@@ -235,481 +113,240 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <title>Dashboard | Vijay Tech</title>
+<meta charset="UTF-8">
+<title>Dashboard | Vijay Tech</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<link rel="stylesheet"
+href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
 
-    <style>
-        :root{
-            --sidebar-width: 260px;
-            --navbar-height: 64px;
+<style>
 
-            --outer-frame:#c7c6dc;
-            --bg-1:#f3f4f6;
-            --bg-2:#eef2f6;
-            --panel-dark:#08143a;
-            --panel-dark-2:#09184b;
-            --accent-a:#19b6b0;
-            --accent-b:#15a0c6;
-            --accent-c:#3bd0c3;
-            --muted-light:rgba(255,255,255,0.86);
-            --muted:#9aa6c3;
-            --card-radius:14px;
-            --outer-radius:18px;
-            --success:#16a34a;
-            --danger:#ef4444;
-            --focus-shadow:0 10px 30px rgba(0,0,0,0.35);
-            --panel-border:rgba(255,255,255,0.03);
+/* ---------------- GLOBAL ---------------- */
+:root{
+    --sidebar-width:260px;
+}
 
-            --kpi-number:#19b6b0;
-            --kpi-purchase:#ffc107;
-            --kpi-expense:#ef4444;
-        }
+body{
+    margin:0;
+    padding:0;
+    font-family:'Poppins',sans-serif;
+    background:
+      radial-gradient(ellipse at center,rgba(8,20,58,0.6),rgba(3,10,28,0.9)),
+      url('${pageContext.request.contextPath}/pages/img/bg-textile.jpg')
+      center/cover no-repeat fixed;
+    overflow-x:hidden;
+}
 
-        * { box-sizing: border-box; }
-        html, body { height: 100%; }
+/* Sidebar pushes content only in desktop */
+@media(min-width:1025px){
+    .main{
+        margin-left:var(--sidebar-width) !important;
+    }
+}
 
-        body {
-            margin: 0;
-            padding: 0;
-            padding-top: var(--navbar-height);
-            font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            color: #fff;
-            background:
-                radial-gradient(ellipse at center,
-                    rgba(8, 20, 58, 0.6),
-                    rgba(3, 10, 28, 0.9)
-                ),
-                url('/textileapp/pages/img/bg-textile.jpg')
-                center / cover no-repeat fixed;
-            overflow-x: auto;
-            scrollbar-gutter: stable;
-        }
+/* Mobile → full width */
+@media(max-width:1024px){
+    .main{
+        margin-left:0 !important;
+    }
+}
 
-        .app-navbar {
-            background: linear-gradient(180deg, var(--panel-dark), var(--panel-dark-2));
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-            box-shadow: 0 8px 30px rgba(2,6,23,0.45);
-            z-index: 3000;
-        }
+/* ---------------- MAIN CONTENT ---------------- */
+.main{
+    padding:22px;
+    transition:0.3s ease;
+}
 
-        .navbar-brand {
-            display: inline-flex;
-            align-items: center;
-            gap: .5rem;
-            color: var(--muted-light) !important;
-        }
+.dashboard-outer-wrapper{
+    max-width:1380px;
+    margin:auto;
+}
 
-        .navbar-brand i {
-            color: var(--accent-a);
-            font-size: 1.15rem;
-            text-shadow: 0 4px 18px rgba(25,182,176,0.25);
-        }
+.dashboard-outer{
+    border-radius:16px;
+    padding:20px;
+    background:rgba(255,255,255,0.07);
+    border:1px solid rgba(255,255,255,0.15);
+    backdrop-filter:blur(10px);
+}
 
-        .navbar-toggler { border-color: rgba(255,255,255,0.15); }
-        .navbar-toggler-icon { filter: invert(1) brightness(1.1); }
+.dashboard-inner{
+    border-radius:14px;
+    padding:20px;
+    background:rgba(255,255,255,0.03);
+}
 
-        .btn-header-logout {
-            border-radius: 999px;
-            border: none;
-            padding-inline: 15px;
-            background: linear-gradient(90deg, var(--accent-a), var(--accent-b));
-            color: #0b1724;
-            font-weight: 600;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-        }
+/* ---------------- KPI CARDS ---------------- */
+.kpi-row{
+    display:flex;
+    gap:20px;
+    flex-wrap:wrap;
+}
 
-        .app-sidebar {
-            position: fixed;
-            left: 0;
-            top: var(--navbar-height);
-            bottom: 0;
-            width: var(--sidebar-width);
-            background: linear-gradient(180deg,#041b33 0%, #07223a 100%);
-            color: #bfe7ea;
-            padding: 24px 18px;
-            overflow-y: auto;
-            z-index: 2000;
-            box-shadow: 2px 0 40px rgba(0,0,0,0.45);
-        }
+.kpi{
+    flex:1;
+    min-width:260px;
+    background:#fff;
+    color:#1b1b1b;
+    padding:20px;
+    border-radius:14px;
+}
 
-        main.main {
-            margin-left: 0;
-            padding: 24px 26px 110px;
-            min-height: calc(100vh - var(--navbar-height));
-            width:100%;
-        }
+.kpi .value{
+    font-size:2.4rem;
+    font-weight:800;
+}
 
-        .dashboard-outer-wrapper {
-            max-width: 1320px;
-            margin: 0 auto;
-            margin-top: -75px;
-        }
+.kpi.sales .value{ color:#19b6b0; }
+.kpi.purchase .value{ color:#ffc107; }
+.kpi.expense .value{ color:#ef4444; }
 
-        @media (max-width: 992px) {
-            .app-sidebar {
-                position: relative;
-                width: 100%;
-                top: 0;
-                height: auto;
-                box-shadow: none;
-            }
-            main.main {
-                margin-left: 0;
-                padding: 16px 14px 110px;
-            }
-        }
+@media(max-width:768px){
+    .kpi{ min-width:100%; }
+}
 
-        .dashboard-outer {
-            width: 100%;
-            border-radius: var(--outer-radius);
-            padding: 18px;
-            background: linear-gradient(180deg,
-                rgba(255,255,255,0.03),
-                rgba(255,255,255,0.015));
-            border: 1px solid rgba(255,255,255,0.12);
-            box-shadow:
-                inset 0 0 80px rgba(0,0,0,0.35),
-                0 22px 40px rgba(0,0,0,0.55);
-            backdrop-filter: blur(10px);
-        }
-
-        .dashboard-top-pill {
-            background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
-            border-radius: 16px;
-            padding: 12px 18px;
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            margin-bottom: 18px;
-            border: 1px solid rgba(255,255,255,0.14);
-            box-shadow: 0 10px 30px rgba(2,6,23,0.6);
-        }
-        .dashboard-top-pill h5 {
-            margin:0;
-            color:#e6eef2;
-            font-weight:600;
-            letter-spacing: 0.02em;
-        }
-
-        .dashboard-inner {
-            background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
-            border-radius: 14px;
-            padding: 24px;
-            border: 1px solid rgba(255,255,255,0.08);
-        }
-
-        .kpi-row {
-            display:flex;
-            gap: 20px;
-            margin-bottom: 22px;
-        }
-
-        .kpi {
-            background: #ffffff;
-            border-radius: 12px;
-            padding: 18px 20px;
-            flex:1;
-            min-height:100px;
-            display:flex;
-            flex-direction:column;
-            justify-content:space-between;
-            box-shadow: 0 18px 38px rgba(15,23,42,0.18);
-            color: #10323a;
-            position: relative;
-            overflow: hidden;
-            border: 1px solid rgba(148, 163, 184, 0.25);
-        }
-
-        .kpi.sales::before,
-        .kpi.purchase::before {
-            content:"";
-            position:absolute;
-            inset:0;
-            opacity:0.85;
-            pointer-events:none;
-            mix-blend-mode: screen;
-        }
-
-        .kpi.sales::before {
-            background: radial-gradient(circle at top left, rgba(25,182,176,0.28), transparent 60%);
-        }
-
-        .kpi.purchase::before {
-            background: radial-gradient(circle at top left, rgba(255,193,7,0.25), transparent 60%);
-        }
-
-        .kpi.expense::before {
-            background: radial-gradient(circle at top left, rgba(239,68,68,0.25), transparent 60%);
-        }
-
-        .kpi-header {
-            font-weight:700;
-            color:#1f2933;
-            font-size:0.95rem;
-            letter-spacing:0.03em;
-            z-index:1;
-        }
-
-        .kpi-number {
-            margin-top:6px;
-            display:flex;
-            align-items:baseline;
-            gap:6px;
-            z-index:1;
-        }
-        .kpi-number .currency {
-            font-size:1.4rem;
-            font-weight:700;
-            opacity:0.9;
-        }
-        .kpi-number .value {
-            font-size:2.4rem;
-            font-weight:800;
-            line-height:1.05;
-        }
-
-        .kpi.sales .value { color: var(--kpi-number); }
-        .kpi.purchase .value { color: var(--kpi-purchase); }
-        .kpi.expense .value { color: var(--kpi-expense); }
-
-        .kpi-sub {
-            font-size:0.78rem;
-            color:#6b7a89;
-            margin-top:4px;
-            z-index:1;
-        }
-
-        .kpi:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 24px 46px rgba(15,23,42,0.25);
-            transition: all .18s ease-out;
-        }
-
-        @media (max-width: 768px) {
-            .kpi-row { flex-direction:column; gap: 12px; }
-        }
-
-        .bottom-footer {
-            position: fixed;
-            left: var(--sidebar-width);
-            right: 0;
-            bottom: 0;
-            height: 64px;
-            background:#ffffff;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            box-shadow: 0 -8px 30px rgba(15,23,42,0.2);
-            z-index: 2500;
-        }
-        .footer-inner{
-            font-size:0.9rem;
-            color:#334155;
-            line-height: 1.4;
-        }
-        .footer-link{
-            color: var(--accent-b);
-            text-decoration:none;
-            font-weight:600;
-        }
-        .footer-link:hover{ text-decoration:underline; }
-
-        @media (max-width: 992px) {
-            .bottom-footer { left: 0; }
-        }
-
-        ::-webkit-scrollbar { width: 9px; }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(148,163,184,0.6);
-            border-radius: 6px;
-        }
-    </style>
-
+</style>
 </head>
 
 <body>
 
-    <%@ include file="header.jsp" %>
-    <%@ include file="sidebar.jsp" %>
+<!-- Sidebar fixed -->
+<%@ include file="sidebar.jsp" %>
 
-    <main class="main">
-        <div class="dashboard-outer-wrapper">
-            <div class="dashboard-outer">
+<!-- Header inside content -->
+<header style="margin-left:0; margin-bottom:20px; color:white; padding:10px 5px;">
+    <h3 style="font-weight:600;">Dashboard</h3>
+</header>
 
-                <div class="dashboard-top-pill">
-                    <div style="display:flex; align-items:center; gap:12px;">
-                        <h5>Dashboard</h5>
-                    </div>
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <span class="btn-outline-soft" style="border-radius:999px; display:inline-flex; align-items:center; gap:6px;">
-                            <i class="bi bi-calendar-event"></i>
-                            <span>Today</span>
-                        </span>
-                        <span class="btn-outline-soft" style="display:inline-flex; align-items:center; gap:8px; border-radius:999px;">
-                            <i class="bi bi-person-circle"></i>
-                            <span style="font-weight:600; color:#e2f3f3;">
-                                <c:choose>
-                                    <c:when test="${not empty sessionScope.user and not empty sessionScope.user.username}">
-                                        <c:out value="${sessionScope.user.username}" />
-                                    </c:when>
-                                    <c:otherwise>
-                                        admin
-                                    </c:otherwise>
-                                </c:choose>
-                            </span>
-                        </span>
-                    </div>
-                </div>
+<main class="main">
 
-                <div class="dashboard-inner">
+<div class="dashboard-outer-wrapper">
+<div class="dashboard-outer">
+<div class="dashboard-inner">
 
-                    <!-- Row 1: Today's Counts -->
-                    <div class="kpi-row">
-                        <div class="kpi sales">
-                            <div class="kpi-header">Today's Sales Count</div>
-                            <div class="kpi-number">
-                                <span class="value">
-                                    <fmt:formatNumber value="${todaySalesCount}" type="number" groupingUsed="true"/>
-                                </span>
-                            </div>
-                            <div class="kpi-sub">Total orders generated today</div>
-                        </div>
-                        <div class="kpi purchase">
-                            <div class="kpi-header">Today's Purchase Count</div>
-                            <div class="kpi-number">
-                                <span class="value">
-                                    <fmt:formatNumber value="${todayPurchaseCount}" type="number" groupingUsed="true"/>
-                                </span>
-                            </div>
-                            <div class="kpi-sub">Materials/items purchased today</div>
-                        </div>
-                    </div>
+<!-- ---------------- ROW 1 ---------------- -->
+<div class="kpi-row">
 
-                    <!-- Row 2: Weekly / Monthly Counts -->
-                    <div class="kpi-row">
-                        <div class="kpi sales">
-                            <div class="kpi-header">Weekly Sales Count</div>
-                            <div class="kpi-number">
-                                <span class="value">
-                                    <fmt:formatNumber value="${weeklySalesCount}" type="number" groupingUsed="true"/>
-                                </span>
-                            </div>
-                            <div class="kpi-sub">Completed sales in current week</div>
-                        </div>
-                        <div class="kpi purchase">
-                            <div class="kpi-header">Weekly Purchase Count</div>
-                            <div class="kpi-number">
-                                <span class="value">
-                                    <fmt:formatNumber value="${weeklyPurchaseCount}" type="number" groupingUsed="true"/>
-                                </span>
-                            </div>
-                            <div class="kpi-sub">Invoices processed this week</div>
-                        </div>
-                        <div class="kpi sales">
-                            <div class="kpi-header">Monthly Sales Count</div>
-                            <div class="kpi-number">
-                                <span class="value">
-                                    <fmt:formatNumber value="${monthlySalesCount}" type="number" groupingUsed="true"/>
-                                </span>
-                            </div>
-                            <div class="kpi-sub">Orders completed this month</div>
-                        </div>
-                        <div class="kpi purchase">
-                            <div class="kpi-header">Monthly Purchase Count</div>
-                            <div class="kpi-number">
-                                <span class="value">
-                                    <fmt:formatNumber value="${monthlyPurchaseCount}" type="number" groupingUsed="true"/>
-                                </span>
-                            </div>
-                            <div class="kpi-sub">Invoices processed this month</div>
-                        </div>
-                    </div>
+    <div class="kpi sales">
+        <div>Today's Sales Count</div>
+        <div class="value">${todaySalesCount}</div>
+    </div>
 
-                    <!-- Row 3: Daily/Weekly Sales & Purchase Amounts -->
-                    <div class="kpi-row">
-                        <div class="kpi sales">
-                            <div class="kpi-header">Today's Sales Amount</div>
-                            <div class="kpi-number">
-                                <span class="currency">₹</span>
-                                <span class="value">
-                                    <fmt:formatNumber value="${todaySalesAmount}" type="number"
-                                                      groupingUsed="true" maxFractionDigits="0"/>
-                                </span>
-                            </div>
-                            <div class="kpi-sub">Total value of sales today</div>
-                        </div>
-                        <div class="kpi purchase">
-                            <div class="kpi-header">Today's Purchase Amount</div>
-                            <div class="kpi-number">
-                                <span class="currency">₹</span>
-                                <span class="value">
-                                    <fmt:formatNumber value="${todayPurchaseAmount}" type="number"
-                                                      groupingUsed="true" maxFractionDigits="0"/>
-                                </span>
-                            </div>
-                            <div class="kpi-sub">Total value of procurement today</div>
-                        </div>
-                        <div class="kpi sales">
-                            <div class="kpi-header">Weekly Sales Amount</div>
-                            <div class="kpi-number">
-                                <span class="currency">₹</span>
-                                <span class="value">
-                                    <fmt:formatNumber value="${weeklySalesAmount}" type="number"
-                                                      groupingUsed="true" maxFractionDigits="0"/>
-                                </span>
-                            </div>
-                            <div class="kpi-sub">Total revenue this week</div>
-                        </div>
-                        <div class="kpi purchase">
-                            <div class="kpi-header">Weekly Purchase Amount</div>
-                            <div class="kpi-number">
-                                <span class="currency">₹</span>
-                                <span class="value">
-                                    <fmt:formatNumber value="${weeklyPurchaseAmount}" type="number"
-                                                      groupingUsed="true" maxFractionDigits="0"/>
-                                </span>
-                            </div>
-                            <div class="kpi-sub">Total spend this week</div>
-                        </div>
-                    </div>
+    <div class="kpi purchase">
+        <div>Today's Purchase Count</div>
+        <div class="value">${todayPurchaseCount}</div>
+    </div>
 
-                    <!-- Row 4: Monthly Amounts -->
-                    <div class="kpi-row">
-                        <div class="kpi sales" style="flex:2;">
-                            <div class="kpi-header">Monthly Sales Amount</div>
-                            <div class="kpi-number">
-                                <span class="currency">₹</span>
-                                <span class="value">
-                                    <fmt:formatNumber value="${monthlySalesAmount}" type="number"
-                                                      groupingUsed="true" maxFractionDigits="0"/>
-                                </span>
-                            </div>
-                            <div class="kpi-sub">Total revenue generated in the current month</div>
-                        </div>
-                        <div class="kpi purchase" style="flex:2;">
-                            <div class="kpi-header">Monthly Purchase Amount</div>
-                            <div class="kpi-number">
-                                <span class="currency">₹</span>
-                                <span class="value">
-                                    <fmt:formatNumber value="${monthlyPurchaseAmount}" type="number"
-                                                      groupingUsed="true" maxFractionDigits="0"/>
-                                </span>
-                            </div>
-                            <div class="kpi-sub">Total value of all material purchases this month</div>
-                        </div>
-                    </div>
+</div>
 
-                </div>
-            </div>
+<!-- ---------------- ROW 2 ---------------- -->
+<div class="kpi-row">
+
+    <div class="kpi sales">
+        <div>Weekly Sales</div>
+        <div class="value">${weeklySalesCount}</div>
+    </div>
+
+    <div class="kpi purchase">
+        <div>Weekly Purchase</div>
+        <div class="value">${weeklyPurchaseCount}</div>
+    </div>
+
+    <div class="kpi sales">
+        <div>Monthly Sales</div>
+        <div class="value">${monthlySalesCount}</div>
+    </div>
+
+    <div class="kpi purchase">
+        <div>Monthly Purchase</div>
+        <div class="value">${monthlyPurchaseCount}</div>
+    </div>
+
+</div>
+
+<!-- ---------------- ROW 3 ---------------- -->
+<div class="kpi-row">
+
+    <div class="kpi sales">
+        <div>Today's Sales Amount</div>
+        <div class="value">
+            <fmt:formatNumber value="${todaySalesAmount}" groupingUsed="true"/>
         </div>
-    </main>
+    </div>
 
-    <%@ include file="footer.jsp" %>
+    <div class="kpi purchase">
+        <div>Today's Purchase Amount</div>
+        <div class="value">
+            <fmt:formatNumber value="${todayPurchaseAmount}" groupingUsed="true"/>
+        </div>
+    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <div class="kpi sales">
+        <div>Weekly Sales Amount</div>
+        <div class="value">
+            <fmt:formatNumber value="${weeklySalesAmount}" groupingUsed="true"/>
+        </div>
+    </div>
+
+    <div class="kpi purchase">
+        <div>Weekly Purchase Amount</div>
+        <div class="value">
+            <fmt:formatNumber value="${weeklyPurchaseAmount}" groupingUsed="true"/>
+        </div>
+    </div>
+
+</div>
+
+<!-- ---------------- ROW 4 ---------------- -->
+<div class="kpi-row">
+
+    <div class="kpi sales" style="flex:2;">
+        <div>Monthly Sales Amount</div>
+        <div class="value">
+            <fmt:formatNumber value="${monthlySalesAmount}" groupingUsed="true"/>
+        </div>
+    </div>
+
+    <div class="kpi purchase" style="flex:2;">
+        <div>Monthly Purchase Amount</div>
+        <div class="value">
+            <fmt:formatNumber value="${monthlyPurchaseAmount}" groupingUsed="true"/>
+        </div>
+    </div>
+
+</div>
+
+<!-- ---------------- ROW 5 ---------------- -->
+<div class="kpi-row">
+
+    <div class="kpi expense">
+        <div>Today's Expense</div>
+        <div class="value">
+            <fmt:formatNumber value="${todayExpenseAmount}" groupingUsed="true"/>
+        </div>
+    </div>
+
+    <div class="kpi expense">
+        <div>Weekly Expense</div>
+        <div class="value">
+            <fmt:formatNumber value="${weeklyExpenseAmount}" groupingUsed="true"/>
+        </div>
+    </div>
+
+    <div class="kpi expense">
+        <div>Monthly Expense</div>
+        <div class="value">
+            <fmt:formatNumber value="${monthlyExpenseAmount}" groupingUsed="true"/>
+        </div>
+    </div>
+
+</div>
+
+</div>
+</div>
+</div>
+
+</main>
 
 </body>
 </html>

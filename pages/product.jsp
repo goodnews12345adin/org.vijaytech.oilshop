@@ -41,6 +41,8 @@
 <body class="bg-light">
 <%@ include file="header.jsp" %>
 <%@ include file="sidebar.jsp" %>
+<div class="content-wrapper">
+    <!-- your page content -->
 
 <div class="card main-content">
     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -117,7 +119,7 @@
         </div>
     
 </div>
-    
+    </div>
 
 
 <%

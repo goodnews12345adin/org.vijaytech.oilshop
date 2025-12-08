@@ -5,7 +5,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 
 <%
-    // --- JSP Scriptlet Block for Session and Data Retrieval ---
     HttpSession session1 = request.getSession(false);
     Properties ctx = null;
 
@@ -18,20 +17,15 @@
         return;
     }
 
-    String role = (String) session1.getAttribute("userRole");
+   /*  String role = (String) session1.getAttribute("userRole");
     if (role == null) {
         role = "user";
         session1.setAttribute("userRole", role);
-    }
+    } */
 
-    // Unused: List<Organization> orgList = (List<Organization>) session.getAttribute("orgList");
-    // Unused: Integer AD_Org_ID = (Integer) session.getAttribute("AD_Org_ID");
-
-    // ORG NAME FROM SESSION
     String orgName = (String) session1.getAttribute("orgName");
     if (orgName == null) orgName = "";
 
-    // PRODUCT LIST
     List<Map<String, Object>> productList =
            (List<Map<String, Object>>) request.getAttribute("productList");
 %>
@@ -43,23 +37,49 @@
 <meta charset="UTF-8">
 <title><%= orgName %> - Sales Invoice</title>
 
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
 <style>
-/* --- Custom Styles --- */
+/* ==========================================================
+   GLOBAL PAGE & SIDEBAR RESPONSIVENESS
+========================================================== */
+
+body {
+    margin-left: 100px; /* space for sidebar on desktop */
+    transition: all 0.3s ease;
+}
+
+/* When sidebar is hidden in mobile/iPad */
+@media (max-width: 1024px) {
+    body {
+        margin-left: 0 !important;
+    }
+}
+
+/* When sidebar becomes active (mobile open) */
+.sidebar.active ~ .content-wrapper {
+    margin-left: 250px !important;
+    transition: all 0.3s ease;
+}
+
+/* ==========================================================
+   PAGE STYLES
+========================================================== */
+
 body { background-color: #f9fafb; font-family: "Inter", "Roboto", sans-serif; }
 .invoice-box { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 20px; }
 .border-dashed { border: 1px dashed #ccc; padding: 10px; border-radius: 6px; }
 .table th, .table td { vertical-align: middle !important; }
 .total-box, .total-box span, .total-box strong { color: #000 !important; }
 
-/* FIX: ADDED CUSTOM CSS FOR SELECT2 DROPDOWN WIDTH */
-.select2-dropdown-full-width {
-    max-width: 500px !important;
-}
+/* FIX: SELECT2 WIDTH */
+.select2-dropdown-full-width { max-width: 500px !important; }
 
+/* LOADER CSS */
 #loader {
     display:none; position: fixed; top:0; left:0; width:100%; height:100%;
     background: rgba(0,0,0,0.4); z-index:9999;
@@ -70,6 +90,51 @@ body { background-color: #f9fafb; font-family: "Inter", "Roboto", sans-serif; }
     padding:20px 30px; background:#fff;
     font-size:18px; border-radius:10px;
 }
+
+/* MOBILE + IPAD RESPONSIVE TABLE */
+@media (max-width: 1024px) {
+
+    .invoice-box { padding: 12px !important; }
+
+    #items-table thead { display: none !important; }
+
+    #items-body tr {
+        display: block;
+        padding: 12px;
+        margin-bottom: 12px;
+        border-radius: 10px;
+        border: 1px solid #ddd;
+        background: #fff;
+    }
+
+    #items-body td {
+        display: flex;
+        justify-content: space-between;
+        border: none !important;
+        padding: 6px 0 !important;
+    }
+
+    #items-body td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        margin-right: 10px;
+        flex: 1;
+        text-align: left;
+    }
+
+    #items-body td input {
+        width: 50%;
+        text-align: right;
+    }
+
+    #items-body td:first-child {
+        display: none !important;
+    }
+
+    .total-box { text-align: right; }
+    #discount { width: 100px !important; }
+}
+
 </style>
 
 </head>
@@ -77,6 +142,9 @@ body { background-color: #f9fafb; font-family: "Inter", "Roboto", sans-serif; }
 <body class="bg-light py-4">
 
 <%@ include file="sidebar.jsp" %>
+
+<!-- RESPONSIVE WRAPPER (MUST WRAP ALL PAGE CONTENT) -->
+<div class="content-wrapper">
 
 <div class="container mt-4">
 <div class="invoice-box">
@@ -161,8 +229,7 @@ body { background-color: #f9fafb; font-family: "Inter", "Roboto", sans-serif; }
                    class="form-control form-control-sm d-inline-block"
                    style="width:120px; display:inline-block;"
                    value="0">
-        </div>
-
+        </div> 
         <div class="mt-2">
             Total: ₹<strong id="grand-total">0.00</strong>
         </div>
@@ -174,7 +241,9 @@ body { background-color: #f9fafb; font-family: "Inter", "Roboto", sans-serif; }
     <div>Please wait... Processing</div>
 </div>
 <div id="alertBox"></div>
-</div> 
+
+</div><!-- content-wrapper -->
+</div><!-- container -->
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -183,10 +252,8 @@ body { background-color: #f9fafb; font-family: "Inter", "Roboto", sans-serif; }
 <script>
 $(function(){
     
-    // --- Initialization ---
     document.getElementById("invoice-date").textContent = new Date().toLocaleDateString("en-GB");
 
-    // Initialize Select2 with Custom Search Matcher
     $("#manual-product").select2({
         placeholder: "--Select Product--",
         width: "100%",
@@ -195,7 +262,7 @@ $(function(){
         matcher: function(params, data) {
             if (!params.term) return data;
 
-            let term = String(params.term).toLowerCase();   // term may be number
+            let term = String(params.term).toLowerCase();
             let text = String(data.text || "").toLowerCase();
             let sKey = String($(data.element).data("search") || "").toLowerCase();
 
@@ -204,20 +271,14 @@ $(function(){
             }
             return null;
         }
-
     });
 
-    // ======================================================
-    // CORE FUNCTIONS
-    // ======================================================
-
-    /**
-     * Adds a new item row to the sales table.
-     */
+    /* =========================================
+       ADD ROW WITH MOBILE LABELS
+    ========================================= */
     function addRow(Id, name, unit, qty, rate) {
         const tr = document.createElement('tr');
 
-        // Create cells
         const tdIndex = document.createElement('td');
         const tdDesc  = document.createElement('td');
         const tdUom   = document.createElement('td');
@@ -226,10 +287,16 @@ $(function(){
         const tdAmount= document.createElement('td');
         const tdAction= document.createElement('td');
 
+        tdDesc.setAttribute("data-label", "Product");
+        tdUom.setAttribute("data-label", "Unit");
+        tdQty.setAttribute("data-label", "Qty");
+        tdRate.setAttribute("data-label", "Rate (₹)");
+        tdAmount.setAttribute("data-label", "Amount (₹)");
+        tdAction.setAttribute("data-label", "Action");
+
         tdAmount.className = 'amount text-end';
         tdAction.className = 'text-center';
 
-        // Create inputs for data fields
         const inputDesc = document.createElement('input');
         inputDesc.className = 'form-control form-control-sm desc';
         inputDesc.value = name;
@@ -257,7 +324,6 @@ $(function(){
         btnRemove.className = 'btn btn-sm btn-danger remove-row';
         btnRemove.textContent = '×';
 
-        // Append inputs to cells
         tdDesc.appendChild(inputDesc);
         tdDesc.appendChild(inputProdId);
         tdUom.appendChild(inputUom);
@@ -265,7 +331,6 @@ $(function(){
         tdRate.appendChild(inputRate);
         tdAction.appendChild(btnRemove);
 
-        // Append cells to row
         tr.appendChild(tdIndex);
         tr.appendChild(tdDesc);
         tr.appendChild(tdUom);
@@ -278,7 +343,6 @@ $(function(){
 
         tdIndex.textContent = document.querySelectorAll("#items-body tr").length;
 
-        // Event listener functions
         function updateRowAmount() {
             const q = parseFloat(inputQty.value) || 0;
             const r = parseFloat(inputRate.value) || 0;
@@ -294,18 +358,16 @@ $(function(){
         inputQty.addEventListener('input', updateRowAmount);
         inputRate.addEventListener('input', updateRowAmount);
 
-        // Initial calculation
         updateRowAmount();
     }
 
-    /**
-     * Recalculates all totals (Subtotal, Discount, Grand Total) and updates row indices.
-     */
+    /* =========================================
+       RECALCULATE TOTAL
+    ========================================= */
     function recalc(){
         let subtotal = 0;
 
         $("#items-body tr").each(function(i){
-            // Update row index number
             $(this).find("td:first").text(i+1);
 
             let qty = parseFloat($(this).find(".qty").val()) || 0;
@@ -327,16 +389,12 @@ $(function(){
         $("#grand-total").text(total.toFixed(2));
     }
 
-    // ======================================================
-    // EVENT HANDLERS
-    // ======================================================
-
     $("#discount").on("input", recalc);
     $("#recalculate").click(recalc);
 
-    /**
-     * Handles product selection from the dropdown.
-     */
+    /* =========================================
+       PRODUCT SELECT EVENT
+    ========================================= */
     $("#manual-product").change(function(){
         let val = this.value;
         if(!val) return;
@@ -345,41 +403,27 @@ $(function(){
         let rate = parseFloat(rateStr) || 0;
         let prodId = $(this).find(":selected").data("prodid") || "0";
 
-        // Check if the product already exists in the table
         let exist = [...document.querySelectorAll("#items-body tr")].find(row =>
             row.querySelector(".desc").value.trim().toLowerCase() === name.toLowerCase()
         );
 
         if(exist){
-            // If exists, increment quantity
             let q = exist.querySelector(".qty");
             q.value = (parseFloat(q.value) || 0) + 1;
             recalc();
         } else {
-            // If new, add a new row
             addRow(prodId, name, unit, 1, rate);
         }
 
-        // Reset dropdown selection
         $(this).val("").trigger("change");
     });
-    
-    function showAlert(type, message) {
-        let alertHTML =
-            '<div class="alert alert-' + type + ' alert-dismissible fade show" role="alert">' +
-                message +
-                '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
-            '</div>';
-        $("#alertBox").html(alertHTML);
-    }
 
-
-
-    /**
-     * Sends the invoice data via AJAX to the SalesSaveServlet.
-     */
+    /* =========================================
+       AJAX SUBMIT
+    ========================================= */
     $("#send-btn").click(function(){
-	$("#loader").show();
+        $("#loader").show();
+
         const data = {
             discount: parseFloat($("#discount").val()) || 0,
             subtotal: $("#subtotal").text(),
@@ -408,23 +452,21 @@ $(function(){
             data: JSON.stringify({ salesData: data }),
             contentType: "application/json; charset=utf-8",
             success: function(response) {
-            	 if (response.status === "error") {
-            		 alert(response.message);
-            		 $("#loader").hide();
-                     return;
-                 }
-                console.log("Server Response:", response);
+
+                if (response.status === "error") {
+                    alert(response.message);
+                    $("#loader").hide();
+                    return;
+                }
 
                 if (response.pdfUrl) {
-                    // OPEN PDF IN NEW TAB
                     window.open(response.pdfUrl, "_blank");
                 }
                 $("#loader").hide();
             },
             error: function(xhr, status, error) {
-            	alert(response.message);
-            	 $("#loader").hide();
-                console.error(error);
+                alert("Error occurred");
+                $("#loader").hide();
             }
         });
 
