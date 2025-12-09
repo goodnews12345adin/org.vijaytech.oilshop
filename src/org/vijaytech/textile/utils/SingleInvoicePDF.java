@@ -255,11 +255,11 @@ public class SingleInvoicePDF extends HttpServlet {
 
             addSummaryRow(table, "Subtotal", subtotal, totalFont);
             addSummaryRow(table, "Discount", discount, totalFont);
-//            addSummaryRow(table, "Taxable Value", taxableValue, totalFont);
-//            addSummaryRow(table, "CGST 9%", cgstAmt, totalFont);
-//            addSummaryRow(table, "SGST 9%", sgstAmt, totalFont);
-//            addSummaryRow(table, "IGST 18%", igstAmt, totalFont);
-//            addSummaryRow(table, "Total GST", totalGST, totalFont);
+            addSummaryRow(table, "Taxable Value", taxableValue, totalFont);
+            addSummaryRow(table, "CGST 9%", cgstAmt, totalFont);
+            addSummaryRow(table, "SGST 9%", sgstAmt, totalFont);
+            addSummaryRow(table, "IGST 18%", igstAmt, totalFont);
+            addSummaryRow(table, "Total GST", totalGST, totalFont);
 
             // GRAND TOTAL (Double border)
             PdfPCell gt1 = new PdfPCell(new Phrase("GRAND TOTAL", grandFont));
