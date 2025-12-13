@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <web-app version="2.5" xmlns="http://java.sun.com/xml/ns/javaee"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
@@ -138,6 +137,24 @@
     <servlet-name>SalesSaveServlet</servlet-name>
     <url-pattern>/SalesSaveServlet</url-pattern>
 </servlet-mapping>
+<servlet>
+    <servlet-name>ExpenseEntryServlet</servlet-name>
+    <servlet-class>org.vijaytech.textile.ExpenseEntryServlet</servlet-class>
+</servlet>
+<servlet-mapping>
+    <servlet-name>ExpenseEntryServlet</servlet-name>
+    <url-pattern>/ExpenseEntryServlet</url-pattern>
+</servlet-mapping>
+
+<servlet>
+    <servlet-name>CashBookReport</servlet-name>
+    <servlet-class>org.vijaytech.textile.CashBookReport</servlet-class>
+</servlet>
+<servlet-mapping>
+    <servlet-name>CashBookReport</servlet-name>
+    <url-pattern>/CashBookReport</url-pattern>
+</servlet-mapping>
+
 <servlet>
     <servlet-name>SingleInvoicePDF</servlet-name>
     <servlet-class>org.vijaytech.textile.utils.SingleInvoicePDF</servlet-class>

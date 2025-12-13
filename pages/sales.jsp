@@ -34,7 +34,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Purchase Entry - <%= orgName %></title>
+<title>Sales Entry</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 
@@ -163,9 +163,9 @@ html.sidebar-open { --content-offset: var(--sidebar-width); }
 .table-responsive{ margin-top:12px; }
 .table thead th{ background: #fbfcfe; border-bottom:1px solid rgba(15,23,42,0.04); font-weight:700; color:var(--muted-text); font-size:0.88rem; }
 .table tbody td { vertical-align:middle; font-size:0.92rem; color:var(--text-dark); }
-.select2-container .select2-selection--single { height: calc(1.5em + 0.75rem); padding: .25rem .5rem; }
+/* .select2-container .select2-selection--single { height: calc(1.5em + 0.75rem); padding: .25rem .5rem; }
 .select2-container--default .select2-selection--single .select2-selection__rendered { line-height:1.5; }
-.select2-dropdown-full-width { max-width: 100% !important; }
+.select2-dropdown-full-width { max-width: 100% !important; } */
 
 /* buttons & totals */
 .btn-sm { padding:6px 10px; font-size:0.85rem; }
@@ -208,6 +208,20 @@ html.sidebar-open { --content-offset: var(--sidebar-width); }
 @media (prefers-reduced-motion: reduce) {
   *{ transition:none !important; animation-duration:0.001ms !important; }
 }
+.select2-fixed-dropdown {
+    max-height: 260px !important;
+    min-height: 150px !important;
+    overflow-y: auto !important;
+    position: relative !important;
+    z-index: 999999 !important; /* above header and page-wrap */
+}
+
+.select2-container--open .select2-dropdown {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
 </style>
 
 </head>
@@ -219,7 +233,7 @@ html.sidebar-open { --content-offset: var(--sidebar-width); }
     <button id="sidebarToggle" class="hamburger" aria-controls="sidebar" aria-expanded="false" title="Toggle sidebar" type="button">
       <span class="bars" aria-hidden="true"><span></span><span></span><span></span></span>
     </button>
-    <div class="header-title">Purchase Entry</div>
+    <div class="header-title">Sales Entry</div>
   </div>
 
   <div class="header-right">
@@ -259,30 +273,28 @@ html.sidebar-open { --content-offset: var(--sidebar-width); }
                 </div>
             </div>
 
-            <div class="col-12 col-md-6">
-                <div>
-                    <label for="manual-product" class="form-label fw-semibold">Select Product</label>
-                    <select id="manual-product" class="form-select" style="width:100%" aria-label="Select product">
-                        <option value="">--Select Product--</option>
-                        <%
-                        if (productList != null) {
-                            for (Map<String,Object> p : productList) {
-                                String name  = (p.get("name")  != null) ? p.get("name").toString() : "";
-                                String rate  = (p.get("rate")  != null) ? p.get("rate").toString() : "0";
-                                String uom   = (p.get("uom")   != null) ? p.get("uom").toString()  : "";
-                                String prodId= (p.get("prodId")!= null) ? p.get("prodId").toString(): "0";
-                                String search= (p.get("value")!= null) ? p.get("value").toString(): "";
-                        %>
-                        <option 
-                            value="<%= name %>|<%= rate %>|<%= uom %>"
-                            data-prodid="<%= prodId %>"
-                            data-search="<%= search %>"
-                        >
-                            <%= search %> - <%= name %> - ₹<%= rate %> / <%= uom %>
-                        </option>
-                        <% } } %>
-                    </select>
-                </div>
+           <div class="col-12 col-md-6">
+                <label class="form-label fw-semibold">Select Product</label>
+                <select id="manual-product" class="form-select" style="width:100%">
+                    <%
+
+                    if (productList != null) {
+                        for (Map<String,Object> p : productList) {
+                        	String name   = p.get("name")   != null ? p.get("name").toString()   : "";
+                        	String rate   = p.get("rate")   != null ? p.get("rate").toString()   : "0";
+                        	String uom    = p.get("uom")    != null ? p.get("uom").toString()    : "";
+                        	String prodId = p.get("prodId") != null ? p.get("prodId").toString() : "0";
+                        	String search = p.get("value")  != null ? p.get("value").toString()  : "";
+
+                    %>
+                    <option 
+                        value="<%= name %>|<%= rate %>|<%= uom %>"
+                        data-prodid="<%= prodId %>"
+                        data-search="<%= search %>">
+                        <%= search %> - <%= name %> - ₹<%= rate %> / <%= uom %>
+                    </option>
+                    <% } } %>
+                </select>
             </div>
         </div>
 
@@ -291,7 +303,7 @@ html.sidebar-open { --content-offset: var(--sidebar-width); }
             <table class="table table-sm table-bordered align-middle" id="items-table" role="table" aria-label="Invoice items">
                 <thead class="table-light">
                     <tr>
-                        <th style="width:36px">#</th>
+                        <th style="width:36px">S.no</th>
                         <th>Product</th>
                         <th style="width:96px">Unit</th>
                         <th style="width:96px">Qty</th>
@@ -303,26 +315,39 @@ html.sidebar-open { --content-offset: var(--sidebar-width); }
                 <tbody id="items-body" aria-live="polite"></tbody>
             </table>
         </div>
-
-        <!-- Buttons -->
-        <div class="d-flex gap-2 justify-content-end mt-3">
-            <button id="recalculate" class="btn btn-outline-primary btn-sm">Recalculate</button>
-            <button id="send-btn" class="btn btn-success btn-sm">Send</button>
+<div class="mt-4 text-end total-box">
+ <div class="mt-2">
+            Discount:
+            <input type="number" id="discount"
+                   class="form-control form-control-sm d-inline-block"
+                   style="width:120px; display:inline-block;"
+                   value="0">
         </div>
-
+ <div class="mt-2">
+            Cash:
+            <input type="number" id="cash"
+                   class="form-control form-control-sm d-inline-block"
+                   style="width:120px; display:inline-block;"
+                   value="0">
+        </div>
+        <div class="mt-2">
+            UPI:
+            <input type="number" id="upi"
+                   class="form-control form-control-sm d-inline-block"
+                   style="width:120px; display:inline-block;"
+                   value="0">
+        </div>
+		<div>Subtotal: ₹<span id="subtotal">0.00</span></div>
+        <div class="mt-2">
+            Total: ₹<strong id="grand-total">0.00</strong>
+        </div>
+    </div>
+    <div class="text-end mt-3">
+        <button id="recalculate" class="btn btn-primary btn-sm">Recalculate</button>
+        <button id="send-btn" class="btn btn-success btn-sm">Send</button>
+    </div>
         <!-- Totals -->
-        <div class="total-box">
-            <div>Subtotal: <span class="value" id="subtotal">0.00</span></div>
-
-            <div class="mt-2 d-flex justify-content-end align-items-center gap-2">
-                <label for="discount" class="mb-0 text-muted-sm">Discount</label>
-                <input type="number" id="discount" class="form-control form-control-sm" style="width:120px;" value="0" aria-label="Discount amount">
-            </div>
-
-            <div class="mt-2">
-                Total: <span class="value" id="grand-total">0.00</span>
-            </div>
-        </div>
+       
 
     </div>
 
@@ -350,6 +375,22 @@ html.sidebar-open { --content-offset: var(--sidebar-width); }
 
 <script>
 $(function(){
+	$("#manual-product").select2({
+	    placeholder: "--Select Product--",
+	    width: "100%",
+	    allowClear: true,
+	    dropdownParent: $('body'),   // IMPORTANT FIX
+	    dropdownCssClass: "select2-dropdown-full-width",
+	    matcher: function(params, data) {
+	        if (!params.term) return data;
+
+	        const term = params.term.toLowerCase();
+	        const text = (data.text || "").toLowerCase();
+	        const sKey = ($(data.element).data("search") || "").toLowerCase();
+
+	        return text.includes(term) || sKey.includes(term) ? data : null;
+	    }
+	});
     // --- Sidebar toggle (push behavior) ---
     const toggleBtn = document.getElementById('sidebarToggle');
     const htmlEl = document.documentElement;
@@ -422,7 +463,7 @@ $(function(){
     // =========== invoice logic (Select2, add rows, totals, AJAX) ===========
     document.getElementById("invoice-date").textContent = new Date().toLocaleDateString("en-GB");
 
-    // Select2 init
+ /*    // Select2 init
     $("#manual-product").select2({
         placeholder: "--Select Product--",
         width: "100%",
@@ -436,7 +477,7 @@ $(function(){
             if (text.includes(term) || sKey.includes(term)) return data;
             return null;
         }
-    });
+    }); */
 
     // Add row function
     function addRow(Id, name, unit, qty, rate) {
@@ -600,7 +641,7 @@ $(function(){
 
         $.ajax({
             type: "POST",
-            url: "<%= request.getContextPath() %>/SalesServlet",
+            url: "<%= request.getContextPath() %>/SalesSaveServlet",
             data: JSON.stringify({ salesData: data }),
             contentType: "application/json; charset=utf-8",
             dataType: "json",
@@ -639,12 +680,12 @@ $(function(){
     });
 
     // Accessibility: allow enter on select2 search to pick the item quickly
-    $(document).on('keydown', '.select2-search__field', function(e){
+  /*   $(document).on('keydown', '.select2-search__field', function(e){
         if(e.key === 'Enter'){
             e.preventDefault();
             $('.select2-results__option[aria-selected=false]').first().trigger('mouseup');
         }
-    });
+    }); */
 
 }); // end ready
 </script>

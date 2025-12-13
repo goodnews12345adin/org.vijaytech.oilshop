@@ -55,7 +55,11 @@
         <i class="bi bi-box-seam me-2" aria-hidden="true"></i> Products
       </a>
     </li>
-
+	 <li>
+      <a href="${pageContext.request.contextPath}/ExpenseEntryServlet" class="nav-link text-white">
+        <i class="bi bi-box-seam me-2" aria-hidden="true"></i> Expense Entry
+      </a>
+    </li>
     <li class="nav-item">
       <a class="nav-link text-white d-flex justify-content-between align-items-center"
          data-bs-toggle="collapse" href="#reportsMenu" role="button"
@@ -70,6 +74,9 @@
           </li>
           <li class="nav-item">
             <a href="${pageContext.request.contextPath}/ProfitAndLossReport" class="nav-link text-white small">Profit-Loss Report</a>
+          </li>
+          <li class="nav-item">
+            <a href="${pageContext.request.contextPath}/CashBookReport" class="nav-link text-white small">Expense Report</a>
           </li>
         </ul>
       </div>

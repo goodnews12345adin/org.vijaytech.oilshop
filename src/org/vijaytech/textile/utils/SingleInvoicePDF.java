@@ -16,10 +16,6 @@ import com.lowagie.text.pdf.*;
 
 public class SingleInvoicePDF extends HttpServlet {
 
-    /* =========================================================
-       Utilities
-       ========================================================= */
-
     private String safe(BigDecimal bd) {
         return (bd == null) ? "" : bd.toPlainString();
     }
@@ -56,23 +52,17 @@ public class SingleInvoicePDF extends HttpServlet {
         table.addCell(c2);
     }
 
-    /* =========================================================
-       SMALL WATERMARK
-       ========================================================= */
-
     class Watermark extends PdfPageEventHelper {
         Font wmFont = new Font(Font.HELVETICA, 38, Font.BOLD, new Color(235, 235, 235));
 
-        @Override
         public void onEndPage(PdfWriter writer, Document document) {
             PdfContentByte canvas = writer.getDirectContentUnder();
-
-            Phrase watermark = new Phrase("HAPPY LADY FASHION", wmFont);
+            Phrase w = new Phrase("HAPPY LADY FASHION", wmFont);
 
             ColumnText.showTextAligned(
                 canvas,
                 Element.ALIGN_CENTER,
-                watermark,
+                w,
                 document.getPageSize().getWidth() / 2,
                 document.getPageSize().getHeight() / 2,
                 40
@@ -80,11 +70,6 @@ public class SingleInvoicePDF extends HttpServlet {
         }
     }
 
-    /* =========================================================
-       MAIN SERVLET
-       ========================================================= */
-
-    @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
@@ -95,16 +80,18 @@ public class SingleInvoicePDF extends HttpServlet {
         }
         doc = java.net.URLDecoder.decode(doc, "UTF-8");
 
-        /* ---------------- SQL ----------------*/
-
+        /* Detect Sales / Purchase */
         String typeSql = "SELECT IsSOTrx FROM C_Invoice WHERE DocumentNo=?";
 
+        /* Updated SQL – pulls discount from ORDER LINE */
         String sql =
             "SELECT i.DateInvoiced, i.DocumentNo, bp.Name AS PartnerName, " +
             "p.Name AS Product, p.HSNCode, " +
-            "il.QtyInvoiced, il.PriceActual, il.LineNetAmt " +
+            "il.QtyInvoiced, il.PriceActual, il.LineNetAmt, " +
+            "ol.DiscountAmt AS LineDiscount " +
             "FROM C_Invoice i " +
             "JOIN C_InvoiceLine il ON i.C_Invoice_ID = il.C_Invoice_ID " +
+            "LEFT JOIN C_OrderLine ol ON il.C_OrderLine_ID = ol.C_OrderLine_ID " +
             "LEFT JOIN C_BPartner bp ON i.C_BPartner_ID = bp.C_BPartner_ID " +
             "LEFT JOIN M_Product p ON il.M_Product_ID = p.M_Product_ID " +
             "WHERE i.DocumentNo=?";
@@ -120,9 +107,6 @@ public class SingleInvoicePDF extends HttpServlet {
 
             Connection conn = DB.getConnectionRW();
 
-            /* ----------------------------------------------------
-               Detect Sales / Purchase
-               ---------------------------------------------------- */
             PreparedStatement ps = conn.prepareStatement(typeSql);
             ps.setString(1, doc);
             ResultSet rs = ps.executeQuery();
@@ -132,22 +116,14 @@ public class SingleInvoicePDF extends HttpServlet {
                 invoiceType = rs.getString("IsSOTrx").equals("Y") ? "SALES" : "PURCHASE";
             }
 
-            /* ----------------------------------------------------
-               Header
-               ---------------------------------------------------- */
+            /* Header */
             Font fTitle = new Font(Font.HELVETICA, 20, Font.BOLD);
             Font fSub   = new Font(Font.HELVETICA, 14, Font.BOLD);
             Font fBold  = new Font(Font.HELVETICA, 10, Font.BOLD);
             Font fText  = new Font(Font.HELVETICA, 10);
 
-            Paragraph comp = new Paragraph("HAPPY LADY FASHION", fTitle);
-            comp.setAlignment(Element.ALIGN_CENTER);
-            pdf.add(comp);
-
-            Paragraph inv = new Paragraph(
-                invoiceType.equals("SALES") ? "SALES INVOICE" : "PURCHASE INVOICE",
-                fSub
-            );
+//            pdf.add(new Paragraph("HAPPY LADY FASHION", fTitle)).setAlignment(Element.ALIGN_CENTER);
+            Paragraph inv = new Paragraph(invoiceType.equals("SALES") ? "SALES INVOICE" : "PURCHASE INVOICE", fSub);
             inv.setAlignment(Element.ALIGN_CENTER);
             pdf.add(inv);
 
@@ -155,16 +131,13 @@ public class SingleInvoicePDF extends HttpServlet {
             pdf.add(new Paragraph("Date       : " + new java.util.Date(), fText));
             pdf.add(new Paragraph(" "));
 
-            /* ----------------------------------------------------
-               Load all rows first (forward-only safe)
-               ---------------------------------------------------- */
+            /* Load line data */
             ps = conn.prepareStatement(sql);
             ps.setString(1, doc);
             rs = ps.executeQuery();
 
             java.util.List<Object[]> items = new java.util.ArrayList<>();
             String partner = "";
-
             boolean firstRow = true;
 
             while (rs.next()) {
@@ -179,25 +152,18 @@ public class SingleInvoicePDF extends HttpServlet {
                     rs.getString("HSNCode"),
                     rs.getBigDecimal("QtyInvoiced"),
                     rs.getBigDecimal("PriceActual"),
-                    rs.getBigDecimal("LineNetAmt")
+                    rs.getBigDecimal("LineNetAmt"),
+                    rs.getBigDecimal("LineDiscount")
                 });
             }
 
-            /* ----------------------------------------------------
-               Customer / Vendor box
-               ---------------------------------------------------- */
-            pdf.add(new Paragraph(
-                invoiceType.equals("SALES") ? "Bill To:" : "Vendor:",
-                fBold
-            ));
+            /* Bill To */
+            pdf.add(new Paragraph(invoiceType.equals("SALES") ? "Bill To:" : "Vendor:", fBold));
             pdf.add(new Paragraph(partner, fText));
             pdf.add(new Paragraph(" "));
 
-            /* ----------------------------------------------------
-               TALLY STYLE: Single complete table
-               ---------------------------------------------------- */
-
-            PdfPTable table = new PdfPTable(new float[]{0.8f, 4f, 1.2f, 1.2f, 1.4f, 1.8f});
+            /* Main Table */
+            PdfPTable table = new PdfPTable(new float[]{0.7f, 3.4f, 1.0f, 1.2f, 1.2f, 1.4f, 1.4f});
             table.setWidthPercentage(100);
 
             table.addCell(headerCell("S.No"));
@@ -205,10 +171,12 @@ public class SingleInvoicePDF extends HttpServlet {
             table.addCell(headerCell("HSN"));
             table.addCell(headerCell("Qty"));
             table.addCell(headerCell("Rate"));
+            table.addCell(headerCell("Discount"));
             table.addCell(headerCell("Amount"));
 
             int serial = 1;
             BigDecimal subtotal = BigDecimal.ZERO;
+            BigDecimal totalDiscount = BigDecimal.ZERO;
 
             for (Object[] row : items) {
 
@@ -217,8 +185,12 @@ public class SingleInvoicePDF extends HttpServlet {
                 BigDecimal qty = (BigDecimal) row[2];
                 BigDecimal rate= (BigDecimal) row[3];
                 BigDecimal amt = (BigDecimal) row[4];
+                BigDecimal disc= (BigDecimal) row[5];
+
+                if (disc == null) disc = BigDecimal.ZERO;
 
                 subtotal = subtotal.add(amt);
+                totalDiscount = totalDiscount.add(disc);
 
                 PdfPCell sno = new PdfPCell(new Phrase("" + serial++));
                 sno.setHorizontalAlignment(Element.ALIGN_CENTER);
@@ -229,46 +201,41 @@ public class SingleInvoicePDF extends HttpServlet {
                 table.addCell(hsn == null ? "" : hsn);
                 table.addCell(right(qty));
                 table.addCell(right(rate));
+                table.addCell(right(disc));
                 table.addCell(right(amt));
             }
 
-            /* ---------- Separator row ---------- */
+            /* Summary Section */
+            Font totalFont = new Font(Font.HELVETICA, 10, Font.BOLD);
+            Font grandFont = new Font(Font.HELVETICA, 12, Font.BOLD);
+
             PdfPCell sep = new PdfPCell(new Phrase(" "));
-            sep.setColspan(6);
+            sep.setColspan(7);
             sep.setBorder(Rectangle.TOP);
             sep.setPadding(4);
             table.addCell(sep);
 
-            /* ---------- SUMMARY SECTION (TALLY STYLE) ---------- */
-
-            Font totalFont = new Font(Font.HELVETICA, 10, Font.BOLD);
-            Font grandFont = new Font(Font.HELVETICA, 12, Font.BOLD);
-
-            BigDecimal discount = BigDecimal.ZERO;
-            BigDecimal taxableValue = subtotal.subtract(discount);
-
-            // GST Calculations
-            BigDecimal cgstAmt = taxableValue.multiply(new BigDecimal("0.09"));
-            BigDecimal sgstAmt = taxableValue.multiply(new BigDecimal("0.09"));
-            BigDecimal igstAmt = taxableValue.multiply(BigDecimal.ZERO);
-            BigDecimal totalGST = cgstAmt.add(sgstAmt).add(igstAmt);
-
             addSummaryRow(table, "Subtotal", subtotal, totalFont);
-            addSummaryRow(table, "Discount", discount, totalFont);
-            addSummaryRow(table, "Taxable Value", taxableValue, totalFont);
-            addSummaryRow(table, "CGST 9%", cgstAmt, totalFont);
-            addSummaryRow(table, "SGST 9%", sgstAmt, totalFont);
-            addSummaryRow(table, "IGST 18%", igstAmt, totalFont);
-            addSummaryRow(table, "Total GST", totalGST, totalFont);
+            addSummaryRow(table, "Total Discount", totalDiscount, totalFont);
 
-            // GRAND TOTAL (Double border)
+            BigDecimal taxableValue = subtotal.subtract(totalDiscount);
+            addSummaryRow(table, "Taxable Value", taxableValue, totalFont);
+
+            BigDecimal cgst = taxableValue.multiply(new BigDecimal("0.09"));
+            BigDecimal sgst = taxableValue.multiply(new BigDecimal("0.09"));
+            BigDecimal totalGST = cgst.add(sgst);
+
+            addSummaryRow(table, "CGST 9%", cgst, totalFont);
+            addSummaryRow(table, "SGST 9%", sgst, totalFont);
+
+            BigDecimal grandTotal = taxableValue.add(totalGST);
+
             PdfPCell gt1 = new PdfPCell(new Phrase("GRAND TOTAL", grandFont));
             gt1.setColspan(5);
             gt1.setHorizontalAlignment(Element.ALIGN_RIGHT);
             gt1.setBorder(Rectangle.TOP | Rectangle.BOTTOM);
             gt1.setPadding(8);
 
-            BigDecimal grandTotal = taxableValue.add(totalGST);
             PdfPCell gt2 = new PdfPCell(new Phrase("₹ " + safe(grandTotal), grandFont));
             gt2.setHorizontalAlignment(Element.ALIGN_RIGHT);
             gt2.setBorder(Rectangle.TOP | Rectangle.BOTTOM);
@@ -279,36 +246,27 @@ public class SingleInvoicePDF extends HttpServlet {
 
             pdf.add(table);
 
-            /* ----------------------------------------------------
-               Signature Section
-               ---------------------------------------------------- */
-
+            /* Signature */
             pdf.add(new Paragraph("\n"));
             PdfPTable sign = new PdfPTable(2);
             sign.setWidthPercentage(100);
 
-            PdfPCell s1 = new PdfPCell(new Phrase("Customer Signature", fText));
-            PdfPCell s2 = new PdfPCell(new Phrase("Authorized Signature", fText));
-
-            s1.setBorder(Rectangle.NO_BORDER);
-            s2.setBorder(Rectangle.NO_BORDER);
-
-            sign.addCell(s1);
-            sign.addCell(s2);
+//            PdfPCell s1 = new PdfPCell(new Phrase("Customer Signature"));
+//            PdfPCell s2 = new PdfPCell(new Phrase("Authorized Signature"));
+//
+//            s1.setBorder(Rectangle.NO_BORDER);
+//            s2.setBorder(Rectangle.NO_BORDER);
+//
+//            sign.addCell(s1);
+//            sign.addCell(s2);
 
             pdf.add(sign);
-
-            /* ----------------------------------------------------
-               Write Output
-               ---------------------------------------------------- */
 
             pdf.close();
 
             resp.setContentType("application/pdf");
             resp.setHeader("Content-Disposition",
-                "attachment; filename=" +
-                doc.replace("/", "_") +
-                (invoiceType.equals("SALES") ? "_Sales.pdf" : "_Purchase.pdf"));
+                "attachment; filename=" + doc.replace("/", "_") + "_Invoice.pdf");
 
             baos.writeTo(resp.getOutputStream());
 

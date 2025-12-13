@@ -162,17 +162,27 @@ public class SalesServlet extends HttpServlet {
             System.out.println("Name: " + name);
             System.out.println("Address: " + address);
             System.out.println("Phone: " + phone);
-if(phone.isEmpty() || phone.isBlank() || phone.equals(null)) {
-	throw new AdempiereException("Please fill Phone Number ");
-	
-}
+			if(phone.isEmpty() || phone.isBlank() || phone.equals(null)) {
+				throw new AdempiereException("Please fill Phone Number ");
+				
+			}
             // ---- Items ----
             JSONArray items = salesData.getJSONArray("items");
             System.out.println("\nItems:");
 
             // ✅ Create Order Header (using existing BP for now)
-            TF_MBPartner bp = new TF_MBPartner(ctx, 1005586, null); // existing partner
-
+            TF_MBPartner bp = new TF_MBPartner(ctx, 0, null); // existing partner
+            bp.setAD_Org_ID(1000000);
+            bp.setName(name!=null ? name :"NA");
+            bp.setPhone(phone!=null ? phone :"NA");
+            bp.setContactName(name!=null ? name :"NA");
+            bp.setCity("NA");
+            bp.setAddress1(address != null ? address : "NA");
+            bp.setSOCreditStatus("X");
+            bp.setSO_CreditLimit(BigDecimal.ZERO);
+            bp.setIsCustomer(true);
+            bp.setIsActive(true);
+            bp.saveEx();
             if (adClientId == 0) {
                 adClientId = bp.getAD_Client_ID();
                 Env.setContext(ctx, "#AD_Client_ID", adClientId);
