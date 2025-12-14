@@ -70,7 +70,7 @@
       <div class="collapse ps-3" id="reportsMenu">
         <ul class="nav flex-column">
           <li class="nav-item">
-            <a href="${pageContext.request.contextPath}/PrintPurchaseReportServlet" class="nav-link text-white small">Purchase Report</a>
+            <a href="${pageContext.request.contextPath}/PrintPurchaseReportServlet" class="nav-link text-white small">Purchase & Sales Report</a>
           </li>
           <li class="nav-item">
             <a href="${pageContext.request.contextPath}/ProfitAndLossReport" class="nav-link text-white small">Profit-Loss Report</a>

@@ -38,7 +38,25 @@
 
                     <!-- Report Form -->
                     <form id="reportForm" class="row g-3" onsubmit="loadReport(event)">
-
+						
+						   <div class="col-md-4">
+                            <label class="form-label">Supplier</label>
+                            <select id="supplier" class="form-select form-select-sm">
+                                <option value="">--Select Supplier--</option>
+                                <%
+                                    List<Map<String, Object>> supplierList =
+                                            (List<Map<String, Object>>) request.getAttribute("supplierList");
+                                    if (supplierList != null) {
+                                        for (Map<String, Object> s : supplierList) {
+                                %>
+                                <option value="<%=s.get("id")%>"><%=s.get("name")%></option>
+                                <%
+                                        }
+                                    }
+                                %>
+                            </select>
+                        </div>
+						
                         <div class="col-md-3">
                             <label class="form-label">From Date</label>
                             <input type="date" class="form-control" id="fromDate" required>
@@ -65,28 +83,12 @@
                             </select>
                         </div>
 
-                        <div class="col-md-4">
-                            <label class="form-label">Supplier</label>
-                            <select id="supplier" class="form-select form-select-sm">
-                                <option value="">--Select Supplier--</option>
-                                <%
-                                    List<Map<String, Object>> supplierList =
-                                            (List<Map<String, Object>>) request.getAttribute("supplierList");
-                                    if (supplierList != null) {
-                                        for (Map<String, Object> s : supplierList) {
-                                %>
-                                <option value="<%=s.get("id")%>"><%=s.get("name")%></option>
-                                <%
-                                        }
-                                    }
-                                %>
-                            </select>
-                        </div>
-
+                     
+<!-- 
                         <div class="col-md-2">
                             <label class="form-label">Page</label>
                             <input type="number" class="form-control" id="page" value="1" min="1">
-                        </div>
+                        </div> -->
 
                         <div class="col-md-6 d-flex align-items-end">
                             <button class="btn btn-primary me-2" type="submit">Show</button>
@@ -122,7 +124,7 @@ function buildRequestJson() {
         org:  "",  
         bp:   document.getElementById("supplier").value,
         summary: document.getElementById("summary").value,
-        page: parseInt(document.getElementById("page").value || "1", 10)
+      /*   page: parseInt(document.getElementById("page").value || "1", 10) */
     };
 }
 
@@ -183,7 +185,7 @@ function renderTable(data, summaryMode){
     }
 
     var docHeader = (summaryMode === "N") ? "DocumentNo" : "";
-    var currentPage = document.getElementById("page").value;
+ /*    var currentPage = document.getElementById("page").value; */
 
     var html = "";
     html += "<div class='card'><div class='card-body'>";
@@ -221,7 +223,7 @@ function renderTable(data, summaryMode){
     html += "</tbody></table></div>";
 
     html += "<div class='d-flex justify-content-between mt-2'>";
-    html += "<div>Page " + currentPage + "</div>";
+   /*  html += "<div>Page " + currentPage + "</div>"; */
     html += "<div>";
     html += "<button class='btn btn-sm btn-outline-secondary me-2' onclick='goToPage(-1)'>Previous</button>";
     html += "<button class='btn btn-sm btn-outline-secondary' onclick='goToPage(1)'>Next</button>";
