@@ -171,10 +171,9 @@ body {
    Main content area
    ========================= */
 .main {
-  margin-left: var(--sb-width);
   padding: 28px;
   min-height: 100vh;
-  width: calc(100% - var(--sb-width));
+  width: 100%;
   transition: margin-left var(--transition), width var(--transition);
   background: transparent;
 }

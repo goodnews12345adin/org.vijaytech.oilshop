@@ -1,4 +1,4 @@
-(() => {
+/*(() => {
   // CONFIG - tweak as needed
   const CFG = {
     grid: 48,
@@ -142,3 +142,4 @@
   requestAnimationFrame(loop);
 
 })();
+*/

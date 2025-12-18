@@ -1,377 +1,434 @@
-<%@ page session="true" %>
-<%-- 
-<%
+<%@ page pageEncoding="UTF-8" session="true" %><%
+    // Server-side retrieval of session username
     String username = (String) session.getAttribute("username");
-    if (username == null) {
+    if (username == null || username.trim().isEmpty()) {
         username = "Guest";
     }
+    String orgNamee = "HLF"; 
 %>
---%>
 
-<!-- ===== Responsive Sidebar (Glass Neon Style) ===== -->
-<!-- Toggle button for small screens -->
-<button id="sidebarToggle" class="sb-toggle" aria-label="Toggle navigation" aria-expanded="true">
-  <i class="bi bi-list"></i>
-</button>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= orgNamee %> ERP - Dashboard v44.1</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
-<div class="sidebar-overlay" id="sidebarOverlay" tabindex="-1" aria-hidden="true"></div>
+    <style>
+        :root {
+            --panel-bg: #08143a;
+            --panel-bg-glass: rgba(8, 20, 58, 0.98);
+            --accent-primary: #19b6b0;
+            --accent-secondary: #15a0c6;
+            --sidebar-width: 280px;
+            --sidebar-collapsed: 85px;
+            --header-height: 75px;
+            --footer-height: 60px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
 
-<div class="sidebar glass-erp d-flex flex-column flex-shrink-0 p-3 text-white shadow-lg" id="mainSidebar" role="navigation" aria-label="Main sidebar">
-  <a href="${pageContext.request.contextPath}/pages/dashboard.jsp"
-     class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none sb-brand">
-    <i class="bi bi-speedometer2 fs-4 me-2 text-glow" aria-hidden="true"></i>
-    <span class="fs-5 fw-bold text-gradient">Sree Textiles</span>
-  </a>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f7fe;
+            margin: 0;
+            padding-top: var(--header-height);
+            padding-bottom: var(--footer-height);
+            transition: var(--transition);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
 
-  <hr class="border-light opacity-25">
+        /* === SIDEBAR === */
+        .sidebar-wrapper {
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--panel-bg);
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1060;
+            transition: var(--transition);
+            box-shadow: 10px 0 30px rgba(0,0,0,0.15);
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-primary) transparent;
+        }
 
-  <ul class="nav nav-pills flex-column mb-auto sb-nav" id="sidebarNav">
-    <li class="nav-item">
-      <a href="${pageContext.request.contextPath}/pages/dashboard.jsp" class="nav-link active text-white" tabindex="0">
-        <i class="bi bi-house-door me-2" aria-hidden="true"></i> Dashboard
-      </a>
-    </li>
+        .sidebar-header {
+            height: var(--header-height);
+            padding: 0 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            position: sticky;
+            top: 0;
+            background: var(--panel-bg);
+            z-index: 10;
+        }
 
-    <li>
-      <a href="${pageContext.request.contextPath}/SalesServlet" class="nav-link text-white">
-        <i class="bi bi-cart-check me-2" aria-hidden="true"></i> Sales
-      </a>
-    </li>
+        .mobile-close-btn {
+            display: none;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            border-radius: 8px;
+            padding: 5px 10px;
+            font-size: 1.2rem;
+            transition: 0.2s;
+        }
+        
+        .mobile-close-btn:hover { background: rgba(255, 255, 255, 0.2); }
 
-    <li>
-      <a href="${pageContext.request.contextPath}/PurchaseServlet" class="nav-link text-white">
-        <i class="bi bi-basket me-2" aria-hidden="true"></i> Purchase
-      </a>
-    </li>
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            padding: 12px 18px;
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none !important;
+            margin: 4px 15px;
+            border-radius: 10px;
+            font-weight: 500;
+            transition: var(--transition);
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            width: calc(100% - 30px);
+            text-align: left;
+        }
 
-    <li>
-      <a href="${pageContext.request.contextPath}/pages/productCategory.jsp" class="nav-link text-white">
-        <i class="bi bi-box-seam me-2" aria-hidden="true"></i> Product category
-      </a>
-    </li>
+        .sidebar-link i:first-child { font-size: 1.2rem; margin-right: 15px; min-width: 25px; }
 
-    <li>
-      <a href="${pageContext.request.contextPath}/Product" class="nav-link text-white">
-        <i class="bi bi-box-seam me-2" aria-hidden="true"></i> Products
-      </a>
-    </li>
-	 <li>
-      <a href="${pageContext.request.contextPath}/ExpenseEntryServlet" class="nav-link text-white">
-        <i class="bi bi-box-seam me-2" aria-hidden="true"></i> Expense Entry
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link text-white d-flex justify-content-between align-items-center"
-         data-bs-toggle="collapse" href="#reportsMenu" role="button"
-         aria-expanded="false" aria-controls="reportsMenu">
-        <span><i class="bi bi-bar-chart me-2" aria-hidden="true"></i> Reports</span>
-        <i class="bi bi-chevron-down"></i>
-      </a>
-      <div class="collapse ps-3" id="reportsMenu">
-        <ul class="nav flex-column">
-          <li class="nav-item">
-            <a href="${pageContext.request.contextPath}/PrintPurchaseReportServlet" class="nav-link text-white small">Purchase & Sales Report</a>
-          </li>
-          <li class="nav-item">
-            <a href="${pageContext.request.contextPath}/ProfitAndLossReport" class="nav-link text-white small">Profit-Loss Report</a>
-          </li>
-          <li class="nav-item">
-            <a href="${pageContext.request.contextPath}/CashBookReport" class="nav-link text-white small">Expense Report</a>
-          </li>
-        </ul>
-      </div>
-    </li>
+        .sidebar-link:hover, .sidebar-link.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff !important;
+        }
 
-  </ul>
-</div>
+        .sidebar-link.active {
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            box-shadow: 0 4px 15px rgba(25, 182, 176, 0.3);
+        }
 
-<!-- ===== Styles & Responsive Media Queries ===== -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-<link href="${pageContext.request.contextPath}/pages/css/style.css" rel="stylesheet">
+        /* === SUBMENU === */
+        .submenu-container {
+            list-style: none;
+            padding: 5px 0;
+            margin: 0 15px 10px 15px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            border-left: 2px solid var(--accent-primary);
+        }
+        
+        .submenu-link {
+            padding: 8px 15px 8px 20px !important;
+            font-size: 0.82rem !important;
+            margin: 2px 0 !important;
+            display: flex !important;
+            align-items: center;
+            color: rgba(255, 255, 255, 0.5) !important;
+            text-decoration: none !important;
+            width: 100% !important;
+        }
 
-<style>
-  /* === Base color variables (kept canonical) === */
-  :root{
-    --outer-frame:#c7c6dc;
-    --bg-1: #f3f4f6;
-    --bg-2: #eef2f6;
-    --panel-dark: #08143a;
-    --panel-dark-2: #09184b;
-    --accent-a: #19b6b0;
-    --accent-b: #15a0c6;
-    --accent-c: #3bd0c3;
-    --muted-light: rgba(255,255,255,0.76);
-    --muted: #9aa6c3;
-    --card-radius: 14px;
-    --outer-radius: 18px;
-    --sidebar-width: 250px;    /* default full width */
-    --sidebar-collapsed: 80px; /* collapsed width for icon-only */
-    --transition-speed: 0.32s;
-  }
+        .submenu-link:hover {
+            color: #fff !important;
+            background: rgba(255, 255, 255, 0.05);
+        }
 
-  /* === Global layout === */
-  body {
-    margin-left: var(--sidebar-width);
-    font-family: 'Poppins', sans-serif;
-    color: #000;
-    background: radial-gradient(ellipse at center, rgba(8,20,58,0.6), rgba(3,10,28,0.9)),
-                url('${pageContext.request.contextPath}/pages/img/bg-textile.jpg') center/cover no-repeat fixed;
-    overflow-x: hidden;
-    transition: margin-left var(--transition-speed) ease;
-  }
+        .submenu-link i { color: var(--accent-primary); margin-right: 12px; font-size: 1rem; }
 
-  /* Sidebar base */
-  .sidebar.glass-erp {
-    width: var(--sidebar-width);
-    height: 100vh;
-    background: linear-gradient(180deg, rgba(8,20,58,0.88), rgba(9,24,75,0.85));
-    backdrop-filter: blur(14px);
-    border-right: 1px solid rgba(255,255,255,0.04);
-    box-shadow: inset -1px 0 0 rgba(255,255,255,0.02), 0 0 25px rgba(27,184,169,0.12);
-    position: fixed;
-    top: 0;
-    left: 0;
-    overflow-y: auto;
-    transition: transform var(--transition-speed) ease, width var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
-    z-index: 1040;
-  }
+        .bi-chevron-down {
+            transition: transform 0.3s ease;
+            font-size: 0.8rem;
+        }
+        .sidebar-link:not(.collapsed) .bi-chevron-down {
+            transform: rotate(180deg);
+        }
 
-  /* Brand text + icon */
-  .sb-brand { color: var(--muted-light) !important; text-shadow: 0 0 8px rgba(25,182,176,0.18); }
-  .sb-nav .nav-link { border-radius: 10px; margin: 4px 0; padding: 10px 12px; font-weight: 500; transition: all 0.2s ease; color: var(--muted-light) !important; display:flex; align-items:center; }
-  .sb-nav .nav-link:hover { background: rgba(255,255,255,0.03); box-shadow: inset 4px 0 0 var(--accent-a); text-decoration:none; }
-  .sb-nav .nav-link.active { background: rgba(255,255,255,0.04); box-shadow: inset 4px 0 0 var(--accent-a); color: #fff !important; }
+        /* === HEADER === */
+        .app-header {
+            height: var(--header-height);
+            background: var(--panel-bg-glass);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: fixed;
+            top: 0;
+            right: 0;
+            left: var(--sidebar-width);
+            z-index: 1040;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+        }
 
-  .text-gradient { background: linear-gradient(90deg, var(--accent-a), var(--accent-b)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-  .text-glow { color: var(--accent-a); text-shadow: 0 0 12px rgba(25,182,176,0.22); }
+        /* === FOOTER === */
+        .app-footer {
+            height: var(--footer-height);
+            background: var(--panel-bg-glass);
+            backdrop-filter: blur(15px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            left: var(--sidebar-width);
+            z-index: 1030;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            color: rgba(255, 255, 255, 0.7);
+        }
 
-  /* Toggle button (for small/mobile) */
-  .sb-toggle {
-    position: fixed;
-    top: 12px;
-    left: 12px;
-    z-index: 1060;
-    background: rgba(255,255,255,0.06);
-    border: 0;
-    color: var(--muted-light);
-    padding: 8px 10px;
-    border-radius: 10px;
-    display: none; /* default hidden; shown on small screens */
-    backdrop-filter: blur(6px);
-  }
-  .sb-toggle:focus { outline: 2px solid rgba(25,182,176,0.24); }
+        /* === STAT CARDS === */
+        .stat-card {
+            background: #fff;
+            border-radius: 15px;
+            padding: 20px;
+            border: none;
+            box-shadow: var(--card-shadow);
+            height: 100%;
+            transition: transform 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-5px); }
+        .stat-label { font-size: 0.75rem; font-weight: 700; color: #444; text-transform: uppercase; margin-bottom: 10px; display: block; }
+        .stat-value { font-size: 1.8rem; font-weight: 800; display: block; }
+        .stat-desc { font-size: 0.7rem; color: #888; }
 
-  /* Overlay for small screens when sidebar open */
-  .sidebar-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.45);
-    z-index: 1035;
-    display: none;
-    opacity: 0;
-    transition: opacity var(--transition-speed) ease;
-  }
+        .main-content { padding: 25px; transition: var(--transition); }
 
-  /* Collapsed (icon-only) sidebar */
-  .sidebar.collapsed {
-    width: var(--sidebar-collapsed);
-  }
-  .sidebar.collapsed .sb-brand span { display: none; }
-  .sidebar.collapsed .sb-nav .nav-link { justify-content: center; padding-left: 0; padding-right: 0; }
-  .sidebar.collapsed .sb-nav .nav-link .bi { font-size: 1.25rem; }
+        /* === MEDIA QUERIES & SIDEBAR ACTIONS === */
+        @media (min-width: 992px) {
+            body { padding-left: var(--sidebar-width); }
+            body.collapsed-sidebar { padding-left: var(--sidebar-collapsed); }
+            
+            body.collapsed-sidebar .sidebar-wrapper { width: var(--sidebar-collapsed); }
+            body.collapsed-sidebar .app-header, 
+            body.collapsed-sidebar .app-footer { left: var(--sidebar-collapsed); }
+            
+            body.collapsed-sidebar .sidebar-link span, 
+            body.collapsed-sidebar .brand-text, 
+            body.collapsed-sidebar .bi-chevron-down, 
+            body.collapsed-sidebar .analytics-label { 
+                display: none !important; 
+            }
+            body.collapsed-sidebar .collapse.show { display: none !important; }
+        }
 
-  /* When sidebar is hidden on small screens, slide left */
-  .sidebar.hidden {
-    transform: translateX(-110%);
-  }
+        @media (max-width: 991px) {
+            .app-header, .app-footer { left: 0 !important; }
+            .sidebar-wrapper { transform: translateX(-100%); width: 280px; }
+            body.mobile-open .sidebar-wrapper { transform: translateX(0); }
+            body { padding-left: 0 !important; }
+            .mobile-close-btn { display: block; }
+            .mobile-overlay {
+                position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+                z-index: 1055; display: none; backdrop-filter: blur(4px);
+            }
+            body.mobile-open .mobile-overlay { display: block; }
+        }
 
-  /* Content area shift behavior for different sidebar sizes */
-  .body-with-collapsed-sidebar { margin-left: var(--sidebar-collapsed); }
-  .body-with-full-sidebar { margin-left: var(--sidebar-width); }
+        .brand-text {
+            background: linear-gradient(90deg, #fff, var(--accent-primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+        }
 
-  /* Smooth scroll for sidebar contents */
-  .sidebar .sb-nav { scroll-behavior: smooth; padding-bottom: 48px; }
+        .btn-logout {
+            background: linear-gradient(135deg, #ff4b2b, #ff416c);
+            border: none; color: white; border-radius: 10px;
+            padding: 8px 16px; font-weight: 600; text-decoration: none; font-size: 0.9rem;
+        }
+        
+        .version-badge {
+            background: rgba(25, 182, 176, 0.2);
+            color: var(--accent-primary);
+            padding: 1px 8px; border-radius: 20px;
+            font-size: 0.65rem; font-weight: 700; border: 1px solid var(--accent-primary);
+        }
+    </style>
+</head>
+<body>
 
-  /* === Media queries === */
+<div class="mobile-overlay" id="mobileOverlay"></div>
 
-  /* Very small phones (portrait) - up to 420px */
-  @media (max-width: 420px) {
-    .sb-toggle { display: inline-flex; align-items: center; justify-content: center; }
-    .sidebar { width: 85%; max-width: 300px; transform: translateX(-110%); } /* hidden by default */
-    .sidebar.visible { transform: translateX(0%); } /* visible on toggle */
-    body { margin-left: 0; }
-    /* Make links bigger/tappable */
-    .sb-nav .nav-link { padding: 14px 16px; font-size: 1rem; }
-    .sidebar-overlay { display: block; } /* visible when toggled by JS */
-  }
+<aside class="sidebar-wrapper" id="sidebar">
+    <div class="sidebar-header">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-intersect text-info fs-3 me-2"></i>
+            <span class="brand-text fs-4"><%= orgNamee %></span>
+        </div>
+        <button class="mobile-close-btn" id="mobileClose"><i class="bi bi-x-lg"></i></button>
+    </div>
+    
+    <nav class="mt-3">
+       <a href="dashboard.jsp" class="sidebar-link active">
+            <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+        </a>
+        <a href="${pageContext.request.contextPath}/SalesServlet" class="sidebar-link">
+            <i class="bi bi-cart3"></i><span>Sales</span>
+        </a>
+        <a href="${pageContext.request.contextPath}/PurchaseServlet" class="sidebar-link">
+            <i class="bi bi-bag-check"></i><span>Purchase</span>
+        </a>
+        <a href="${pageContext.request.contextPath}/pages/productCategory.jsp" class="sidebar-link">
+            <i class="bi bi-collection"></i><span>Categories</span>
+        </a>
+        <a href="${pageContext.request.contextPath}/Product" class="sidebar-link">
+            <i class="bi bi-box-seam"></i><span>Products</span>
+        </a>
+        <a href="${pageContext.request.contextPath}/ExpenseEntryServlet" class="sidebar-link">
+            <i class="bi bi-wallet2"></i><span>Expenses</span>
+        </a>
 
-  /* Small devices / large phones (<= 768px) */
-  @media (max-width: 768px) {
-    .sb-toggle { display: inline-flex; }
-    .sidebar { width: 78%; max-width: 340px; transform: translateX(-110%); } /* default hidden */
-    .sidebar.visible { transform: translateX(0%); box-shadow: 0 20px 40px rgba(2,6,23,0.6); }
-    body { margin-left: 0; }
-    .sidebar-overlay { display: block; } /* will be shown/hidden via JS by toggling opacity/aria-hidden */
-  }
+        <div class="mt-4 px-4 small text-uppercase text-muted fw-bold analytics-label" style="font-size: 0.65rem; letter-spacing: 1px; margin-bottom: 5px;">Data & Analytics</div>
+        
+        <button class="sidebar-link d-flex justify-content-between align-items-center collapsed" 
+                type="button" data-bs-toggle="collapse" data-bs-target="#reportMenu">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-bar-chart-line-fill"></i><span>Reports Center</span>
+            </div>
+            <i class="bi bi-chevron-down"></i>
+        </button>
+        
+        <div class="collapse" id="reportMenu">
+            <div class="submenu-container">
+                <a href="${pageContext.request.contextPath}/PrintPurchaseReportServlet" class="submenu-link">
+                    <i class="bi bi-file-earmark-bar-graph me-2"></i>Sales & Purchase
+                </a>
+                <a href="${pageContext.request.contextPath}/ProfitAndLossReport" class="submenu-link">
+                    <i class="bi bi-graph-up-arrow me-2"></i>Profit & Loss
+                </a>
+                <a href="${pageContext.request.contextPath}/CashBookReport" class="submenu-link">
+                    <i class="bi bi-journal-check me-2"></i>Expense Summary
+                </a>
+            </div>
+        </div>
+    </nav>
+</aside>
 
-  /* Medium devices (tablets / small laptops) 769px - 991px */
-  @media (min-width: 769px) and (max-width: 991px) {
-    /* Use collapsed icon-only sidebar for medium screens to maximize content space */
-    .sidebar { width: var(--sidebar-collapsed); }
-    body { margin-left: var(--sidebar-collapsed); }
-    .sb-brand span { display: none; }
-    .sb-toggle { display: none; } /* desktop-tablet doesn't need overlay toggle */
-    .sidebar { box-shadow: none; }
-  }
+<header class="app-header">
+    <div class="container-fluid d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center">
+            <button class="btn text-white fs-2 p-0 me-3" id="sidebarToggle" type="button">
+                <i class="bi bi-list"></i>
+            </button>
+            <div class="d-none d-sm-block">
+                <h5 class="m-0 text-white fw-bold" id="greeting">Welcome, <%= username %></h5>
+                <small class="text-info" id="liveClock" style="font-size: 0.75rem;"></small>
+            </div>
+        </div>
+        
+        <div class="d-flex align-items-center gap-2 gap-md-3">
+            <div class="text-end d-none d-sm-block">
+                <span class="version-badge">v44.1</span>
+                <span class="text-white fw-bold d-block" style="font-size: 0.9rem;"><%= username %></span>
+                <small class="text-muted opacity-75" style="font-size: 0.65rem;">Status: Online</small>
+            </div>
+            <a href="logout.jsp" class="btn btn-logout d-flex align-items-center">
+                <i class="bi bi-power me-md-2"></i><span>Logout</span>
+            </a>
+        </div>
+    </div>
+</header>
 
-  /* Large devices (desktops) 992px - 1199px */
-  @media (min-width: 992px) and (max-width: 1199px) {
-    .sidebar { width: 220px; }
-    body { margin-left: 220px; }
-  }
+<main class="main-content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="alert bg-white shadow-sm border-0 rounded-4 p-4">
+                    <h4 class="fw-bold text-dark mb-1">Operational Overview</h4>
+                    <p class="text-muted mb-0">Management dashboard for <%= orgNamee %> Enterprise Resource Planning.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
 
-  /* Extra large (>= 1200px) - default full size */
-  @media (min-width: 1200px) {
-    .sidebar { width: var(--sidebar-width); }
-    body { margin-left: var(--sidebar-width); }
-    .sb-toggle { display: none; }
-  }
+<footer class="app-footer">
+    <div class="container-fluid d-flex flex-column flex-md-row justify-content-between align-items-center px-4 small">
+        <div class="mb-1 mb-md-0 text-white">
+            &copy; <span id="year"></span> <strong><%= orgNamee %></strong> | System v44.1
+        </div>
+        <div class="text-center text-md-end">
+            Design & Developed by 
+            <a href="https://VijayTechOrbitSolutions.com" target="_blank" class="text-info text-decoration-none fw-bold">
+                VijayTechOrbitSolutions.com
+            </a>
+        </div>
+    </div>
+</footer>
 
-  /* Landscape phones / high-res narrow screens */
-  @media (min-width: 421px) and (max-width: 768px) and (orientation: landscape) {
-    .sidebar { width: 60%; }
-    .sb-nav .nav-link { padding: 12px 14px; }
-  }
-
-  /* Retina & high DPI tweaks (increase icon clarity) */
-  @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-    .text-glow { text-shadow: 0 0 14px rgba(25,182,176,0.26); }
-  }
-
-  /* Print: hide background and show simple stacked nav */
-  @media print {
-    body { margin: 0; background: #fff !important; color: #000 !important; }
-    .sidebar { position: static; width: auto; height: auto; box-shadow: none; background: transparent; border: none; }
-    .sb-toggle, .sidebar-overlay { display: none !important; }
-    .sb-nav .nav-link { color: #000 !important; background: transparent !important; box-shadow: none !important; }
-  }
-
-  /* Respect user reduced motion preferences */
-  @media (prefers-reduced-motion: reduce) {
-    :root { --transition-speed: 0.001s; }
-    .sidebar, .sidebar-overlay, body { transition: none !important; }
-  }
-
-  /* Dark mode adaptation */
-  @media (prefers-color-scheme: dark) {
-    :root { --muted-light: rgba(255,255,255,0.86); }
-    .sidebar { background: linear-gradient(180deg, rgba(6,12,30,0.95), rgba(7,14,38,0.95)); }
-  }
-
-  /* small utility tweaks */
-  .sb-nav .nav-link .bi { margin-right: 10px; }
-  .sb-nav .nav-link .me-2 { margin-right: 10px; }
-
-</style>
-
-<!-- ===== JS: Toggle & accessibility (no external deps required) ===== -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-  (function () {
-    const sidebar = document.getElementById('mainSidebar');
-    const toggleBtn = document.getElementById('sidebarToggle');
-    const overlay = document.getElementById('sidebarOverlay');
-    const bodyEl = document.body;
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const mobileClose = document.getElementById('mobileClose');
+    const mobileOverlay = document.getElementById('mobileOverlay');
+    const body = document.body;
 
-    // Utility to set aria-expanded on toggle button
-    function setToggleExpanded(expanded) {
-      if (toggleBtn) toggleBtn.setAttribute('aria-expanded', String(expanded));
-    }
-
-    // Show/Hide for small screens
-    function openSidebar() {
-      sidebar.classList.add('visible');
-      sidebar.classList.remove('hidden');
-      overlay.style.display = 'block';
-      // allow CSS transition to fade in
-      requestAnimationFrame(() => overlay.style.opacity = '1');
-      overlay.setAttribute('aria-hidden', 'false');
-      setToggleExpanded(true);
-      // trap focus (very lightweight)
-      try { sidebar.querySelector('a,button, [tabindex]')?.focus(); } catch(e){}
-    }
-
-    function closeSidebar() {
-      sidebar.classList.remove('visible');
-      sidebar.classList.add('hidden');
-      overlay.style.opacity = '0';
-      overlay.setAttribute('aria-hidden', 'true');
-      setToggleExpanded(false);
-      // hide overlay after transition
-      setTimeout(() => {
-        if (!sidebar.classList.contains('visible')) overlay.style.display = 'none';
-      }, 320);
-      // return focus to toggle button for accessibility
-      if (toggleBtn) toggleBtn.focus();
-    }
-
-    // Toggle handler
-    function toggleSidebar() {
-      if (sidebar.classList.contains('visible')) closeSidebar(); else openSidebar();
-    }
-
-    // Click outside closes sidebar
-    overlay.addEventListener('click', closeSidebar);
-    overlay.addEventListener('touchstart', closeSidebar);
-
-    // Toggle button
-    toggleBtn.addEventListener('click', function (e) {
-      e.preventDefault();
-      toggleSidebar();
+    // Corrected Sidebar Action Logic
+    sidebarToggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (window.innerWidth < 992) {
+            // Logic for Mobile: Slide sidebar in
+            body.classList.toggle('mobile-open');
+        } else {
+            // Logic for Desktop: Collapse sidebar to icons only
+            body.classList.toggle('collapsed-sidebar');
+            
+            // Auto-collapse open menus if sidebar is shrunk
+            const reportMenu = document.getElementById('reportMenu');
+            if (body.classList.contains('collapsed-sidebar')) {
+                const bsCollapse = bootstrap.Collapse.getInstance(reportMenu);
+                if (bsCollapse) bsCollapse.hide();
+            }
+        }
     });
 
-    // Close on ESC key
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' || e.key === 'Esc') {
-        // only close if overlay is visible (i.e. small-screen)
-        if (sidebar.classList.contains('visible')) closeSidebar();
-      }
+    // Close mobile sidebar when clicking "X" or the blurred overlay
+    [mobileClose, mobileOverlay].forEach(el => {
+        el.addEventListener('click', () => {
+            body.classList.remove('mobile-open');
+        });
     });
 
-    // Initialize sidebar visibility depending on viewport (so server-side margin doesn't mismatch)
-    function initSidebarState() {
-      const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
-      if (vw <= 768) {
-        sidebar.classList.add('hidden');
-        sidebar.classList.remove('collapsed');
-        bodyEl.classList.remove('body-with-collapsed-sidebar');
-        bodyEl.classList.remove('body-with-full-sidebar');
-        bodyEl.style.marginLeft = '0';
-      } else if (vw >= 769 && vw <= 991) {
-        sidebar.classList.remove('hidden');
-        sidebar.classList.add('collapsed');
-        bodyEl.classList.add('body-with-collapsed-sidebar');
-        bodyEl.style.marginLeft = getComputedStyle(document.documentElement).getPropertyValue('--sidebar-collapsed').trim();
-      } else if (vw >= 992 && vw <= 1199) {
-        sidebar.classList.remove('hidden');
-        sidebar.classList.remove('collapsed');
-        bodyEl.classList.add('body-with-full-sidebar');
-        bodyEl.style.marginLeft = '220px';
-      } else {
-        sidebar.classList.remove('hidden');
-        sidebar.classList.remove('collapsed');
-        bodyEl.classList.add('body-with-full-sidebar');
-        bodyEl.style.marginLeft = getComputedStyle(document.documentElement).getPropertyValue('--sidebar-width').trim();
-      }
-      setToggleExpanded(!sidebar.classList.contains('hidden'));
+    // Reset mobile state if window is resized to desktop width
+    window.addEventListener('resize', () => {
+        if (window.innerWidth >= 992) {
+            body.classList.remove('mobile-open');
+        }
+    });
+
+    // UI Updates (Time & Username Greeting)
+    function updateUI() {
+        const now = new Date();
+        const hrs = now.getHours();
+        
+        // Update clock and year
+        const liveClockEl = document.getElementById('liveClock');
+        const yearEl = document.getElementById('year');
+        if(liveClockEl) liveClockEl.innerText = now.toDateString() + " | " + now.toLocaleTimeString();
+        if(yearEl) yearEl.innerText = now.getFullYear();
+
+        // Inject Username correctly
+        const serverUser = "<%= username %>";
+        let greetText = (hrs < 12) ? "Good Morning" : (hrs < 17) ? "Good Afternoon" : "Good Evening";
+        
+        const greetingEl = document.getElementById('greeting');
+        if(greetingEl) {
+            greetingEl.innerHTML = greetText + `, <span class="text-info">${serverUser}</span>`;
+        }
     }
-
-    // On load and on resize adjust initial state
-    window.addEventListener('load', initSidebarState);
-    window.addEventListener('resize', initSidebarState);
-
-    // Keyboard accessibility: focus trap hint (optional)
-    // Note: for a full focus trap, integrate a focus-trap library; this is a lightweight approach.
-  })();
+    
+    // Refresh every second
+    setInterval(updateUI, 1000);
+    updateUI();
 </script>
+
+</body>
+</html>

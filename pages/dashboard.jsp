@@ -156,6 +156,7 @@
     request.setAttribute("monthlyExpenseAmount", monthlyExpenseAmount);
 %>
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -584,6 +585,41 @@
                         </div>
                         <div class="kpi-sub">Total value of all purchases this month</div>
                     </div>
+                    
+                    <!-- EXPENSE AMOUNTS -->
+<div class="kpi expense">
+    <div class="kpi-header">Today's Expense Amount</div>
+    <div class="kpi-number">
+        <span class="currency">₹</span>
+        <span class="value">
+            <fmt:formatNumber value="${todayExpenseAmount}" type="number" groupingUsed="true" maxFractionDigits="0"/>
+        </span>
+    </div>
+    <div class="kpi-sub">Total expenses incurred today</div>
+</div>
+
+<div class="kpi expense">
+    <div class="kpi-header">Weekly Expense Amount</div>
+    <div class="kpi-number">
+        <span class="currency">₹</span>
+        <span class="value">
+            <fmt:formatNumber value="${weeklyExpenseAmount}" type="number" groupingUsed="true" maxFractionDigits="0"/>
+        </span>
+    </div>
+    <div class="kpi-sub">Total expenses this week</div>
+</div>
+
+<div class="kpi expense">
+    <div class="kpi-header">Monthly Expense Amount</div>
+    <div class="kpi-number">
+        <span class="currency">₹</span>
+        <span class="value">
+            <fmt:formatNumber value="${monthlyExpenseAmount}" type="number" groupingUsed="true" maxFractionDigits="0"/>
+        </span>
+    </div>
+    <div class="kpi-sub">Total expenses this month</div>
+</div>
+                    
 
                 </div>
             </div>
