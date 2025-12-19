@@ -1,4 +1,4 @@
-package org.vijaytech.textile.utils;
+package org.vijaytech.oilshop.utils;
 
 import java.io.OutputStream;
 import java.net.HttpURLConnection;

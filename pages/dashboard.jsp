@@ -429,7 +429,7 @@
 
 <body>
 
-<%@ include file="header.jsp" %>
+<%-- <%@ include file="header.jsp" %> --%>
 <%@ include file="sidebar.jsp" %>
 
 <main class="main" role="main" aria-labelledby="dashboardTitle">

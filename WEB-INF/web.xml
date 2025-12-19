@@ -32,7 +32,7 @@
   <!-- User Login Servlet -->
  <servlet>
     <servlet-name>UserLoginServlet</servlet-name>
-    <servlet-class>org.vijaytech.textile.UserLoginServlet</servlet-class>
+    <servlet-class>org.vijaytech.oilshop.UserLoginServlet</servlet-class>
 </servlet>
 
 <servlet-mapping>
@@ -48,7 +48,7 @@
    
  <servlet>
     <servlet-name>LoadBillInfo</servlet-name>
-    <servlet-class>org.vijaytech.textile.LoadBillInfo</servlet-class>
+    <servlet-class>org.vijaytech.oilshop.LoadBillInfo</servlet-class>
 </servlet>
 
 <servlet-mapping>
@@ -65,7 +65,7 @@
 
 <servlet>
     <servlet-name>SalesServlet</servlet-name>
-    <servlet-class>org.vijaytech.textile.SalesServlet</servlet-class>
+    <servlet-class>org.vijaytech.oilshop.SalesServlet</servlet-class>
 </servlet>
 
 <servlet-mapping>
@@ -74,7 +74,7 @@
 </servlet-mapping>
 <servlet>
     <servlet-name>PurchaseServlet</servlet-name>
-    <servlet-class>org.vijaytech.textile.PurchaseServlet</servlet-class>
+    <servlet-class>org.vijaytech.oilshop.PurchaseServlet</servlet-class>
 </servlet>
 
 <servlet-mapping>
@@ -83,7 +83,7 @@
 </servlet-mapping>
 <servlet>
     <servlet-name>PrintPurchaseReportServlet</servlet-name>
-    <servlet-class>org.vijaytech.textile.PrintPurchaseReportServlet</servlet-class>
+    <servlet-class>org.vijaytech.oilshop.PrintPurchaseReportServlet</servlet-class>
 </servlet>
 
 <servlet-mapping>
@@ -93,7 +93,7 @@
 
 <servlet>
     <servlet-name>ProductCategory</servlet-name>
-    <servlet-class>org.vijaytech.textile.ProductCategory</servlet-class>
+    <servlet-class>org.vijaytech.oilshop.ProductCategory</servlet-class>
 </servlet>
 
 <servlet-mapping>
@@ -103,7 +103,7 @@
 
 <servlet>
     <servlet-name>Product</servlet-name>
-    <servlet-class>org.vijaytech.textile.Product</servlet-class>
+    <servlet-class>org.vijaytech.oilshop.Product</servlet-class>
 </servlet>
 
 <servlet-mapping>
@@ -112,7 +112,7 @@
 </servlet-mapping>
 <servlet>
     <servlet-name>ProfitAndLossReport</servlet-name>
-    <servlet-class>org.vijaytech.textile.ProfitAndLossReport</servlet-class>
+    <servlet-class>org.vijaytech.oilshop.ProfitAndLossReport</servlet-class>
 </servlet>
 
 <servlet-mapping>
@@ -121,7 +121,7 @@
 </servlet-mapping>
 <servlet>
     <servlet-name>InvoicePDFServlet</servlet-name>
-    <servlet-class>org.vijaytech.textile.utils.InvoicePDFServlet</servlet-class>
+    <servlet-class>org.vijaytech.oilshop.utils.InvoicePDFServlet</servlet-class>
 </servlet>
 
 <servlet-mapping>
@@ -131,7 +131,7 @@
 
 <servlet>
     <servlet-name>SalesSaveServlet</servlet-name>
-    <servlet-class>org.vijaytech.textile.SalesSaveServlet</servlet-class>
+    <servlet-class>org.vijaytech.oilshop.SalesSaveServlet</servlet-class>
 </servlet>
 <servlet-mapping>
     <servlet-name>SalesSaveServlet</servlet-name>
@@ -139,7 +139,7 @@
 </servlet-mapping>
 <servlet>
     <servlet-name>ExpenseEntryServlet</servlet-name>
-    <servlet-class>org.vijaytech.textile.ExpenseEntryServlet</servlet-class>
+    <servlet-class>org.vijaytech.oilshop.ExpenseEntryServlet</servlet-class>
 </servlet>
 <servlet-mapping>
     <servlet-name>ExpenseEntryServlet</servlet-name>
@@ -148,7 +148,7 @@
 
 <servlet>
     <servlet-name>CashBookReport</servlet-name>
-    <servlet-class>org.vijaytech.textile.CashBookReport</servlet-class>
+    <servlet-class>org.vijaytech.oilshop.CashBookReport</servlet-class>
 </servlet>
 <servlet-mapping>
     <servlet-name>CashBookReport</servlet-name>
@@ -157,7 +157,7 @@
 
 <servlet>
     <servlet-name>SingleInvoicePDF</servlet-name>
-    <servlet-class>org.vijaytech.textile.utils.SingleInvoicePDF</servlet-class>
+    <servlet-class>org.vijaytech.oilshop.utils.SingleInvoicePDF</servlet-class>
 </servlet>
 
 <servlet-mapping>

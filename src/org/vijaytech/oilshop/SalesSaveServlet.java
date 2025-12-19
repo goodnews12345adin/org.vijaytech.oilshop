@@ -1,4 +1,4 @@
-package org.vijaytech.textile;
+package org.vijaytech.oilshop;
 
 import java.awt.Rectangle;
 import java.io.BufferedReader;
@@ -37,7 +37,7 @@ import org.syvasoft.tallyfrontcrusher.model.TF_MBPartner;
 import org.syvasoft.tallyfrontcrusher.model.TF_MOrder;
 import org.syvasoft.tallyfrontcrusher.model.TF_MOrderLine;
 import org.syvasoft.tallyfrontcrusher.model.TF_MProduct;
-import org.vijaytech.textile.utils.GenerateTextileBillPDF;
+import org.vijaytech.oilshop.utils.GenerateTextileBillPDF;
 
 import com.google.gson.Gson;
 import com.lowagie.text.Font;

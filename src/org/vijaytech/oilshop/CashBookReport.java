@@ -1,4 +1,4 @@
-package org.vijaytech.textile;
+package org.vijaytech.oilshop;
 
 import java.awt.Color;
 import java.io.IOException;

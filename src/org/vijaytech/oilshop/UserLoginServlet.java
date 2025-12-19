@@ -1,4 +1,4 @@
-package org.vijaytech.textile;
+package org.vijaytech.oilshop;
 
 import java.io.IOException; 
 import java.sql.*;
@@ -105,7 +105,7 @@ public class UserLoginServlet extends HttpServlet {
 
                 
               
-                response.sendRedirect("pages/dashboard.jsp");
+                response.sendRedirect("/pages/dashboard.jsp");
             } else {
                 setiDempiereContext(request);
                 response.sendRedirect("pages/loginpage.jsp?error=1");

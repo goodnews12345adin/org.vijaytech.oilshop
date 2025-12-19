@@ -1,4 +1,4 @@
-package org.vijaytech.textile;
+package org.vijaytech.oilshop;
 
 public class Organization {
     private int AD_Org_ID;

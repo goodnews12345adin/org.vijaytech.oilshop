@@ -1,6 +1,6 @@
 <%@ page import="java.util.Map" %>
 <%@ page import="java.util.List" %>
-<%@ page import="org.vijaytech.textile.Organization" %>
+<%@ page import="org.vijaytech.oilshop.Organization" %>
 <%@ page import="java.util.Properties" %>
 <%@ page language="java"
          contentType="text/html; charset=UTF-8"
@@ -525,7 +525,10 @@
                            style="width:120px;"
                            value="0">
                 </div>
-
+				<div class="mt-2">
+                    Balance Cash:
+                    ₹<span id="ReCash">0.00</span>
+                </div>
                 <div class="mt-2">
                     Subtotal:
                     ₹<span id="subtotal">0.00</span>
@@ -795,7 +798,26 @@ $(function () {
         if (total < 0) total = 0;
 
         $("#grand-total").text(total.toFixed(2));
+        updateBalanceCash();
     }
+    
+    /*  ==========================
+    Balance Cash Function
+    =========================== */
+    function updateBalanceCash() {
+
+        const total = parseFloat($("#grand-total").text()) || 0;
+        const cash  = parseFloat($("#cash").val()) || 0;
+        const upi   = parseFloat($("#upi").val()) || 0;
+
+        let balance = total - (cash + upi);
+        if (balance < 0) balance = 0;
+
+        $("#ReCash").text(balance.toFixed(2));
+    }
+
+    $("#discount").on("input", recalc);
+    $("#cash, #upi").on("input", updateBalanceCash);
 
     $("#discount").on("input", recalc);
     $("#recalculate").on("click", recalc);

@@ -267,7 +267,7 @@
     </div>
     
     <nav class="mt-3">
-       <a href="dashboard.jsp" class="sidebar-link active">
+       <a href="${pageContext.request.contextPath}/pages/dashboard.jsp" class="sidebar-link active">
             <i class="bi bi-speedometer2"></i><span>Dashboard</span>
         </a>
         <a href="${pageContext.request.contextPath}/SalesServlet" class="sidebar-link">
@@ -337,7 +337,7 @@
     </div>
 </header>
 
-<main class="main-content">
+<%-- <main class="main-content">
     <div class="container-fluid">
         <div class="row">
             <div class="col-12">
@@ -348,7 +348,7 @@
             </div>
         </div>
     </div>
-</main>
+</main> --%>
 
 <footer class="app-footer">
     <div class="container-fluid d-flex flex-column flex-md-row justify-content-between align-items-center px-4 small">

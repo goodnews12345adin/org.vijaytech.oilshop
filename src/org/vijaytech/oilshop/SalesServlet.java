@@ -1,4 +1,4 @@
-package org.vijaytech.textile;
+package org.vijaytech.oilshop;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -31,8 +31,8 @@ import org.syvasoft.tallyfrontcrusher.model.TF_MBPartner;
 import org.syvasoft.tallyfrontcrusher.model.TF_MOrder;
 import org.syvasoft.tallyfrontcrusher.model.TF_MOrderLine;
 import org.syvasoft.tallyfrontcrusher.model.TF_MProduct;
-import org.vijaytech.textile.utils.GenerateTextileBillPDF;
-import org.vijaytech.textile.utils.WhatsAppSender;
+import org.vijaytech.oilshop.utils.GenerateTextileBillPDF;
+import org.vijaytech.oilshop.utils.WhatsAppSender;
 
 public class SalesServlet extends HttpServlet {
 
