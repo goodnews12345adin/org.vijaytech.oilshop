@@ -4,9 +4,9 @@ Bundle-Name: Vijay Tech Mobile App
 Bundle-SymbolicName: org.vijaytech.oilshop;singleton:=true
 Bundle-Version: 10.1.0.qualifier
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Web-ContextPath: textileapp
+Web-ContextPath: oilshop
 Bundle-ClassPath: .,
- textileapp/,
+ oilshop/,
  pages/
 Require-Bundle: org.adempiere.base;bundle-version="0.0.0",
  org.adempiere.base.process;bundle-version="10.0.0",

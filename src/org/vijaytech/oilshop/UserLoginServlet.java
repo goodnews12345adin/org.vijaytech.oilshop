@@ -46,13 +46,13 @@ public class UserLoginServlet extends HttpServlet {
         // Invalidate old session
         HttpSession oldSession = request.getSession(false);
         if (oldSession != null) oldSession.invalidate();
-
+        System.out.println("Start");
         // Create new session and set timeout
         HttpSession session = request.getSession(true);
         session.setMaxInactiveInterval(60 * 60 * 24); // 24 hours in seconds
 
         Properties ctx = setiDempiereContext(request);     
-
+        
         Env.setCtx(ctx);
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -103,9 +103,7 @@ public class UserLoginServlet extends HttpServlet {
                 session.setAttribute("AD_Org_ID", orgID);
                 System.out.println(orgID);
 
-                
-              
-                response.sendRedirect("/pages/dashboard.jsp");
+                response.sendRedirect("pages/dashboard.jsp");
             } else {
                 setiDempiereContext(request);
                 response.sendRedirect("pages/loginpage.jsp?error=1");

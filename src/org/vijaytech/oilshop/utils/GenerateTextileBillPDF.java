@@ -37,7 +37,8 @@ public class GenerateTextileBillPDF {
     private static final String SHOP_ADDRESS = "Old Subramanian Clinic (Opposite), Main Road, Kadayanallur \u2013 627751";
     private static final String SHOP_PHONE   = "9597908804";
     private static final String SHOP_EMAIL   = "yourmail@example.com"; // change to real email
-
+    private static final String SHOP_ADDRESS1 = "Palanganatham";
+    private static final String SHOP_NAME1    = "SKV";
     // ===== COLOR THEME =====
     private static final Color COLOR_PRIMARY   = new Color(251, 176, 52);   // Yellow-Orange
     private static final Color COLOR_ACCENT    = new Color(194, 24, 91);    // Pink Magenta
@@ -380,6 +381,165 @@ public class GenerateTextileBillPDF {
         doc.close();
         return pdfFile.getAbsolutePath();
     }
+    /// 80MM
+    public static String generate80mm(File pdfFile, int orderId, Properties ctx) throws Exception {
+
+        if (pdfFile.getParentFile() != null && !pdfFile.getParentFile().exists()) {
+            pdfFile.getParentFile().mkdirs();
+        }
+
+        // ================= HEADER QUERY =================
+        String sql = "SELECT o.documentno, o.dateordered, "
+                   + "bp.name, bp.phone, COALESCE(l.address1,'') AS cust_addr "
+                   + "FROM c_order o "
+                   + "JOIN c_bpartner bp ON bp.c_bpartner_id = o.c_bpartner_id "
+                   + "LEFT JOIN c_bpartner_location bpl ON (bpl.c_bpartner_id = bp.c_bpartner_id AND bpl.isbillto='Y') "
+                   + "LEFT JOIN c_location l ON l.c_location_id = bpl.c_location_id "
+                   + "WHERE o.c_order_id = ?";
+
+        PreparedStatement ps = DB.prepareStatement(sql, null);
+        ps.setInt(1, orderId);
+        ResultSet rs = ps.executeQuery();
+
+        String billNo="", custName="", phone="", address="";
+        Timestamp billDate=null;
+
+        if (rs.next()) {
+            billNo   = rs.getString("documentno");
+            billDate = rs.getTimestamp("dateordered");
+            custName = rs.getString("name");
+            phone    = rs.getString("phone");
+            address  = rs.getString("cust_addr");
+        }
+        rs.close();
+        ps.close();
+
+        // ================= ITEMS QUERY =================
+        String sql2 = "SELECT p.name, p.hsncode, ol.qtyordered, ol.priceactual "
+                    + "FROM c_orderline ol "
+                    + "JOIN m_product p ON p.m_product_id = ol.m_product_id "
+                    + "WHERE ol.c_order_id = ?";
+
+        PreparedStatement ps2 = DB.prepareStatement(sql2, null);
+        ps2.setInt(1, orderId);
+        ResultSet rs2 = ps2.executeQuery();
+
+        class Item {
+            String name, hsn;
+            BigDecimal qty, rate, amt;
+        }
+
+        List<Item> items = new ArrayList<>();
+        BigDecimal subTotal = BigDecimal.ZERO;
+
+        while (rs2.next()) {
+            Item it = new Item();
+            it.name = rs2.getString(1);
+            it.hsn  = rs2.getString(2);
+            it.qty  = rs2.getBigDecimal(3);
+            it.rate = rs2.getBigDecimal(4);
+
+            if (it.qty == null)  it.qty = BigDecimal.ZERO;
+            if (it.rate == null) it.rate = BigDecimal.ZERO;
+
+            it.amt = it.qty.multiply(it.rate);
+            subTotal = subTotal.add(it.amt);
+            items.add(it);
+        }
+        rs2.close();
+        ps2.close();
+
+        BigDecimal cgst = subTotal.multiply(new BigDecimal("0.025")).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal sgst = cgst;
+        BigDecimal grandTotal = subTotal.add(cgst).add(sgst);
+
+        // ================= PDF START =================
+        Rectangle pageSize = new Rectangle(226.77f, 1250f); // 80mm
+        Document doc = new Document(pageSize, 6, 6, 6, 6);
+        PdfWriter writer = PdfWriter.getInstance(doc, new FileOutputStream(pdfFile));
+        doc.open();
+
+        Font normal = new Font(Font.COURIER, 9);
+        Font bold   = new Font(Font.COURIER, 9, Font.BOLD);
+        Font title  = new Font(Font.COURIER, 10, Font.BOLD);
+
+        SimpleDateFormat df = new SimpleDateFormat("dd/MM/yy HH:mm");
+
+        // ================= HEADER =================
+        Paragraph p = new Paragraph("SKV OILS", title);
+        p.setAlignment(Element.ALIGN_CENTER);
+        doc.add(p);
+        doc.add(new Paragraph("--------------------------------", normal));
+
+        doc.add(new Paragraph("| BILL NO : " + billNo, normal));
+        doc.add(new Paragraph("| DATE    : " + (billDate != null ? df.format(billDate) : ""), normal));
+        doc.add(new Paragraph("--------------------------------", normal));
+
+        doc.add(new Paragraph("| Customer: " + custName, normal));
+        doc.add(new Paragraph("| Phone   : " + phone, normal));
+        doc.add(new Paragraph("--------------------------------", normal));
+
+        // ================= ITEMS =================
+        doc.add(new Paragraph("| SI ITEM     HSN   QTY RATE   AMT |", bold));
+        doc.add(new Paragraph("--------------------------------", normal));
+
+        int si = 1;
+        for (Item it : items) {
+            String row = String.format(
+                "| %-2d %-8s %-5s %3s %5.2f %6.2f |",
+                si++,
+                it.name.length() > 8 ? it.name.substring(0,8) : it.name,
+                it.hsn != null ? it.hsn : "",
+                it.qty.stripTrailingZeros().toPlainString(),
+                it.rate,
+                it.amt
+            );
+            doc.add(new Paragraph(row, normal));
+        }
+
+        doc.add(new Paragraph("--------------------------------", normal));
+        doc.add(new Paragraph(String.format("| SUB TOTAL : %14.2f |", subTotal), normal));
+        doc.add(new Paragraph(String.format("| CGST @2.5%%: %13.2f |", cgst), normal));
+        doc.add(new Paragraph(String.format("| SGST @2.5%%: %13.2f |", sgst), normal));
+        doc.add(new Paragraph("--------------------------------", normal));
+
+        Paragraph gt = new Paragraph(
+            String.format("| TOTAL     : %14.2f |", grandTotal),
+            bold
+        );
+        doc.add(gt);
+
+        // ================= AMOUNT IN WORDS =================
+        doc.add(new Paragraph("--------------------------------", normal));
+        doc.add(new Paragraph("| Amount in Words", bold));
+        doc.add(new Paragraph("| " + convertToIndianCurrency(grandTotal), normal));
+        doc.add(new Paragraph("--------------------------------", normal));
+
+        // ================= QR =================
+        doc.add(new Paragraph("| Scan to Pay (PhonePe / GPay)", bold));
+
+//        String upi =
+//            "upi://pay?pa=skvoils@upi&pn=SKVOILS&am="
+//            + grandTotal.toPlainString() + "&cu=INR";
+//
+//        BarcodeQRCode qr = new BarcodeQRCode(upi, 110, 110, null);
+//        Image qrImg = qr.getImage();
+//        qrImg.scaleToFit(110, 110);
+//        qrImg.setAlignment(Image.ALIGN_CENTER);
+//        doc.add(qrImg);
+
+        doc.add(new Paragraph("--------------------------------", normal));
+        Paragraph thanks = new Paragraph("Thank you! Visit again.", bold);
+        thanks.setAlignment(Element.ALIGN_CENTER);
+        doc.add(thanks);
+
+        doc.close();
+        return pdfFile.getAbsolutePath();
+    }
+
+
+
+
 
     // ================== HELPER METHODS ==================
 

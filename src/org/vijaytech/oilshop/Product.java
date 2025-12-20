@@ -147,8 +147,8 @@ public class Product extends HttpServlet {
             Env.setContext(ctx, "#AD_User_ID", 100);
         if (Env.getContextAsInt(ctx, "#M_Warehouse_ID") == 0)
             Env.setContext(ctx, "#M_Warehouse_ID", 1000113);
-
         int clientId = Env.getAD_Client_ID(ctx);   // *** NEW: use for unique check ***
+        Env.setCtx(ctx);
 
         // AD_Org_ID from session fallback
         int sessionOrg = 0;
@@ -230,15 +230,14 @@ public class Product extends HttpServlet {
 
             // Optional fields
             if (json.has("Description")) product.setDescription(json.optString("Description", null));
-            if (json.has("HSNCode")) product.set_CustomColumn("HSNCode", json.optString("HSNCode", null));
+            if (json.has("HSNCode")) product.setHSNCode(json.optString("HSNCode", null));
+          
 
-            if (json.has("Barcode")) {
-                String bar = json.optString("Barcode", null);
-                if (bar != null && !bar.trim().isEmpty()) {
-                    product.setUPC(bar);
-                    product.setSKU(bar);
-                }
-            }
+			/*
+			 * if (json.has("Barcode")) { String bar = json.optString("Barcode", null); if
+			 * (bar != null && !bar.trim().isEmpty()) { product.setUPC(bar);
+			 * product.setSKU(bar); } }
+			 */
 
             // BillPrice with proper BigDecimal scale(2)
             if (json.has("BillPrice")) {
@@ -252,15 +251,12 @@ public class Product extends HttpServlet {
             }
 
             // Qty (custom column) with scale(3)
-            if (json.has("Qty")) {
-                try {
-                    double q = json.optDouble("Qty", 0.0);
-                    BigDecimal qty = BigDecimal.valueOf(q).setScale(3, RoundingMode.HALF_UP);
-                    product.set_CustomColumn("Qty", qty);
-                } catch (Exception e) {
-                    throw new AdempiereException("Invalid Qty format!");
-                }
-            }
+			/*
+			 * if (json.has("Qty")) { try { double q = json.optDouble("Qty", 0.0);
+			 * BigDecimal qty = BigDecimal.valueOf(q).setScale(3, RoundingMode.HALF_UP);
+			 * product.set_CustomColumn("Qty", qty); } catch (Exception e) { throw new
+			 * AdempiereException("Invalid Qty format!"); } }
+			 */
 
             // Rate (custom column) with scale(2)
             if (json.has("Rate")) {
@@ -268,6 +264,15 @@ public class Product extends HttpServlet {
                     double r = json.optDouble("Rate", 0.0);
                     BigDecimal rate = BigDecimal.valueOf(r).setScale(2, RoundingMode.HALF_UP);
                     product.set_CustomColumn("Rate", rate);
+                } catch (Exception e) {
+                    throw new AdempiereException("Invalid Rate format!");
+                }
+            }
+            if (json.has("TaxRate")) {
+                try {
+                    double r = json.optDouble("TaxRate", 0.0);
+                    BigDecimal rate = BigDecimal.valueOf(r).setScale(2, RoundingMode.HALF_UP);
+                    product.set_CustomColumn("TaxRate", rate);
                 } catch (Exception e) {
                     throw new AdempiereException("Invalid Rate format!");
                 }

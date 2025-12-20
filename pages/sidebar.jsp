@@ -4,7 +4,7 @@
     if (username == null || username.trim().isEmpty()) {
         username = "Guest";
     }
-    String orgNamee = "HLF"; 
+    String orgNamee = "SKV"; 
 %>
 
 <!DOCTYPE html>
@@ -267,7 +267,8 @@
     </div>
     
     <nav class="mt-3">
-       <a href="${pageContext.request.contextPath}/pages/dashboard.jsp" class="sidebar-link active">
+       
+        <a href="${pageContext.request.contextPath}/pages/dashboard.jsp" class="sidebar-link">
             <i class="bi bi-speedometer2"></i><span>Dashboard</span>
         </a>
         <a href="${pageContext.request.contextPath}/SalesServlet" class="sidebar-link">
@@ -330,25 +331,14 @@
                 <span class="text-white fw-bold d-block" style="font-size: 0.9rem;"><%= username %></span>
                 <small class="text-muted opacity-75" style="font-size: 0.65rem;">Status: Online</small>
             </div>
-            <a href="logout.jsp" class="btn btn-logout d-flex align-items-center">
+            <a href="${pageContext.request.contextPath}/pages/loginpage.jsp" class="btn btn-logout d-flex align-items-center">
                 <i class="bi bi-power me-md-2"></i><span>Logout</span>
             </a>
         </div>
     </div>
 </header>
 
-<%-- <main class="main-content">
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-12">
-                <div class="alert bg-white shadow-sm border-0 rounded-4 p-4">
-                    <h4 class="fw-bold text-dark mb-1">Operational Overview</h4>
-                    <p class="text-muted mb-0">Management dashboard for <%= orgNamee %> Enterprise Resource Planning.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</main> --%>
+
 
 <footer class="app-footer">
     <div class="container-fluid d-flex flex-column flex-md-row justify-content-between align-items-center px-4 small">

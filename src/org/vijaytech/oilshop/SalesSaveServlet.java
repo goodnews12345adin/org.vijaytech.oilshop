@@ -78,7 +78,8 @@ public class SalesSaveServlet extends HttpServlet {
             JSONObject salesData = root.getJSONObject("salesData");
 
             Properties ctx = (Properties) session.getAttribute("ctx");
-            if (ctx == null) ctx = Env.getCtx();
+            Env.setCtx(ctx);
+
 
             if (Env.getAD_Client_ID(ctx) == 0)
                 Env.setContext(ctx, "#AD_Client_ID", 1000000);
@@ -88,7 +89,7 @@ public class SalesSaveServlet extends HttpServlet {
                 Env.setContext(ctx, "#AD_User_ID", 100);
             if (Env.getContextAsInt(ctx, "#M_Warehouse_ID") == 0)
                 Env.setContext(ctx, "#M_Warehouse_ID", 1000113);
-
+            if (ctx == null) ctx = Env.getCtx();
             JSONObject customer = salesData.getJSONObject("customer");
             String name = customer.optString("name", "Walk-in").trim();
             String address = customer.optString("address", "NA").trim();
@@ -100,7 +101,12 @@ public class SalesSaveServlet extends HttpServlet {
             BigDecimal discount = new BigDecimal(salesData.optString("discount", "0"));
             JSONArray items = salesData.getJSONArray("items");
 
-            int existingBP_ID = DB.getSQLValue(null, "SELECT C_BPartner_ID FROM C_BPartner WHERE Phone=?", phone);
+            int existingBP_ID = DB.getSQLValue(
+            	    null,
+            	    "SELECT C_BPartner_ID FROM C_BPartner WHERE Phone=? AND AD_Client_ID=?",
+            	    phone,
+            	    Env.getAD_Client_ID(ctx)
+            	);
 
             TF_MBPartner bp;
             if (existingBP_ID > 0) {
@@ -172,15 +178,23 @@ public class SalesSaveServlet extends HttpServlet {
 
                 TF_MOrderLine ordLine = new TF_MOrderLine(ctx, 0, null);
                 TF_MProduct prod = new TF_MProduct(ctx, prodId, null);
+
+                if (prod.getAD_Client_ID() != Env.getAD_Client_ID(ctx)) {
+                    throw new AdempiereException(
+                        "Product belongs to another client"
+                    );
+                }
                 ordLine.setC_Order_ID(ordH.get_ID());
                 ordLine.setM_Product_ID(prod.get_ID());
                 ordLine.setC_UOM_ID(prod.getC_UOM_ID());
-                ordLine.setDiscount(BigDecimal.ZERO);
+                ordLine.setDiscount(discount);
                 ordLine.setQty(qty);
                 ordLine.setQtyOrdered(qty);
                 ordLine.setPrice(rate);
                 ordLine.setPriceActual(rate);
-                ordLine.setC_Tax_ID(1000017);
+                
+//                ordLine.setC_Tax_ID(1000021);
+                ordLine.setC_Tax_ID(1000021);
                 ordLine.saveEx();
             }
 
@@ -197,20 +211,22 @@ public class SalesSaveServlet extends HttpServlet {
             }
             Files.createDirectories(Paths.get(invoicesFolder));
             File pdfFile = new File(invoicesFolder, filename);
+             
+            
+            String  pdfUrl =GenerateTextileBillPDF.generate80mm(pdfFile, ordH.get_ID(), ctx);
+           
+              String publicPdfUrl = req.getContextPath() + "/invoices/" + filename;
 
-            try {
-                GenerateTextileBillPDF.generate(pdfFile, ordH.get_ID(), phone, ctx);
-            } catch (Exception e) {
-                out.write("{\"status\":\"error\",\"message\":\"" + e.getMessage() + "\"}");
-                e.printStackTrace();
-            }
+              // Single JSON response
+              JSONObject result = new JSONObject();
+              result.put("status", "success");
+              result.put("pdfUrl", publicPdfUrl);
+              result.put("message", "Saved successfully");
 
-            String pdfUrl = req.getContextPath() + "/InvoicePDFServlet?file=" +
-                    URLEncoder.encode(filename, "UTF-8");
+              resp.setContentType("application/json");
+              resp.setCharacterEncoding("UTF-8");
+              resp.getWriter().write(result.toString());
 
-            resp.setContentType("application/json");
-            resp.getWriter().write("{\"pdfUrl\":\"" + pdfUrl + "\"}");
-            out.write("{\"status\":\"success\",\"message\":\"Saved successfully\"}");
 
         } catch (Exception e) {
             out.write("{\"status\":\"error\",\"message\":\"" + e.getMessage() + "\"}");
