@@ -22,8 +22,8 @@ import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.syvasoft.tallyfrontcrusher.model.TF_MProduct;
-import org.syvasoft.tallyfrontcrusher.model.TF_MProductCategory;
+import org.vijaytech.model.TF_MProduct;
+import org.vijaytech.model.TF_MProductCategory;
 
 public class Product extends HttpServlet {
 
@@ -272,7 +272,7 @@ public class Product extends HttpServlet {
                 try {
                     double r = json.optDouble("TaxRate", 0.0);
                     BigDecimal rate = BigDecimal.valueOf(r).setScale(2, RoundingMode.HALF_UP);
-                    product.set_CustomColumn("TaxRate", rate);
+                    product.setGSTRate(rate);
                 } catch (Exception e) {
                     throw new AdempiereException("Invalid Rate format!");
                 }
@@ -289,15 +289,24 @@ public class Product extends HttpServlet {
                 resp.getWriter().write("{\"error\":\"Entry Type is required\"}");
                 return;
             }
+
             if (entryType.equalsIgnoreCase("Purchase")) {
                 product.setIsPurchased(true);
                 product.setIsSold(false);
-            }
 
-            if (entryType.equalsIgnoreCase("Sales")) {
+            } else if (entryType.equalsIgnoreCase("Sales")) {
                 product.setIsSold(true);
                 product.setIsPurchased(false);
+
+            } else if (entryType.equalsIgnoreCase("Both")) {
+                product.setIsPurchased(true);
+                product.setIsSold(true);
+
+            } else {
+                resp.getWriter().write("{\"error\":\"Invalid Entry Type\"}");
+                return;
             }
+
 
             // WeighmentEnabled always true (Y)
             product.set_CustomColumn("WeighmentEnabled", Boolean.TRUE);

@@ -22,8 +22,8 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.syvasoft.tallyfrontcrusher.model.TF_MProduct;
-import org.syvasoft.tallyfrontcrusher.model.TF_MProductCategory;
+import org.vijaytech.model.TF_MProduct;
+import org.vijaytech.model.TF_MProductCategory;
 
 public class ProfitAndLossReport extends  HttpServlet{
 

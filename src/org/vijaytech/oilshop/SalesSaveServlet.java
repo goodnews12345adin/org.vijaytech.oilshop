@@ -33,10 +33,10 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.syvasoft.tallyfrontcrusher.model.TF_MBPartner;
-import org.syvasoft.tallyfrontcrusher.model.TF_MOrder;
-import org.syvasoft.tallyfrontcrusher.model.TF_MOrderLine;
-import org.syvasoft.tallyfrontcrusher.model.TF_MProduct;
+import org.vijaytech.model.TF_MBPartner;
+import org.vijaytech.model.TF_MOrder;
+import org.vijaytech.model.TF_MOrderLine;
+import org.vijaytech.model.TF_MProduct;
 import org.vijaytech.oilshop.utils.GenerateTextileBillPDF;
 
 import com.google.gson.Gson;

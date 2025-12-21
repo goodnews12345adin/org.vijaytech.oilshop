@@ -17,11 +17,11 @@ import org.compiere.util.Env;
 import org.compiere.util.Trx;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.syvasoft.tallyfrontcrusher.model.MPriceListUOM;
-import org.syvasoft.tallyfrontcrusher.model.TF_MBPartner;
-import org.syvasoft.tallyfrontcrusher.model.TF_MOrder;
-import org.syvasoft.tallyfrontcrusher.model.TF_MOrderLine;
-import org.syvasoft.tallyfrontcrusher.model.TF_MProduct;
+import org.vijaytech.model.MPriceListUOM;
+import org.vijaytech.model.TF_MBPartner;
+import org.vijaytech.model.TF_MOrder;
+import org.vijaytech.model.TF_MOrderLine;
+import org.vijaytech.model.TF_MProduct;
 
 public class PurchaseServlet extends HttpServlet {
 

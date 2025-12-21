@@ -581,15 +581,31 @@ $(function () {
         placeholder: "-- Search Product --",
         width: "100%",
         allowClear: true,
-        dropdownCssClass: "p-2", // Add padding to dropdown
+        dropdownCssClass: "p-2",
+
         matcher: function (params, data) {
-            if (!params.term) return data;
+
+            // If no search term, return all data
+            if (!params.term || typeof params.term !== "string") {
+                return data;
+            }
+
+            // Ensure text is always a string
             const term = params.term.toLowerCase();
-            const text = (data.text || "").toLowerCase();
-            const sKey = ($(data.element).data("search") || "").toLowerCase();
-            return (text.includes(term) || sKey.includes(term)) ? data : null;
+            const text = String(data.text || "").toLowerCase();
+
+            // Ensure custom search key is string
+            const sKey = String($(data.element).data("search") || "").toLowerCase();
+
+            // Match against visible text OR custom search key
+            if (text.includes(term) || sKey.includes(term)) {
+                return data;
+            }
+
+            return null;
         }
     });
+
 
     /* ===========================
        Sidebar & Layout Logic

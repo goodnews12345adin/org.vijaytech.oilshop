@@ -35,6 +35,6 @@ Import-Package: com.lowagie.text,
  org.compiere.model,
  org.compiere.util,
  org.json,
- org.syvasoft.eInvoiceutil,
- org.syvasoft.tallyfrontcrusher.model,
- org.syvasoft.tallyfrontcrusher.process
+ org.vijaytech.eInvoiceutil,
+ org.vijaytech.model,
+ org.vijaytech.process

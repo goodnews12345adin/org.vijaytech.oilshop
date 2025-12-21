@@ -15,8 +15,8 @@ import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.syvasoft.tallyfrontcrusher.model.MPriceListUOM;
-import org.syvasoft.tallyfrontcrusher.model.TF_MProduct;
+import org.vijaytech.model.MPriceListUOM;
+import org.vijaytech.model.TF_MProduct;
 
 public class LoadBillInfo extends HttpServlet {
     private static final long serialVersionUID = 1L;

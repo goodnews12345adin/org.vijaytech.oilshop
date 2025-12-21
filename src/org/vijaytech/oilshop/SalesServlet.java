@@ -27,10 +27,10 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.syvasoft.tallyfrontcrusher.model.TF_MBPartner;
-import org.syvasoft.tallyfrontcrusher.model.TF_MOrder;
-import org.syvasoft.tallyfrontcrusher.model.TF_MOrderLine;
-import org.syvasoft.tallyfrontcrusher.model.TF_MProduct;
+import org.vijaytech.model.TF_MBPartner;
+import org.vijaytech.model.TF_MOrder;
+import org.vijaytech.model.TF_MOrderLine;
+import org.vijaytech.model.TF_MProduct;
 import org.vijaytech.oilshop.utils.GenerateTextileBillPDF;
 import org.vijaytech.oilshop.utils.WhatsAppSender;
 
@@ -58,9 +58,8 @@ public class SalesServlet extends HttpServlet {
 
             // 🔹 Fetch product list
             List<TF_MProduct> prodList = new Query(ctx, TF_MProduct.Table_Name,
-                    "IsSold ='Y' AND WeighmentEnabled ='Y' AND  isActive ='Y' AND ProductType ='I' AND AD_Org_ID = ? ", null)
+                    "IsSold ='Y' AND WeighmentEnabled ='Y' AND  isActive ='Y' AND ProductType ='I' ", null)
                     .setClient_ID()
-                    .setParameters(AD_Org_ID)
                     .list();
 
             List<Map<String, Object>> productData = new ArrayList<>();
