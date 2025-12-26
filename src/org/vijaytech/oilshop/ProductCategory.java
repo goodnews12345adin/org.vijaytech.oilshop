@@ -12,7 +12,7 @@ import javax.servlet.http.HttpSession;
 
 import org.compiere.util.Env;
 import org.json.JSONObject;
-import org.vijaytech.model.TF_MProductCategory;
+import org.syvasoft.tallyfrontcrusher.model.TF_MProductCategory;
 
 public class ProductCategory extends HttpServlet{
 

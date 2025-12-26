@@ -1,22 +1,14 @@
 package org.vijaytech.oilshop;
 
-import java.awt.Rectangle;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
 
 import javax.servlet.ServletException;
@@ -24,7 +16,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import javax.swing.text.Document;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MBPartnerLocation;
@@ -33,19 +24,13 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.vijaytech.model.TF_MBPartner;
-import org.vijaytech.model.TF_MOrder;
-import org.vijaytech.model.TF_MOrderLine;
-import org.vijaytech.model.TF_MProduct;
+import org.syvasoft.tallyfrontcrusher.model.TF_MBPartner;
+import org.syvasoft.tallyfrontcrusher.model.TF_MOrder;
+import org.syvasoft.tallyfrontcrusher.model.TF_MOrderLine;
+import org.syvasoft.tallyfrontcrusher.model.TF_MProduct;
 import org.vijaytech.oilshop.utils.GenerateTextileBillPDF;
 
 import com.google.gson.Gson;
-import com.lowagie.text.Font;
-import com.lowagie.text.FontFactory;
-import com.lowagie.text.Paragraph;
-import com.lowagie.text.pdf.PdfPCell;
-import com.lowagie.text.pdf.PdfPTable;
-import com.lowagie.text.pdf.PdfWriter;
 
 public class SalesSaveServlet extends HttpServlet {
 
@@ -163,6 +148,7 @@ public class SalesSaveServlet extends HttpServlet {
             ordH.setC_DocTypeTarget_ID(1000041);
             ordH.setM_Warehouse_ID(Env.getContextAsInt(ctx, "#M_Warehouse_ID"));
             ordH.setPaymentRule("B");
+            ordH.setM_PriceList_ID(1000058);
             ordH.setC_BankAccount_ID(1000094);
             ordH.setDateAcct(new Timestamp(System.currentTimeMillis()));
             ordH.setDateOrdered(new Timestamp(System.currentTimeMillis()));
@@ -221,6 +207,7 @@ public class SalesSaveServlet extends HttpServlet {
               JSONObject result = new JSONObject();
               result.put("status", "success");
               result.put("pdfUrl", publicPdfUrl);
+              result.put("docNo", ordH.getDocumentNo());
               result.put("message", "Saved successfully");
 
               resp.setContentType("application/json");

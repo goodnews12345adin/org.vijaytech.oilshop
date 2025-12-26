@@ -156,6 +156,15 @@
 </servlet-mapping>
 
 <servlet>
+    <servlet-name>CancelSalesEntry</servlet-name>
+    <servlet-class>org.vijaytech.oilshop.CancelSalesEntry</servlet-class>
+</servlet>
+<servlet-mapping>
+    <servlet-name>CancelSalesEntry</servlet-name>
+    <url-pattern>/CancelSalesEntry</url-pattern>
+</servlet-mapping>
+
+<servlet>
     <servlet-name>SingleInvoicePDF</servlet-name>
     <servlet-class>org.vijaytech.oilshop.utils.SingleInvoicePDF</servlet-class>
 </servlet>

@@ -537,8 +537,11 @@
                     <span id="grand-total">0.00</span>
                 </div>
             </div>
-
+				<input type="hidden" id="cancelId" value="0"></input>
             <div class="d-flex justify-content-end gap-3 mt-4">
+            <button id="cancel" class="btn btn-danger border">
+                    <i class="bi bi-arrow me-2"></i>Cancel Entry
+                </button>
                 <button id="recalculate" class="btn btn-light border">
                     <i class="bi bi-arrow-clockwise me-2"></i>Recalculate
                 </button>
@@ -572,7 +575,8 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-$(function () {
+$(function () { 
+	$("#cancelId").val("0");
 
     /* ===========================
        Select2 Initialization
@@ -824,6 +828,15 @@ $(function () {
     /* ===========================
        AJAX SAVE
     =========================== */
+    function toggleCancelButton() {
+        const cancelId = $("#cancelId").val();
+        if (cancelId && cancelId !== "0") {
+            $("#cancel").removeClass("d-none");
+        } else {
+            $("#cancel").addClass("d-none");
+        }
+    }
+
     $("#send-btn").on("click", function () {
         // Simple Validation
         if ($("#items-body tr").length === 0) {
@@ -867,7 +880,10 @@ $(function () {
                 $("#loader").hide();
 
                 if (response && response.status === "success") {
-                    
+                	$("#cancelId").val(response.docNo);
+                	alert("doc Id "+$("#cancelId").val());
+                	console.log("cancel id "+$("#cancelId").val());
+                	toggleCancelButton();
                     // 1. Show Success Message
                     showToast('success', 'Invoice Saved Successfully!');
 
@@ -894,6 +910,49 @@ $(function () {
             }
         });
     });
+    
+    $("#cancel").on("click", function () {
+
+        const cancelId = $("#cancelId").val();
+        if (!cancelId || cancelId === "0") {
+            return; // safety guard
+        }
+	console.log("poooo "+cancelId);
+        $("#loader").show();
+
+        $.ajax({
+            type: "POST",
+            url: "<%= request.getContextPath() %>/CancelSalesEntry",
+            data: {
+            	documentNo: cancelId
+            },
+
+            success: function (response) {
+                $("#loader").hide();
+
+                if (response && response.status === "success") {
+
+                    $("#cancelId").val("0");
+                    $("#cancel").addClass("d-none");
+
+                    showToast("success", "Canceled Successfully!");
+                    resetInvoiceForm();
+
+                } else {
+                    const err = response ? (response.error || response.message) : "Unknown error";
+                    showToast("error", err);
+                }
+            },
+
+            error: function (xhr, status, error) {
+                $("#loader").hide();
+                showToast("error", "Server Connection Failed: " + error);
+                console.error(xhr);
+            }
+        });
+
+    });
+
 
 });
 </script>

@@ -22,7 +22,7 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.vijaytech.model.TF_MBPartner;
+import org.syvasoft.tallyfrontcrusher.model.TF_MBPartner;
 
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.*;

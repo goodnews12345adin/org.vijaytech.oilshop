@@ -10,7 +10,7 @@ import javax.servlet.http.*;
 
 import org.compiere.util.DB;
 import org.compiere.util.Env;
-import org.vijaytech.model.TF_MPayment;
+import org.syvasoft.tallyfrontcrusher.model.TF_MPayment;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MAttachment;
 import org.compiere.model.MBPartner;

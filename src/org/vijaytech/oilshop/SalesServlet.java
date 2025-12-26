@@ -5,11 +5,8 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,20 +14,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import javax.servlet.*;
-import javax.servlet.http.*;
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MOrder;
 import org.compiere.model.Query;
-import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.vijaytech.model.TF_MBPartner;
-import org.vijaytech.model.TF_MOrder;
-import org.vijaytech.model.TF_MOrderLine;
-import org.vijaytech.model.TF_MProduct;
+import org.syvasoft.tallyfrontcrusher.model.TF_MBPartner;
+import org.syvasoft.tallyfrontcrusher.model.TF_MOrder;
+import org.syvasoft.tallyfrontcrusher.model.TF_MOrderLine;
+import org.syvasoft.tallyfrontcrusher.model.TF_MProduct;
 import org.vijaytech.oilshop.utils.GenerateTextileBillPDF;
 import org.vijaytech.oilshop.utils.WhatsAppSender;
 
@@ -195,12 +195,11 @@ public class SalesServlet extends HttpServlet {
 
             TF_MOrder ordH = new TF_MOrder(ctx, 0, null);
 //            ordH.setAD_Client_ID(adClientId);
-            ordH.setAD_Org_ID(adOrgId);
-            ordH.setBPartner(bp);
             ordH.setC_DocType_ID(1000041);
             ordH.setC_DocTypeTarget_ID(1000041);
             ordH.setM_Warehouse_ID(Env.getContextAsInt(ctx, "#M_Warehouse_ID"));
             ordH.setPaymentRule("B");
+            ordH.setM_PriceList_ID(1000058);
             ordH.setC_BankAccount_ID(1000094);
             ordH.setDateAcct(new Timestamp(System.currentTimeMillis()));
             ordH.setDateOrdered(new Timestamp(System.currentTimeMillis()));

@@ -22,8 +22,8 @@ import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.vijaytech.model.TF_MProduct;
-import org.vijaytech.model.TF_MProductCategory;
+import org.syvasoft.tallyfrontcrusher.model.TF_MProduct;
+import org.syvasoft.tallyfrontcrusher.model.TF_MProductCategory;
 
 public class Product extends HttpServlet {
 
