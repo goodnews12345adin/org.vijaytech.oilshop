@@ -48,8 +48,12 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <!-- QZ Tray -->
+<script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.4/qz-tray.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsrsasign/10.8.6/jsrsasign-all-min.js"></script>
 
-  <style>
+
+<style>
     :root {
       --accent: #15a0c6;
       --accent-dark: #0e7d9b;
@@ -446,7 +450,7 @@
                         </div>
                         <div class="form-floating">
                             <input type="text" class="form-control" id="cust-phone" placeholder="Phone">
-                            <label for="cust-phone">Phone / GSTIN</label>
+                            <label for="cust-phone">Phone Number</label>
                         </div>
                     </div>
                 </div>
@@ -571,6 +575,8 @@
     </div>
   </div>
 </div>
+<iframe id="printFrame"
+        style="display:none;width:0;height:0;border:0"></iframe>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -881,19 +887,27 @@ $(function () {
 
                 if (response && response.status === "success") {
                 	$("#cancelId").val(response.docNo);
-                	alert("doc Id "+$("#cancelId").val());
+                	/* alert("doc Id "+$("#cancelId").val()); */
                 	console.log("cancel id "+$("#cancelId").val());
                 	toggleCancelButton();
                     // 1. Show Success Message
                     showToast('success', 'Invoice Saved Successfully!');
+							console.log("pdf Path : "+response.pdfUrl);
+			                    // 2. Open PDF/Bill if available
+			                   if (response.pdfUrl) {
+			   <%--   $.ajax({
+			        type: "POST",
+			        url: "<%= request.getContextPath() %>/ThermalPrintServer",
+			        data: {
+			            pdf: response.pdfUrl
+			        }
+			    }); --%> 
+			}
 
-                    // 2. Open PDF/Bill if available
-                    if (response.pdfUrl) {
-                        window.open(response.pdfUrl, "_blank");
-                    } else if (response.fileName) {
-                        const fb = "<%= request.getContextPath() %>/invoices/" + encodeURIComponent(response.fileName);
+ 					<%--  else if (response.fileName) {
+                        const fb = "<%=request.getContextPath()%>/invoices/" + encodeURIComponent(response.fileName);
                         window.open(fb, "_blank");
-                    }
+                    } --%>
 
                     // 3. Clear Data (Don't show old data)
                     resetInvoiceForm();
@@ -952,6 +966,39 @@ $(function () {
         });
 
     });
+
+    /* ===========================
+    TVS RP 3200 LITE – SILENT PRINT
+ =========================== */
+ async function silentThermalPrint(pdfUrl) {
+     try {
+         if (!qz.websocket.isActive()) {
+             await qz.websocket.connect();
+         }
+
+         const printer = await qz.printers.getDefault();
+
+         const config = qz.configs.create(printer, {
+             rasterize: true,
+             scaleContent: false,
+             density: 203,
+             size: { width: 80 }   // FORCE 80mm
+         });
+
+         const data = [{
+             type: 'pdf',
+             data: pdfUrl
+         }];
+
+         await qz.print(config, data);
+         console.log("TVS RP-3200 printed silently");
+
+     } catch (e) {
+         console.error(e);
+         showToast("error", "Thermal printer not ready");
+     }
+ }
+
 
 
 });

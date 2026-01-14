@@ -481,7 +481,7 @@ public class GenerateTextileBillPDF {
 
         // ================= ITEMS =================
         doc.add(new Paragraph("| SI ITEM     HSN   QTY RATE   AMT |", bold));
-        doc.add(new Paragraph("--------------------------------", normal));
+        doc.add(new Paragraph("------------------------------------", normal));
 
         int si = 1;
         for (Item it : items) {

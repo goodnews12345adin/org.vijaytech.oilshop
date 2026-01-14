@@ -118,17 +118,31 @@ public class DashboardServlet extends HttpServlet {
                 "AND date_trunc('month', DateOrdered) = date_trunc('month', CURRENT_DATE)";
 
             // ========= EXPENSE QUERIES (EXPENSES table) =========
-            String SQL_TODAY_EXPENSE_AMOUNT =
-                "SELECT COALESCE(SUM(amount),0) FROM EXPENSES " +
-                "WHERE expense_date::date = CURRENT_DATE";
+            String baseExpense =
+            	    "FROM C_Payment " +
+            	    "WHERE AD_Client_ID = "+AD_Client_ID +""+
+            	    "AND AD_Org_ID = "+AD_Org_ID +""+
+            	    "AND IsReceipt = 'N' " +
+            	    "AND TenderType = 'X' " +
+            	    "AND DocStatus = 'CO' ";
 
             String SQL_WEEKLY_EXPENSE_AMOUNT =
-                "SELECT COALESCE(SUM(amount),0) FROM EXPENSES " +
-                "WHERE date_trunc('week', expense_date) = date_trunc('week', CURRENT_DATE)";
+            	    "SELECT COALESCE(SUM(PayAmt),0) " + baseExpense +
+            	    "AND date_trunc('week', DateTrx) = date_trunc('week', CURRENT_DATE)";
+
+
+
 
             String SQL_MONTHLY_EXPENSE_AMOUNT =
-                "SELECT COALESCE(SUM(amount),0) FROM EXPENSES " +
-                "WHERE date_trunc('month', expense_date) = date_trunc('month', CURRENT_DATE)";
+            	    "SELECT COALESCE(SUM(PayAmt),0) " + baseExpense +
+            	    "AND date_trunc('month', DateTrx) = date_trunc('month', CURRENT_DATE)";
+
+
+
+
+            String SQL_TODAY_EXPENSE_AMOUNT =
+            	    "SELECT COALESCE(SUM(PayAmt),0) " + baseExpense +
+            	    "AND DateTrx::date = CURRENT_DATE";
 
             // ========= EXECUTE COUNTS =========
             todaySalesCount      = DB.getSQLValue(null, SQL_TODAY_SALES_COUNT);

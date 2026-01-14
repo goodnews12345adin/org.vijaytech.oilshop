@@ -29,6 +29,8 @@ import org.syvasoft.tallyfrontcrusher.model.TF_MOrder;
 import org.syvasoft.tallyfrontcrusher.model.TF_MOrderLine;
 import org.syvasoft.tallyfrontcrusher.model.TF_MProduct;
 import org.vijaytech.oilshop.utils.GenerateTextileBillPDF;
+import org.vijaytech.oilshop.utils.ThermalPrintServer;
+import org.vijaytech.oilshop.utils.TvsRawPdfPrinter;
 
 import com.google.gson.Gson;
 
@@ -199,14 +201,14 @@ public class SalesSaveServlet extends HttpServlet {
             File pdfFile = new File(invoicesFolder, filename);
              
             
-            String  pdfUrl =GenerateTextileBillPDF.generate80mm(pdfFile, ordH.get_ID(), ctx);
-           
+//            String  pdfUrl =GenerateTextileBillPDF.generate80mm(pdfFile, ordH.get_ID(), ctx);
+            ThermalPrintServer.printGstBill(ordH.get_ID());
               String publicPdfUrl = req.getContextPath() + "/invoices/" + filename;
 
               // Single JSON response
               JSONObject result = new JSONObject();
               result.put("status", "success");
-              result.put("pdfUrl", publicPdfUrl);
+//              result.put("pdfUrl", pdfUrl);
               result.put("docNo", ordH.getDocumentNo());
               result.put("message", "Saved successfully");
 
