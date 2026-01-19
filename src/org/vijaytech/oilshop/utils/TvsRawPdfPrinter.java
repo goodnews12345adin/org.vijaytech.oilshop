@@ -172,15 +172,17 @@ public class TvsRawPdfPrinter {
         public double qty;
         public double rate;
         public double amount;
+        public double discount;
         public boolean highlight;
 
-        public Item(String name, String hsn, double qty, double rate, boolean highlight) {
+        public Item(String name, String hsn, double qty, double rate, boolean highlight,double discount) {
             this.name = name;
             this.hsn = hsn;
             this.qty = qty;
             this.rate = rate;
             this.amount = qty * rate;
             this.highlight = highlight;
+            this.discount = discount;
         }
     }
 }

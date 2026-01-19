@@ -42,9 +42,9 @@ public class ThermalPrintServer {
 
             /* ================= ITEMS ================= */
             String sql2 =
-                    "SELECT p.name, p.hsncode, ol.qtyordered, ol.priceactual, p.GSTRate " +
+                    "SELECT p.name, p.hsncode, ol.qtyordered, ol.priceactual, p.GSTRate, ol.discount " +
                     "FROM c_orderline ol " +
-                    "JOIN m_product p ON p.m_product_id = ol.m_product_id " +
+                    "LEFT JOIN m_product p ON p.m_product_id = ol.m_product_id " +
                     "WHERE ol.c_order_id = ?";
 
             ps2 = DB.prepareStatement(sql2, null);
@@ -54,7 +54,7 @@ public class ThermalPrintServer {
             List<Item> items = new ArrayList<>();
             double gstRate = 0;   // single slab
             double subTotal = 0;
-
+            double discount = 0;
             while (rs2.next()) {
                 String pname = rs2.getString("name");
                 String hsn   = rs2.getString("hsncode");
@@ -67,8 +67,11 @@ public class ThermalPrintServer {
                 if (gstRate == 0) {
                     gstRate = rs2.getDouble("GSTRate");
                 }
+                if (discount == 0) {
+                	discount = rs2.getDouble("discount");
+                }
 
-                Item it = new Item(pname, hsn, qty, rate, false);
+                Item it = new Item(pname, hsn, qty, rate, false,discount);
                 items.add(it);
 
                 subTotal += it.amount;

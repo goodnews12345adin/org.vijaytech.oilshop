@@ -179,7 +179,7 @@ public class SalesSaveServlet extends HttpServlet {
                 ordLine.setQty(qty);
                 ordLine.setQtyOrdered(qty);
                 ordLine.setPrice(rate);
-                ordLine.setPriceActual(rate);
+                ordLine.setPriceActual(rate.subtract(discount));
                 
 //                ordLine.setC_Tax_ID(1000021);
                 ordLine.setC_Tax_ID(1000021);

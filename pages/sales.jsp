@@ -970,7 +970,7 @@ $(function () {
     /* ===========================
     TVS RP 3200 LITE – SILENT PRINT
  =========================== */
- async function silentThermalPrint(pdfUrl) {
+ /*  async function silentThermalPrint(pdfUrl) {
      try {
          if (!qz.websocket.isActive()) {
              await qz.websocket.connect();
@@ -997,7 +997,7 @@ $(function () {
          console.error(e);
          showToast("error", "Thermal printer not ready");
      }
- }
+ } */
 
 
 
