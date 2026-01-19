@@ -1,10 +1,31 @@
 <%@ page pageEncoding="UTF-8" session="true" %><%
-    // Server-side retrieval of session username
-    String username = (String) session.getAttribute("username");
-    if (username == null || username.trim().isEmpty()) {
-        username = "Guest";
-    }
-    String orgNamee = "SKV"; 
+/* ===========================
+   SESSION & ROLE VALIDATION
+   =========================== */
+String username = (String) session.getAttribute("username");
+Integer roleIdObj = (Integer) session.getAttribute("AD_Role_ID");
+
+if (roleIdObj == null) {
+    response.sendRedirect(request.getContextPath() + "/pages/loginpage.jsp");
+    return;
+}
+
+int roleId = roleIdObj.intValue();
+
+if (username == null || username.trim().isEmpty()) {
+    username = "Guest";
+}
+
+/* ===========================
+   ROLE CONSTANTS
+   =========================== */
+ Integer ROLE_ADMIN1  = (Integer) session.getAttribute("ROLE_ADMIN");
+//final int ROLE_MANAGER = (Integer) session.getAttribute("ROLE_MANAGER");
+ Integer ROLE_CASHIERObj = (Integer) session.getAttribute("ROLE_CASHIER");
+
+final int ROLE_ADMIN  = ROLE_ADMIN1.intValue();
+final int ROLE_CASHIER = ROLE_CASHIERObj.intValue();
+String orgNamee = "SKV";
 %>
 
 <!DOCTYPE html>
@@ -12,7 +33,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= orgNamee %> ERP - Dashboard v44.1</title>
+    <title><%= orgNamee %> ERP - Dashboard</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -265,52 +286,58 @@
         </div>
         <button class="mobile-close-btn" id="mobileClose"><i class="bi bi-x-lg"></i></button>
     </div>
-    
-    <nav class="mt-3">
-       
-        <a href="${pageContext.request.contextPath}/pages/dashboard.jsp" class="sidebar-link">
-            <i class="bi bi-speedometer2"></i><span>Dashboard</span>
-        </a>
-        <a href="${pageContext.request.contextPath}/SalesServlet" class="sidebar-link">
-            <i class="bi bi-cart3"></i><span>Sales</span>
-        </a>
-        <a href="${pageContext.request.contextPath}/PurchaseServlet" class="sidebar-link">
-            <i class="bi bi-bag-check"></i><span>Purchase</span>
-        </a>
-        <a href="${pageContext.request.contextPath}/pages/productCategory.jsp" class="sidebar-link">
-            <i class="bi bi-collection"></i><span>Categories</span>
-        </a>
-        <a href="${pageContext.request.contextPath}/Product" class="sidebar-link">
-            <i class="bi bi-box-seam"></i><span>Products</span>
-        </a>
-        <a href="${pageContext.request.contextPath}/ExpenseEntryServlet" class="sidebar-link">
-            <i class="bi bi-wallet2"></i><span>Expenses</span>
-        </a>
 
-        <div class="mt-4 px-4 small text-uppercase text-muted fw-bold analytics-label" style="font-size: 0.65rem; letter-spacing: 1px; margin-bottom: 5px;">Data & Analytics</div>
-        
-        <button class="sidebar-link d-flex justify-content-between align-items-center collapsed" 
-                type="button" data-bs-toggle="collapse" data-bs-target="#reportMenu">
-            <div class="d-flex align-items-center">
-                <i class="bi bi-bar-chart-line-fill"></i><span>Reports Center</span>
-            </div>
-            <i class="bi bi-chevron-down"></i>
-        </button>
-        
-        <div class="collapse" id="reportMenu">
-            <div class="submenu-container">
-                <a href="${pageContext.request.contextPath}/PrintPurchaseReportServlet" class="submenu-link">
-                    <i class="bi bi-file-earmark-bar-graph me-2"></i>Sales & Purchase
-                </a>
-                <a href="${pageContext.request.contextPath}/ProfitAndLossReport" class="submenu-link">
-                    <i class="bi bi-graph-up-arrow me-2"></i>Profit & Loss
-                </a>
-                <a href="${pageContext.request.contextPath}/CashBookReport" class="submenu-link">
-                    <i class="bi bi-journal-check me-2"></i>Expense Summary
-                </a>
-            </div>
-        </div>
-    </nav>
+
+    <!-- Dashboard (ALL ROLES) -->
+    <% if (roleId == ROLE_ADMIN) { %>
+    <a href="<%=request.getContextPath()%>/pages/dashboard.jsp" class="sidebar-link">
+        <i class="bi bi-speedometer2 me-2"></i> Dashboard
+    </a>
+ <% } %>
+    <!-- Sales (ADMIN + CASHIER) -->
+    <% if (roleId == ROLE_ADMIN || roleId == ROLE_CASHIER) { %>
+    <a href="<%=request.getContextPath()%>/SalesServlet" class="sidebar-link">
+        <i class="bi bi-cart3 me-2"></i> Sales
+    </a>
+    <% } %>
+
+    <!-- Purchase (ADMIN + MANAGER) -->
+    <% if (roleId == ROLE_ADMIN || roleId == ROLE_CASHIER) { %>
+    <a href="<%=request.getContextPath()%>/PurchaseServlet" class="sidebar-link">
+        <i class="bi bi-bag-check me-2"></i> Purchase
+    </a>
+    <% } %>
+
+    <!-- Products (ADMIN ONLY) -->
+    <% if (roleId == ROLE_ADMIN) { %>
+    <a href="<%=request.getContextPath()%>/pages/productCategory.jsp" class="sidebar-link">
+        <i class="bi bi-collection me-2"></i> Categories
+    </a>
+    <a href="<%=request.getContextPath()%>/Product" class="sidebar-link">
+        <i class="bi bi-box-seam me-2"></i> Products
+    </a>
+    <% } %>
+
+    <!-- Expenses (ADMIN + MANAGER) -->
+    <% if (roleId == ROLE_ADMIN ) { %>
+    <a href="<%=request.getContextPath()%>/ExpenseEntryServlet" class="sidebar-link">
+        <i class="bi bi-wallet2 me-2"></i> Expenses
+    </a>
+    <% } %>
+
+    <!-- Reports -->
+    <% if (roleId == ROLE_ADMIN ) { %>
+    <hr class="text-secondary">
+    <a href="<%=request.getContextPath()%>/PrintPurchaseReportServlet" class="sidebar-link">
+        <i class="bi bi-bar-chart-line me-2"></i> Sales & Purchase
+    </a>
+    <a href="<%=request.getContextPath()%>/ProfitAndLossReport" class="sidebar-link">
+        <i class="bi bi-graph-up me-2"></i> Profit & Loss
+    </a>
+    <a href="<%=request.getContextPath()%>/CashBookReport" class="sidebar-link">
+        <i class="bi bi-journal-check me-2"></i> Expense Summary
+    </a>
+    <% } %>
 </aside>
 
 <header class="app-header">
@@ -327,7 +354,7 @@
         
         <div class="d-flex align-items-center gap-2 gap-md-3">
             <div class="text-end d-none d-sm-block">
-                <span class="version-badge">v44.1</span>
+               <!--  <span class="version-badge"></span> -->
                 <span class="text-white fw-bold d-block" style="font-size: 0.9rem;"><%= username %></span>
                 <small class="text-muted opacity-75" style="font-size: 0.65rem;">Status: Online</small>
             </div>

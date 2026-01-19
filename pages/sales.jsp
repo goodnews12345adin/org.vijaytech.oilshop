@@ -253,53 +253,46 @@
     /* ===========================
        TOTALS BOX (Modern High Contrast)
     =========================== */
-    .total-box {
-      background: #0f172a;
-      border-radius: 20px;
-      padding: 30px;
-      color: #fff;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 30px;
-      justify-content: flex-end;
-      align-items: center;
-      margin-top: 30px;
-      box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.3);
-    }
+   .total-box {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 20px;
+    background: #0b132b;
+    padding: 20px;
+    border-radius: 16px;
+}
 
-    .total-item-group {
-      display: flex;
-      flex-direction: column;
-      min-width: 120px;
-    }
+.total-item-group {
+    display: flex;
+    flex-direction: column;
+    min-width: 160px;
+}
 
-    .total-item-group label {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      color: #94a3b8;
-      margin-bottom: 8px;
-    }
+.total-item-group label {
+    font-size: 12px;
+    color: #9aa4b2;
+    margin-bottom: 4px;
+}
 
-    .total-item-group .form-control-sm {
-      background: rgba(255,255,255,0.1);
-      border: 1px solid rgba(255,255,255,0.15);
-      color: #fff;
-      text-align: right;
-    }
-    
-    .total-item-group .form-control-sm:focus {
-        background: rgba(255,255,255,0.2);
-        box-shadow: none;
-        border-color: var(--accent);
-    }
+.total-item-group input {
+    height: 36px;
+}
 
-    #grand-total {
-      font-size: 32px;
-      color: var(--accent);
-      font-weight: 800;
-      line-height: 1;
-    }
+#grand-total {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1ec8ff;
+}
+#Bal-amt {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1ec8ff;
+}
+#subtotal{
+color: deepskyblue;
+}
+
 
     /* ===========================
        BUTTONS
@@ -516,31 +509,43 @@
                 </div>
             </div>
 
-            <div class="total-box">
-                <div class="total-item-group">
-                    <label>Discount (₹)</label>
-                    <input type="number" id="discount" class="form-control form-control-sm" value="0">
-                </div>
-                <div class="total-item-group">
-                    <label>Cash Paid</label>
-                    <input type="number" id="cash" class="form-control form-control-sm" value="0">
-                </div>
-                <div class="total-item-group">
-                    <label>UPI / Bank</label>
-                    <input type="number" id="upi" class="form-control form-control-sm" value="0">
-                </div>
-                
-                <div class="vr d-none d-lg-block bg-secondary opacity-25" style="height: 50px;"></div>
+           <div class="total-box">
 
-                <div class="total-item-group text-end">
-                    <label>Subtotal</label>
-                    <span class="fw-bold fs-5 opacity-75">₹<span id="subtotal">0.00</span></span>
-                </div>
-                <div class="total-item-group text-end">
-                    <label class="text-info">Grand Total</label>
-                    <span id="grand-total">0.00</span>
-                </div>
-            </div>
+    <div class="total-item-group">
+        <label>Discount (₹)</label>
+        <input type="number" id="discount" class="form-control form-control-sm" value="0">
+    </div>
+
+    <div class="total-item-group">
+        <label>Cash Paid</label>
+        <input type="number" id="cash" class="form-control form-control-sm" value="0">
+    </div>
+
+    <div class="total-item-group">
+        <label>UPI / Bank</label>
+        <input type="number" id="upi" class="form-control form-control-sm" value="0">
+    </div>
+
+   <div class="total-item-group text-end">
+        <label class="text-info">Balance Amt</label>
+        <span id="Bal-amt">0.00</span>
+    </div>
+
+    <div class="vr d-none d-lg-block bg-secondary opacity-25"></div>
+
+    <div class="total-item-group text-end ms-auto">
+        <label>Subtotal</label>
+        <span class="fw-bold fs-5 opacity-75">
+            ₹<span id="subtotal">0.00</span>
+        </span>
+    </div>
+
+    <div class="total-item-group text-end">
+        <label class="text-info">Grand Total</label>
+        <span id="grand-total">0.00</span>
+    </div>
+
+</div>
 				<input type="hidden" id="cancelId" value="0"></input>
             <div class="d-flex justify-content-end gap-3 mt-4">
             <button id="cancel" class="btn btn-danger border">
@@ -746,9 +751,12 @@ $(function () {
         const total = Math.max(0, sub - disc);
         
         $("#grand-total").text(total.toFixed(2));
+        calculateBalance();
     }
 
     $("#discount").on("input", recalc);
+    $("#cash").on("input", recalc);
+    $("#upi").on("input", recalc);
     $("#recalculate").on("click", function(e){
         e.preventDefault();
         recalc();
@@ -757,6 +765,8 @@ $(function () {
         icon.addClass('spin-anim'); 
         setTimeout(() => icon.removeClass('spin-anim'), 500);
     });
+    
+    
 
     // Product Select Listener
     $("#manual-product").on("change", function () {
@@ -842,6 +852,20 @@ $(function () {
             $("#cancel").addClass("d-none");
         }
     }
+    /* ===========================
+    PAYMENT & BALANCE CALCULATION (ADDED)
+ =========================== */
+ function calculateBalance() {
+     const cash = parseFloat($("#cash").val()) || 0;
+     const upi  = parseFloat($("#upi").val()) || 0;
+     const grandTotal = parseFloat($("#grand-total").text()) || 0;
+
+     const paid = cash + upi;
+     const balance = grandTotal - paid;
+
+     $("#Bal-amt").text(balance.toFixed(2));
+ }
+
 
     $("#send-btn").on("click", function () {
         // Simple Validation
@@ -850,8 +874,18 @@ $(function () {
             return;
         }
 
-        $("#loader").css("display", "flex");
+        var balAmt = parseFloat($("#Bal-amt").text()) || 0;
 
+       alert("balAmt "+balAmt);
+       if (balAmt === 0) {
+    	   showToast('success',"Payment complete");
+    	    return true;
+    	} else {
+    		showToast('error',"Balance amount pending");
+    	    return;
+    	}
+
+        $("#loader").css("display", "flex");
         const data = {
             discount: parseFloat($("#discount").val()) || 0,
             subtotal: $("#subtotal").text(),
@@ -892,17 +926,17 @@ $(function () {
                 	toggleCancelButton();
                     // 1. Show Success Message
                     showToast('success', 'Invoice Saved Successfully!');
-							console.log("pdf Path : "+response.pdfUrl);
+						
 			                    // 2. Open PDF/Bill if available
-			                   if (response.pdfUrl) {
-			   <%--   $.ajax({
+			               <%--      if (response.pdfUrl) {
+			    $.ajax({
 			        type: "POST",
 			        url: "<%= request.getContextPath() %>/ThermalPrintServer",
 			        data: {
 			            pdf: response.pdfUrl
 			        }
-			    }); --%> 
-			}
+			    }); 
+			}--%> 
 
  					<%--  else if (response.fileName) {
                         const fb = "<%=request.getContextPath()%>/invoices/" + encodeURIComponent(response.fileName);
@@ -929,6 +963,7 @@ $(function () {
 
         const cancelId = $("#cancelId").val();
         if (!cancelId || cancelId === "0") {
+        	showToast('error', 'Id Not Found: ');
             return; // safety guard
         }
 	console.log("poooo "+cancelId);

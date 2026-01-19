@@ -59,7 +59,13 @@ public class UserLoginServlet extends HttpServlet {
 
         try {
             // Validate user credentials
-            String sql = "SELECT AD_User_ID FROM AD_User WHERE Name = ? AND Password = ? AND IsActive = 'Y'";
+//            String sql = "SELECT AD_User_ID FROM AD_User WHERE Name = ? AND Password = ? AND IsActive = 'Y'";
+        	String sql =
+        		    "SELECT u.AD_User_ID, ur.AD_Role_ID " +
+        		    "FROM AD_User u " +
+        		    "JOIN AD_User_Roles ur ON u.AD_User_ID = ur.AD_User_ID " +
+        		    "WHERE u.Name = ? AND u.Password = ? AND u.IsActive='Y' AND ur.IsActive='Y'";
+
             pstmt = DB.prepareStatement(sql, null);
             pstmt.setString(1, username);
             pstmt.setString(2, password);
@@ -67,8 +73,12 @@ public class UserLoginServlet extends HttpServlet {
 
             if (rs.next()) {
                 int userID = rs.getInt("AD_User_ID");
+                
+                int AD_Role_ID = rs.getInt("AD_Role_ID");
                 int clientID = MSysConfig.getIntValue("CLIENT_ID", 1000000);
                 int roleID = MSysConfig.getIntValue("MOBWEB_ROLE_ID", 1000015, clientID);
+                int ROLE_ADMIN = MSysConfig.getIntValue("ROLE_ADMIN", 1000050, clientID);
+                int ROLE_CASHIER = MSysConfig.getIntValue("ROLE_CASHIER", 1000065, clientID);
                 int orgID =0;
                 // ✅ Load active organizations
                 List<Organization> orgList = new ArrayList<>();
@@ -98,12 +108,15 @@ public class UserLoginServlet extends HttpServlet {
                 session.setAttribute("ctx", ctx);
                 session.setAttribute("AD_Client_ID", clientID);
                 session.setAttribute("AD_User_ID", userID);
-                session.setAttribute("AD_Role_ID", roleID);
+                session.setAttribute("AD_Role_ID", AD_Role_ID);
                 session.setAttribute("orgList", orgList);
                 session.setAttribute("AD_Org_ID", orgID);
-                System.out.println(orgID);
+                session.setAttribute("ROLE_CASHIER", ROLE_CASHIER);
+                session.setAttribute("ROLE_ADMIN", ROLE_ADMIN);
+                session.setAttribute("username", username);
+                System.out.println(AD_Role_ID);
 
-                response.sendRedirect("pages/dashboard.jsp");
+                response.sendRedirect("pages/sidebar.jsp");
             } else {
                 setiDempiereContext(request);
                 response.sendRedirect("pages/loginpage.jsp?error=1");
