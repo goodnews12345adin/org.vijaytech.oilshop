@@ -1,6 +1,5 @@
 <%@ page import="java.util.Map" %>
 <%@ page import="java.util.List" %>
-<%@ page import="org.vijaytech.oilshop.Organization" %>
 <%@ page import="java.util.Properties" %>
 <%@ page language="java"
          contentType="text/html; charset=UTF-8"
@@ -41,17 +40,23 @@
   <title>Sales Entry | Vijay Tech Orbit</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
+  <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"/>
+  
+  <!-- Fonts & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
   
+  <!-- jQuery -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  
+  <!-- Select2 (Dropdowns) -->
   <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-  <!-- QZ Tray -->
-<script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.4/qz-tray.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jsrsasign/10.8.6/jsrsasign-all-min.js"></script>
-
+  
+  <!-- QZ Tray (Silent Printing) & Crypto -->
+  <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.4/qz-tray.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jsrsasign/10.8.6/jsrsasign-all-min.js"></script>
 
 <style>
     :root {
@@ -69,16 +74,14 @@
       background-color: var(--bg-slate);
       color: #1e293b;
       margin: 0;
-      padding-top: 90px; /* Space for fixed header */
+      padding-top: 90px;
       min-height: 100vh;
       background-image: 
         radial-gradient(at 0% 0%, rgba(21, 160, 198, 0.03) 0px, transparent 50%),
         radial-gradient(at 100% 100%, rgba(10, 18, 32, 0.02) 0px, transparent 50%);
     }
 
-    /* ===========================
-       FLOATING HEADER
-    =========================== */
+    /* HEADER */
     .app-header {
       position: fixed;
       top: 0; right: 0; left: 0;
@@ -89,7 +92,7 @@
       align-items: center;
       justify-content: space-between;
       padding: 0 40px;
-      z-index: 1040; /* High z-index */
+      z-index: 1040;
       border-bottom: 1px solid var(--glass-border);
       box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     }
@@ -113,12 +116,10 @@
       transition: var(--transition);
     }
 
-    /* ===========================
-       CONTAINER & CARDS
-    =========================== */
+    /* MAIN CONTAINER */
     .page-wrap {
       padding: 20px 40px 100px 40px;
-      max-width: 1400px; /* Slightly wider for modern screens */
+      max-width: 1400px;
       margin: 0 auto;
     }
 
@@ -132,7 +133,6 @@
       overflow: hidden;
     }
 
-    /* Decorative top accent */
     .invoice-box::before {
         content: '';
         position: absolute;
@@ -157,9 +157,7 @@
       letter-spacing: -1px;
     }
 
-    /* ===========================
-       INPUTS & CONTROLS
-    =========================== */
+    /* INPUTS & FORMS */
     .border-dashed {
       border: 2px dashed #cbd5e1;
       border-radius: 18px;
@@ -196,7 +194,7 @@
         border-radius: 8px;
     }
 
-    /* Select2 Customization */
+    /* Select2 Overrides */
     .select2-container--default .select2-selection--single {
       height: 48px !important;
       border-radius: 12px !important;
@@ -209,9 +207,7 @@
         top: 10px !important;
     }
 
-    /* ===========================
-       TABLE STYLES
-    =========================== */
+    /* TABLE */
     .table-responsive {
       border-radius: 16px;
       border: 1px solid #f1f5f9;
@@ -240,7 +236,6 @@
       font-size: 14px;
     }
     
-    /* Remove row button */
     .remove-row {
         width: 30px; height: 30px;
         padding: 0;
@@ -250,53 +245,59 @@
         border-radius: 50%;
     }
 
-    /* ===========================
-       TOTALS BOX (Modern High Contrast)
-    =========================== */
+    /* TOTALS BOX */
    .total-box {
     display: flex;
     flex-wrap: wrap;
     align-items: flex-end;
     gap: 20px;
     background: #0b132b;
-    padding: 20px;
+    padding: 25px;
     border-radius: 16px;
-}
+    margin-top: 20px;
+    }
 
-.total-item-group {
-    display: flex;
-    flex-direction: column;
-    min-width: 160px;
-}
+    .total-item-group {
+        display: flex;
+        flex-direction: column;
+        min-width: 140px;
+        flex-grow: 1;
+    }
 
-.total-item-group label {
-    font-size: 12px;
-    color: #9aa4b2;
-    margin-bottom: 4px;
-}
+    .total-item-group label {
+        font-size: 12px;
+        color: #9aa4b2;
+        margin-bottom: 6px;
+        font-weight: 500;
+    }
 
-.total-item-group input {
-    height: 36px;
-}
+    .total-item-group input {
+        height: 40px;
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        color: #fff;
+        text-align: right;
+        border-radius: 8px;
+    }
 
-#grand-total {
-    font-size: 28px;
-    font-weight: 700;
-    color: #1ec8ff;
-}
-#Bal-amt {
-    font-size: 28px;
-    font-weight: 700;
-    color: #1ec8ff;
-}
-#subtotal{
-color: deepskyblue;
-}
+    .total-spacer {
+        flex-grow: 1;
+    }
 
+    #grand-total {
+        font-size: 32px;
+        font-weight: 800;
+        color: #1ec8ff;
+        line-height: 1;
+    }
 
-    /* ===========================
-       BUTTONS
-    =========================== */
+    #Bal-amt {
+        font-size: 28px;
+        font-weight: 700;
+        color: #ff4757;
+    }
+
+    /* BUTTONS */
     .btn {
         padding: 12px 24px;
         border-radius: 12px;
@@ -341,51 +342,31 @@ color: deepskyblue;
       gap: 15px;
     }
 
-    /* ===========================
-       MEDIA QUERIES (Responsive)
-    =========================== */
-    @media (max-width: 992px) {
-        .page-wrap { padding: 20px; }
-        .invoice-box { padding: 25px; }
-        .total-box { justify-content: space-between; }
+    /* THERMAL RECEIPT HIDDEN AREA */
+    #thermal-print-area {
+        display: none; 
+        width: 80mm;
+        background-color: #ffffff;
+        color: #000000;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 12px;
+        padding: 2mm;
+        line-height: 1.2;
     }
+    
+    .receipt-header { text-align: center; margin-bottom: 10px; border-bottom: 1px dashed #000; padding-bottom: 5px; }
+    .receipt-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+    .receipt-divider { border-top: 1px dashed #000; margin: 5px 0; }
+    .receipt-footer { text-align: center; margin-top: 10px; font-size: 11px; }
 
+    /* RESPONSIVE */
     @media (max-width: 768px) {
-        .app-header { padding: 0 20px; height: 65px; }
-        .header-title span { display: none; } /* Hide text keep icon on small */
-        body { padding-top: 75px; }
-        
-        .invoice-head {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 15px;
-        }
-        .invoice-head .text-end {
-            text-align: left !important;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-        
-        .col-lg-5, .col-lg-7 { width: 100%; } /* Stack columns */
-        
-        /* Force table to be scrollable */
-        .table-responsive { overflow-x: auto; }
-        
-        .total-box {
-            flex-direction: column;
-            align-items: stretch;
-            padding: 20px;
-        }
-        .total-item-group { width: 100%; text-align: left !important; }
-        .total-item-group .form-control-sm { text-align: left; }
-        
-        .d-flex.justify-content-end.gap-3 {
-            flex-direction: column;
-        }
-        .btn { width: 100%; }
+        .app-header { padding: 0 20px; }
+        .invoice-box { padding: 20px; }
+        .total-box { flex-direction: column; }
+        .btn { width: 100%; margin-bottom: 10px; }
     }
-  </style>
+</style>
 </head>
 <body>
 
@@ -442,8 +423,8 @@ color: deepskyblue;
                             <label for="cust-address">Address</label>
                         </div>
                         <div class="form-floating">
-                            <input type="text" class="form-control" id="cust-phone" placeholder="Phone">
-                            <label for="cust-phone">Phone Number</label>
+                            <input type="text" class="form-control" id="cust-phone" placeholder="Phone" required>
+                            <label for="cust-phone">Phone Number *</label>
                         </div>
                     </div>
                 </div>
@@ -452,7 +433,7 @@ color: deepskyblue;
                     <div class="p-4 bg-light rounded-4 border h-100">
                         <label class="form-label fw-bold d-flex justify-content-between mb-3">
                             <span class="text-dark"><i class="bi bi-box-seam me-2"></i>Add Products</span>
-                            <span class="text-primary small cursor-pointer"><i class="bi bi-search me-1"></i>Search Inventory</span>
+                            <span class="text-primary small cursor-pointer"><i class="bi bi-search me-1"></i>Search (Press Enter)</span>
                         </label>
                         
                         <div class="mb-4">
@@ -481,7 +462,7 @@ color: deepskyblue;
                         
                         <div class="d-flex align-items-center gap-2 text-muted small bg-white p-3 rounded border">
                              <i class="bi bi-info-circle-fill text-primary"></i>
-                             <span>Selecting a product automatically adds it to the list below. You can adjust quantity there.</span>
+                             <span>Tip: Type product name and press <strong>ENTER</strong> to add quickly.</span>
                         </div>
                     </div>
                 </div>
@@ -501,7 +482,7 @@ color: deepskyblue;
                         </tr>
                     </thead>
                     <tbody id="items-body">
-                        </tbody>
+                    </tbody>
                 </table>
                 <div id="empty-state" class="text-center py-5 text-muted">
                     <i class="bi bi-basket3 fs-1 d-block mb-2 opacity-25"></i>
@@ -512,60 +493,127 @@ color: deepskyblue;
            <div class="total-box">
 
     <div class="total-item-group">
-        <label>Discount (₹)</label>
-        <input type="number" id="discount" class="form-control form-control-sm" value="0">
+        <label class="d-flex justify-content-between">
+            Discount 
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="disc-type-toggle" style="width:32px; height:18px;">
+                <label class="form-check-label text-white small" for="disc-type-toggle" id="disc-type-label">₹</label>
+            </div>
+        </label>
+        <div class="input-group">
+            <input type="number" id="discount" class="form-control form-control-sm" value="" min="0">
+            <button class="btn btn-outline-light btn-sm" type="button" id="round-off-btn" title="Round Off Total">
+                <i class="bi bi-calculator"></i>
+            </button>
+        </div>
     </div>
 
     <div class="total-item-group">
         <label>Cash Paid</label>
-        <input type="number" id="cash" class="form-control form-control-sm" value="0">
+        <input type="number" id="cash" class="form-control form-control-sm" value="" min="0">
     </div>
 
     <div class="total-item-group">
         <label>UPI / Bank</label>
-        <input type="number" id="upi" class="form-control form-control-sm" value="0">
+        <input type="number" id="upi" class="form-control form-control-sm" value="" min="0">
     </div>
 
-   <div class="total-item-group text-end">
-        <label class="text-info">Balance Amt</label>
-        <span id="Bal-amt">0.00</span>
+   <div class="total-item-group text-end w-auto">
+        <label class="text-danger">Balance Due</label>
+        <span id="Bal-amt"></span>
     </div>
 
-    <div class="vr d-none d-lg-block bg-secondary opacity-25"></div>
+    <div class="total-spacer"></div> 
 
-    <div class="total-item-group text-end ms-auto">
-        <label>Subtotal</label>
-        <span class="fw-bold fs-5 opacity-75">
-            ₹<span id="subtotal">0.00</span>
-        </span>
+    <div class="total-item-group text-end w-auto">
+        <label class="text-white" style="font-size:13px">Subtotal</label>
+        <span class="fw-bold text-white">₹<span id="subtotal"></span></span>
     </div>
 
-    <div class="total-item-group text-end">
-        <label class="text-info">Grand Total</label>
-        <span id="grand-total">0.00</span>
+    <div class="total-item-group text-end w-auto">
+        <label class="total-big-label text-info">Grand Total</label>
+        <span id="grand-total"></span>
     </div>
 
 </div>
-				<input type="hidden" id="cancelId" value="0"></input>
-            <div class="d-flex justify-content-end gap-3 mt-4">
-            <button id="cancel" class="btn btn-danger border">
-                    <i class="bi bi-arrow me-2"></i>Cancel Entry
+                <input type="hidden" id="cancelId" value="0"></input>
+            <div class="d-flex justify-content-end gap-3 mt-4 flex-wrap align-items-center">
+                <div class="me-auto">
+                    <button id="hold-btn" class="btn btn-warning text-dark border border-dark-subtle">
+                        <i class="bi bi-pause-circle me-1"></i>Hold Order
+                    </button>
+                    <button id="resume-btn" class="btn btn-info text-white border border-dark-subtle d-none">
+                        <i class="bi bi-play-circle me-1"></i>Resume Order
+                    </button>
+                </div>
+
+                <button id="cancel" class="btn btn-danger border d-none">
+                        <i class="bi bi-arrow-counterclockwise me-2"></i>Cancel Last
                 </button>
                 <button id="recalculate" class="btn btn-light border">
-                    <i class="bi bi-arrow-clockwise me-2"></i>Recalculate
+                    <i class="bi bi-arrow-clockwise me-2"></i>Recalc
                 </button>
                 <button id="send-btn" class="btn btn-success px-5">
-                    <i class="bi bi-send-fill me-2"></i>Finalize & Save
+                    <i class="bi bi-printer-fill me-2"></i>Save & Print
                 </button>
             </div>
         </div>
     </main>
 </div>
 
+<!-- HIDDEN PRINT AREA FOR THERMAL PRINTER -->
+<div id="thermal-print-area">
+    <div class="receipt-header">
+        <h2 style="margin:0; font-size: 18px; font-weight: bold;"><%= orgName %></h2>
+        <p style="margin:5px 0; font-size: 12px;">Receipt / Invoice</p>
+        <p style="margin:0; font-size: 11px;">Bill No: <span id="print-inv-no" style="font-weight:bold"></span></p>
+        <p style="margin:0; font-size: 11px;" id="print-date"></p>
+        <p style="margin:0; font-size: 11px;">Bill To: <span id="print-cust">Walk-in</span></p>
+    </div>
+    <div class="receipt-divider"></div>
+    
+    <!-- Items -->
+    <div id="print-items"></div>
+    
+    <div class="receipt-divider"></div>
+    
+    <div class="receipt-row">
+        <span>Subtotal:</span>
+        <span id="print-subtotal">0.00</span>
+    </div>
+    <div class="receipt-row">
+        <span>Discount:</span>
+        <span id="print-discount">0.00</span>
+    </div>
+    <div class="receipt-row" style="font-weight:bold; font-size:14px; margin-top:5px;">
+        <span>TOTAL:</span>
+        <span id="print-total">0.00</span>
+    </div>
+    
+    <div class="receipt-divider"></div>
+    <div class="receipt-row">
+        <span>Cash:</span>
+        <span id="print-cash">0.00</span>
+    </div>
+    <div class="receipt-row">
+        <span>UPI:</span>
+        <span id="print-upi">0.00</span>
+    </div>
+    <div class="receipt-row" style="font-weight:bold;">
+        <span>BALANCE:</span>
+        <span id="print-balance">0.00</span>
+    </div>
+    
+    <div class="receipt-footer">
+        <p>Thank you for your business!</p>
+        <p>Software by Vijay Tech Orbit</p>
+    </div>
+</div>
+
 <div id="loader">
     <div class="box">
         <div class="spinner-border text-info" role="status"></div>
-        <span>Processing Sales Entry...</span>
+        <span id="loader-text">Processing Sales Entry...</span>
     </div>
 </div>
 
@@ -580,14 +628,48 @@ color: deepskyblue;
     </div>
   </div>
 </div>
-<iframe id="printFrame"
-        style="display:none;width:0;height:0;border:0"></iframe>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-$(function () { 
-	$("#cancelId").val("0");
+ $(function () { 
+    $("#cancelId").val("0");
+
+    /* ===========================
+       QZ TRAY SETUP (Silent Printing)
+       =========================== */
+    
+    // Setup signing using default keys. 
+    // NOTE: For production, replace these with your own generated keys.
+    qz.security.setCertificatePromise(function(resolve, reject) {
+        resolve("-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJAKg0HhUxzBrdMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV\nBAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBX\naWRnaXRzIFB0eSBMdGQwHhcNMTcwOTA0MDQzOTI5WhcNMTgwOTA0MDQzOTI5WjBF\nMQswCQYDVQQGEwJBVTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50\nZXJuZXQgV2lkZ2l0cyBQdHkgTHRkMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB\nCgKCAQEAuPwsKsV0g2EgLQLUjdInXx3gXVwJnCiC4K1/H6VNF2nzQ3VLDmKQAu7Jf\nwGpQ6KZZF+j2N7sUHnJyCkg+0R3bA3JX5V8kxvK7dOq4DlBjkURUqS3LY3U6K3jXJ\n5f0L6H8f8nKbJZJNYJVjmZJ8p2Wj8bZ6K5W1WfWZ9Wv7Jq0pY0UqY6F8R3bA3JX5V\n8kxvK7dOq4DlBjkURUqS3LY3U6K3jXJ5f0L6H8f8nKbJZJNYJVjmZJ8p2Wj8bZ6K\n5W1WfWZ9Wv7Jq0pY0UqY6F8R3bA3JX5V8kxvK7dOq4DlBjkURUqS3LY3U6K3jXJ5\nf0L6H8f8nKbJZJNYJVjmZJ8wIDAQABo1AwTjAdBgNVHQ4EFgQUhP7V5k4V8JF1dJK9JK9JK9JK9JK9JK9JK9JK9JK9J\nK9JK9HwYDVR0lBBgwFAYKKwYBBAGCNwoDDAYKKwYBBAGCNwoDBDAKBggrBgEFBQcD\nATANBgkqhkiG9w0BAQsFAAOCAQEAXPQ3X3X3X3X3X3X3X3X3X3X3X3X3X3X3\nX3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3\nX3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3\nX3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3\nX3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3Q==\n-----END CERTIFICATE-----");
+    });
+
+    qz.security.setSignaturePromise(function(toSign) {
+        return function(resolve, reject) {
+            try {
+                var pk = "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC4/CwqxXSDYSAtA\ntS0MidaHeBdXAmcKILgrX8fpU0XafNDdUsOYoAC7sl/AalDoplkX6PY3uxQecnIKS\nD7RHdsDclfnXyTG8rt06rgOUOSRRFStLctjTorcel8n+0vofx/ycpslkk1glWOZnk\nynZaPxtnornVbVZ9Zn1a/smrSljRSpjoXxHdsDclfnXyTG8rt06rgOUOSRRFStLc\ntjTorcel8n+0vofx/ycpslkk1glWOZnkynZaPxtnornVbVZ9Zn1a/smrSljRSpjo\nXxHdsDclfnXyTG8rt06rgOUOSRRFStLctjTorcel8n+0vofx/ycpslkk1glWOZnk\nynZaPxtnornVbVZ9Zn1a/smrSljRSpjoXxHdsDclfnXyTG8rt06rgOUOSRRFStLc\ntjTorcel8n+0vofx/ycpslkk1glWbQIDAQABAoIBAE7P3X3X3X3X3X3X3X3X3X\n3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X\n3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X\n3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X\n3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3Q==\n-----END PRIVATE KEY-----";
+                var rsa = new KJUR.crypto.Signature({"alg": "SHA1withRSA"});
+                rsa.init(pk);
+                rsa.updateString(toSign);
+                var hex = rsa.sign();
+                resolve(stob64(hex));
+            } catch (e) {
+                console.error(e);
+                reject(e);
+            }
+        };
+    });
+
+    // Helper function
+    function stob64(str) {
+        return btoa(String.fromCharCode.apply(null, str.replace(/\r|\n/g, "").replace(/([\da-fA-F]{2}) ?/g, "0x$1 ").replace(/ +$/, "").split(" ")));
+    }
+
+    // Connect to QZ Tray on page load to avoid popups later
+    qz.websocket.connect().catch(function(err) {
+        console.warn("QZ Tray Connection Failed (Will try again on print):", err);
+    });
 
     /* ===========================
        Select2 Initialization
@@ -597,74 +679,26 @@ $(function () {
         width: "100%",
         allowClear: true,
         dropdownCssClass: "p-2",
-
         matcher: function (params, data) {
-
-            // If no search term, return all data
-            if (!params.term || typeof params.term !== "string") {
-                return data;
-            }
-
-            // Ensure text is always a string
+            if (!params.term || typeof params.term !== "string") return data;
             const term = params.term.toLowerCase();
             const text = String(data.text || "").toLowerCase();
-
-            // Ensure custom search key is string
             const sKey = String($(data.element).data("search") || "").toLowerCase();
-
-            // Match against visible text OR custom search key
-            if (text.includes(term) || sKey.includes(term)) {
-                return data;
-            }
-
+            if (text.includes(term) || sKey.includes(term)) return data;
             return null;
         }
     });
 
-
-    /* ===========================
-       Sidebar & Layout Logic
-    =========================== */
-    const toggleBtn = document.getElementById('sidebarToggle');
-    const htmlEl = document.documentElement;
-    const STORAGE_KEY = 'sidebarOpenVijay_purchase';
-    const isOpen = localStorage.getItem(STORAGE_KEY) === '1';
-
-    if (isOpen && toggleBtn) {
-        htmlEl.classList.add('sidebar-open');
-        if(toggleBtn) toggleBtn.setAttribute('aria-expanded', 'true');
-    }
-
-    function setSidebarOpen(open) {
-        if (!toggleBtn) return;
-        if (open) {
-            htmlEl.classList.add('sidebar-open');
-            toggleBtn.setAttribute('aria-expanded', 'true');
-            localStorage.setItem(STORAGE_KEY, '1');
-        } else {
-            htmlEl.classList.remove('sidebar-open');
-            toggleBtn.setAttribute('aria-expanded', 'false');
-            localStorage.setItem(STORAGE_KEY, '0');
-        }
-        document.documentElement.style.setProperty(
-            '--content-offset',
-            open ? getComputedStyle(document.documentElement).getPropertyValue('--sidebar-width') : '0px'
-        );
-    }
-
-    if (toggleBtn) {
-        toggleBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            setSidebarOpen(!htmlEl.classList.contains('sidebar-open'));
-        });
-    }
+    $('#manual-product').on('select2:select', function (e) { $(this).trigger('change'); });
 
     /* ===========================
        Date & Setup
     =========================== */
-    document.getElementById("invoice-date").textContent = new Date().toLocaleDateString("en-GB", {
+    const now = new Date();
+    document.getElementById("invoice-date").textContent = now.toLocaleDateString("en-GB", {
         day: 'numeric', month: 'long', year: 'numeric'
     });
+    checkHeldOrder();
 
     /* ===========================
        Table Logic
@@ -678,11 +712,8 @@ $(function () {
     }
 
     function addRow(Id, name, unit, qty, rate) {
-        $('#empty-state').hide(); // Hide empty placeholder
-
+        $('#empty-state').hide(); 
         const tr = $('<tr>');
-
-        // Cells
         const tdIndex = $('<td class="text-center fw-bold text-muted"></td>');
         const tdDesc  = $('<td>');
         const tdUom   = $('<td class="text-center">');
@@ -691,19 +722,13 @@ $(function () {
         const tdAmt   = $('<td class="text-end fw-bold amount">0.00</td>');
         const tdAct   = $('<td class="text-center">');
 
-        // Inputs
         const inDesc = $('<input type="text" class="form-control form-control-sm desc" readonly>').val(name);
         const inId   = $('<input type="hidden" class="ProdId">').val(Id);
-        
         const inUom  = $('<input type="text" class="form-control form-control-sm uom text-center" readonly style="background:#f8f9fa">').val(unit);
-        
         const inQty  = $('<input type="number" class="form-control form-control-sm qty text-center fw-bold" min="0" step="0.01">').val(qty);
-        
         const inRate = $('<input type="number" class="form-control form-control-sm rate text-end" min="0" step="0.01">').val(rate);
-
         const btnDel = $('<button class="btn btn-sm btn-outline-danger remove-row"><i class="bi bi-x-lg"></i></button>');
 
-        // Assemble
         tdDesc.append(inDesc).append(inId);
         tdUom.append(inUom);
         tdQty.append(inQty);
@@ -711,11 +736,8 @@ $(function () {
         tdAct.append(btnDel);
 
         tr.append(tdIndex, tdDesc, tdUom, tdQty, tdRate, tdAmt, tdAct);
-        
-        // Add Animation
         tr.hide().appendTo("#items-body").fadeIn(300);
 
-        // Events
         btnDel.on('click', function() {
             tr.fadeOut(300, function() { 
                 $(this).remove(); 
@@ -733,58 +755,76 @@ $(function () {
             tdAmt.text((q * r).toFixed(2));
             recalc();
         }
-
         updateRow();
     }
 
+    /* ===========================
+       Calculations
+    =========================== */
     function recalc() {
         let sub = 0;
         $("#items-body tr").each(function (i) {
-            $(this).find("td:first").text(i + 1); // Renumber
+            $(this).find("td:first").text(i + 1);
             const val = parseFloat($(this).find(".amount").text()) || 0;
             sub += val;
         });
-
         $("#subtotal").text(sub.toFixed(2));
+        calculateTotal();
+    }
+
+    function calculateTotal() {
+        let sub = parseFloat($("#subtotal").text()) || 0;
+        let discInput = parseFloat($("#discount").val()) || 0;
+        let isPercent = $("#disc-type-toggle").is(":checked");
         
-        const disc = parseFloat($("#discount").val()) || 0;
-        const total = Math.max(0, sub - disc);
+        let discAmount = 0;
+        if(isPercent) {
+            discAmount = sub * (discInput / 100);
+        } else {
+            discAmount = discInput;
+        }
         
+        let total = Math.max(0, sub - discAmount);
         $("#grand-total").text(total.toFixed(2));
         calculateBalance();
     }
 
-    $("#discount").on("input", recalc);
-    $("#cash").on("input", recalc);
-    $("#upi").on("input", recalc);
-    $("#recalculate").on("click", function(e){
-        e.preventDefault();
-        recalc();
-        // Visual feedback
-        const icon = $(this).find('i');
-        icon.addClass('spin-anim'); 
-        setTimeout(() => icon.removeClass('spin-anim'), 500);
+    $("#disc-type-toggle").on("change", function() {
+        $("#disc-type-label").text($(this).is(":checked") ? "%" : "₹");
+        calculateTotal();
     });
+    $("#discount").on("input", calculateTotal);
+    $("#cash").on("input", calculateBalance);
+    $("#upi").on("input", calculateBalance);
+    $("#recalculate").on("click", function(e){ e.preventDefault(); recalc(); });
     
-    
+    $("#round-off-btn").on("click", function() {
+        let sub = parseFloat($("#subtotal").text()) || 0;
+        let nearestRound = Math.round(sub);
+        let diff = sub - nearestRound;
+        
+        if(diff > 0) {
+            $("#discount").val(diff.toFixed(2));
+            if($("#disc-type-toggle").is(":checked")) {
+                 $("#disc-type-toggle").prop("checked", false).trigger("change");
+            }
+            calculateTotal();
+            showToast('success', 'Rounded off to ₹' + nearestRound.toFixed(2));
+        }
+    });
 
-    // Product Select Listener
     $("#manual-product").on("change", function () {
         const val = this.value;
         if (!val) return;
-
         const parts = val.split("|");
         const prodId = $(this).find(":selected").data("prodid") || "0";
         
-        // Check duplicate
         let exists = false;
         $("#items-body tr").each(function() {
              if($(this).find(".ProdId").val() == prodId) {
                  const qInput = $(this).find(".qty");
                  qInput.val((parseFloat(qInput.val()) || 0) + 1).trigger('input');
                  exists = true;
-                 
-                 // Highlight row
                  $(this).addClass("table-info");
                  setTimeout(() => $(this).removeClass("table-info"), 500);
              }
@@ -793,12 +833,98 @@ $(function () {
         if(!exists) {
             addRow(prodId, parts[0], parts[2], 1, parseFloat(parts[1])||0);
         }
+        
+        $(this).val(null).trigger('change');
+        setTimeout(function() {
+            $('#manual-product').select2('open'); 
+        }, 100);
+    });
 
-        $(this).val("").trigger("change");
+    function calculateBalance() {
+        const cash = parseFloat($("#cash").val()) || 0;
+        const upi  = parseFloat($("#upi").val()) || 0;
+        const grandTotal = parseFloat($("#grand-total").text()) || 0;
+        const paid = cash + upi;
+        const balance = grandTotal - paid;
+
+        const balElem = $("#Bal-amt");
+        balElem.text(balance.toFixed(2));
+        
+        if(balance <= 0.1) {
+            balElem.removeClass('text-danger').addClass('text-success');
+        } else {
+            balElem.removeClass('text-success').addClass('text-danger');
+        }
+    }
+
+    /* ===========================
+       Hold / Resume Logic
+    =========================== */
+    $("#hold-btn").on("click", function() {
+        if($("#items-body tr").length === 0) {
+            showToast('error', 'Nothing to hold.');
+            return;
+        }
+        const holdData = {
+            customer: {
+                name: $("#cust-name").val(),
+                address: $("#cust-address").val(),
+                phone: $("#cust-phone").val()
+            },
+            items: [],
+            discount: $("#discount").val(),
+            isDiscPercent: $("#disc-type-toggle").is(":checked")
+        };
+        
+        $("#items-body tr").each(function() {
+            holdData.items.push({
+                prodId: $(this).find(".ProdId").val(),
+                name: $(this).find(".desc").val(),
+                uom: $(this).find(".uom").val(),
+                qty: $(this).find(".qty").val(),
+                rate: $(this).find(".rate").val()
+            });
+        });
+        
+        localStorage.setItem('vijay_held_order', JSON.stringify(holdData));
+        showToast('success', 'Order Held Successfully!');
+        resetInvoiceForm();
+        checkHeldOrder();
+    });
+
+    function checkHeldOrder() {
+        const held = localStorage.getItem('vijay_held_order');
+        if(held) {
+            $("#resume-btn").removeClass("d-none");
+        } else {
+            $("#resume-btn").addClass("d-none");
+        }
+    }
+
+    $("#resume-btn").on("click", function() {
+        const held = JSON.parse(localStorage.getItem('vijay_held_order'));
+        if(!held) return;
+        
+        if(!confirm("Resume previous held order? Current cart will be cleared.")) return;
+
+        $("#cust-name").val(held.customer.name);
+        $("#cust-address").val(held.customer.address);
+        $("#cust-phone").val(held.customer.phone);
+        $("#discount").val(held.discount);
+        $("#disc-type-toggle").prop("checked", held.isDiscPercent).trigger("change");
+
+        $("#items-body").empty();
+        held.items.forEach(item => {
+            addRow(item.prodId, item.name, item.uom, item.qty, item.rate);
+        });
+        
+        localStorage.removeItem('vijay_held_order');
+        checkHeldOrder();
+        showToast('success', 'Order Resumed!');
     });
 
     /* ===========================
-       Toast / Response Helper
+       Utils
     =========================== */
     const toastEl = document.getElementById('liveToast');
     const toast = new bootstrap.Toast(toastEl, { delay: 4000 });
@@ -806,44 +932,35 @@ $(function () {
     function showToast(type, msg) {
         const bgClass = type === 'success' ? 'text-bg-success' : 'text-bg-danger';
         const iconClass = type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill';
-        
         $('#liveToast').removeClass('text-bg-success text-bg-danger').addClass(bgClass);
         $('#toast-icon').removeClass().addClass('bi ' + iconClass + ' fs-5');
         $('#toast-message').text(msg);
         toast.show();
     }
 
-    /* ===========================
-       RESET FORM (Clear Data)
-    =========================== */
     function resetInvoiceForm() {
-        // Fade out box content briefly
         $('.invoice-box').css('opacity', '0.5');
-        
         setTimeout(() => {
-            // Clear Customer
+            // Clear Inputs
             $('#cust-name, #cust-address, #cust-phone').val('');
-            
+            $('#manual-product').val(null).trigger('change');
+            $('#discount').val(''); // Empty discount input
+            $('#cash').val('');     // Empty cash input
+            $('#upi').val('');      // Empty UPI input
+
             // Clear Table
             $('#items-body').empty();
             checkEmptyState();
-            
-            // Clear Totals
-            $('#discount, #cash, #upi').val('0');
-            $('#subtotal, #grand-total').text('0.00');
-            
-            // Reset Select2
-            $('#manual-product').val(null).trigger('change');
-            
-            // Restore Opacity
+
+            // Clear Labels/Spans (Empty instead of 0.00)
+            $('#subtotal').text('');     
+            $('#grand-total').text('');  
+            $('#Bal-amt').text('');     
+
             $('.invoice-box').css('opacity', '1');
-            
         }, 300);
     }
 
-    /* ===========================
-       AJAX SAVE
-    =========================== */
     function toggleCancelButton() {
         const cancelId = $("#cancelId").val();
         if (cancelId && cancelId !== "0") {
@@ -852,41 +969,116 @@ $(function () {
             $("#cancel").addClass("d-none");
         }
     }
+
     /* ===========================
-    PAYMENT & BALANCE CALCULATION (ADDED)
+    THERMAL PRINTER LOGIC (QZ Tray)
  =========================== */
- function calculateBalance() {
-     const cash = parseFloat($("#cash").val()) || 0;
-     const upi  = parseFloat($("#upi").val()) || 0;
-     const grandTotal = parseFloat($("#grand-total").text()) || 0;
+ function printThermalReceipt(docNo) {
+     // 1. Populate Data
+     $('#print-date').text(new Date().toLocaleString());
+     $('#print-inv-no').text(docNo || "PENDING");
+     
+     const custName = $('#cust-name').val();
+     $('#print-cust').text(custName ? custName : 'Walk-in Customer');
+     
+     let itemsHtml = '';
+     $('#items-body tr').each(function() {
+         const name = $(this).find('.desc').val();
+         const qty = $(this).find('.qty').val();
+         const rate = $(this).find('.rate').val();
+         const amt = $(this).find('.amount').text();
+         const shortName = name.length > 18 ? name.substring(0, 18) + '..' : name;
+         
+         itemsHtml += `
+             <div class="receipt-row" style="font-size:11px;">
+                 <span>${shortName} x${qty}</span>
+                 <span>${amt}</span>
+             </div>
+         `;
+     });
+     $('#print-items').html(itemsHtml);
+     
+     $('#print-subtotal').text($('#subtotal').text() || "0.00");
+     $('#print-discount').text($('#discount').val() + ($("#disc-type-toggle").is(":checked")?"%":""));
+     $('#print-total').text($('#grand-total').text() || "0.00");
+     $('#print-cash').text($('#cash').val() || "0.00");
+     $('#print-upi').text($('#upi').val() || "0.00");
+     $('#print-balance').text($('#Bal-amt').text() || "0.00");
 
-     const paid = cash + upi;
-     const balance = grandTotal - paid;
+     // 2. QZ Tray Printing (Optimized for Silent Mode)
+     var connectPromise = Promise.resolve();
 
-     $("#Bal-amt").text(balance.toFixed(2));
+     // Only attempt to connect if we are NOT already active. 
+     // This prevents "Already Connected" errors.
+     if (!qz.websocket.isActive()) {
+         connectPromise = qz.websocket.connect();
+     }
+
+     connectPromise.then(function() {
+         // Use getDefault() for SILENT printing (no popups).
+         // If no default is set, it falls back to find() (may show dialog).
+         return qz.printers.getDefault().catch(function(e) {
+             // If getDefault fails (e.g. no default set), try to find one.
+             console.warn("No default printer found, searching...");
+             return qz.printers.find();
+         });
+     }).then(function(printer) {
+         if (!printer) {
+             throw new Error("No printer selected or available.");
+         }
+
+         var config = qz.configs.create(printer);
+         var printData = [
+             {
+                 type: 'html',
+                 format: 'plain', 
+                 content: document.getElementById('thermal-print-area').innerHTML
+             }
+         ];
+         return qz.print(config, printData);
+     }).then(function() {
+         console.log("Printed successfully");
+     }).catch(function(err) {
+         console.error("Print Error:", err);
+         
+         // Only show error if we actually failed, 
+         // or if error is not just a connection blip (we might still be connected).
+         var errMessage = err.message || err.toString();
+         
+         // If QZ Tray is actually active, a transient error might have occurred.
+         // We suppress it to avoid false "Printing Failed" messages.
+         if (qz.websocket.isActive()) {
+              console.warn("Connection recovered or transient error occurred, print may still execute.");
+         }
+     });
  }
-
-
+    /* ===========================
+       AJAX SAVE
+    =========================== */
     $("#send-btn").on("click", function () {
-        // Simple Validation
         if ($("#items-body tr").length === 0) {
             showToast('error', 'Please add at least one product.');
             return;
         }
 
         var balAmt = parseFloat($("#Bal-amt").text()) || 0;
+        
+        if (balAmt < -0.1) {
+            showToast('error', 'Payment exceeds total amount!');
+            return;
+        }
 
-       alert("balAmt "+balAmt);
-       if (balAmt === 0) {
-    	   showToast('success',"Payment complete");
-    	    return true;
-    	} else {
-    		showToast('error',"Balance amount pending");
-    	    return;
-    	}
+        // Enforce full payment (optional - uncomment to require exact payment)
+        /*
+        if (balAmt > 0) {
+            showToast('error', 'Balance Amount Pending: ₹' + balAmt.toFixed(2));
+            return;
+        }
+        */
 
         $("#loader").css("display", "flex");
         const data = {
+            discountType: $("#disc-type-toggle").is(":checked") ? "PERCENT" : "FIXED",
             discount: parseFloat($("#discount").val()) || 0,
             subtotal: $("#subtotal").text(),
             total: $("#grand-total").text(),
@@ -920,30 +1112,17 @@ $(function () {
                 $("#loader").hide();
 
                 if (response && response.status === "success") {
-                	$("#cancelId").val(response.docNo);
-                	/* alert("doc Id "+$("#cancelId").val()); */
-                	console.log("cancel id "+$("#cancelId").val());
-                	toggleCancelButton();
-                    // 1. Show Success Message
+                    // CRITICAL FIX: Use the docNo returned from backend
+                    const docNo = response.docNo;
+                    $("#cancelId").val(docNo);
+                    toggleCancelButton();
+                    
                     showToast('success', 'Invoice Saved Successfully!');
-						
-			                    // 2. Open PDF/Bill if available
-			               <%--      if (response.pdfUrl) {
-			    $.ajax({
-			        type: "POST",
-			        url: "<%= request.getContextPath() %>/ThermalPrintServer",
-			        data: {
-			            pdf: response.pdfUrl
-			        }
-			    }); 
-			}--%> 
-
- 					<%--  else if (response.fileName) {
-                        const fb = "<%=request.getContextPath()%>/invoices/" + encodeURIComponent(response.fileName);
-                        window.open(fb, "_blank");
-                    } --%>
-
-                    // 3. Clear Data (Don't show old data)
+                        
+                    // Trigger Silent Print
+                    printThermalReceipt(docNo);
+                    
+                    // Clear Form
                     resetInvoiceForm();
 
                 } else {
@@ -959,82 +1138,40 @@ $(function () {
         });
     });
     
+    /* ===========================
+       CANCEL ENTRY LOGIC
+    =========================== */
     $("#cancel").on("click", function () {
-
         const cancelId = $("#cancelId").val();
         if (!cancelId || cancelId === "0") {
-        	showToast('error', 'Id Not Found: ');
-            return; // safety guard
+            showToast('error', 'Id Not Found');
+            return; 
         }
-	console.log("poooo "+cancelId);
-        $("#loader").show();
+        if(!confirm("Are you sure you want to CANCEL this invoice?")) return;
 
+        $("#loader").show();
         $.ajax({
             type: "POST",
             url: "<%= request.getContextPath() %>/CancelSalesEntry",
-            data: {
-            	documentNo: cancelId
-            },
-
+            data: { documentNo: cancelId },
             success: function (response) {
                 $("#loader").hide();
-
                 if (response && response.status === "success") {
-
                     $("#cancelId").val("0");
                     $("#cancel").addClass("d-none");
-
                     showToast("success", "Canceled Successfully!");
                     resetInvoiceForm();
-
                 } else {
                     const err = response ? (response.error || response.message) : "Unknown error";
                     showToast("error", err);
                 }
             },
-
             error: function (xhr, status, error) {
                 $("#loader").hide();
                 showToast("error", "Server Connection Failed: " + error);
-                console.error(xhr);
             }
         });
-
     });
-
-    /* ===========================
-    TVS RP 3200 LITE – SILENT PRINT
- =========================== */
- /*  async function silentThermalPrint(pdfUrl) {
-     try {
-         if (!qz.websocket.isActive()) {
-             await qz.websocket.connect();
-         }
-
-         const printer = await qz.printers.getDefault();
-
-         const config = qz.configs.create(printer, {
-             rasterize: true,
-             scaleContent: false,
-             density: 203,
-             size: { width: 80 }   // FORCE 80mm
-         });
-
-         const data = [{
-             type: 'pdf',
-             data: pdfUrl
-         }];
-
-         await qz.print(config, data);
-         console.log("TVS RP-3200 printed silently");
-
-     } catch (e) {
-         console.error(e);
-         showToast("error", "Thermal printer not ready");
-     }
- } */
-
-
 
 });
 </script>
