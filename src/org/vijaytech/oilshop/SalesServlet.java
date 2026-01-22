@@ -145,9 +145,8 @@ public class SalesServlet extends HttpServlet {
             String address = customer.optString("address", "");
             String phone = customer.optString("phone", "");
 
-            if (phone == null || phone.trim().isEmpty()) {
-                throw new AdempiereException("Please fill Phone Number");
-            }
+            // CHANGE: Phone validation removed. If empty, defaults to Walk-in logic later or empty string.
+            System.out.println("Customer: " + name + " | Phone: " + phone + " (Optional)");
 
             // Safe discount parsing
             BigDecimal discount = BigDecimal.ZERO;
@@ -163,15 +162,13 @@ public class SalesServlet extends HttpServlet {
             String subtotal = salesData.optString("subtotal", "");
             String total = salesData.optString("total", "");
 
-            System.out.println("Customer: " + name + " | Phone: " + phone);
-
             // ---- Items Processing ----
             JSONArray items = salesData.getJSONArray("items");
 
             // Create/Update Business Partner
             TF_MBPartner bp = new TF_MBPartner(ctx, 0, null);
-            bp.setAD_Org_ID(1000000);
-            bp.setName(name != null ? name : "NA");
+            bp.setAD_Org_ID(1000000); // Default or dynamic based on BP logic
+            bp.setName(name != null ? name : "Walk-in");
             bp.setPhone(phone);
             bp.setContactName(name);
             bp.setCity("NA");
@@ -182,6 +179,7 @@ public class SalesServlet extends HttpServlet {
             bp.setIsActive(true);
             bp.saveEx();
 
+            // Update context IDs from BP if needed (assuming BP inherits org)
             if (adClientId == 0) {
                 adClientId = bp.getAD_Client_ID();
                 Env.setContext(ctx, "#AD_Client_ID", adClientId);
@@ -213,7 +211,6 @@ public class SalesServlet extends HttpServlet {
                 JSONObject item = items.getJSONObject(i);
 
                 int prodId = item.getInt("prodId");
-                // String product = item.optString("product", ""); // Not strictly needed if ID is valid
                 
                 // Parsing values safely
                 BigDecimal qty = new BigDecimal(item.get("qty").toString());
@@ -221,8 +218,9 @@ public class SalesServlet extends HttpServlet {
                 BigDecimal amount = new BigDecimal(item.get("amount").toString()).setScale(2, RoundingMode.HALF_UP);
 
                 TF_MProduct prod = new TF_MProduct(ctx, prodId, null);
-                prod.setBillPrice(rate);
-                prod.saveEx();
+                // Update product price if needed (optional)
+                // prod.setBillPrice(rate); 
+                // prod.saveEx();
                 
                 if (prod.getAD_Client_ID() != adClientId) {
                     throw new AdempiereException("Product " + prod.getName() + " belongs to another tenant!");
@@ -242,7 +240,7 @@ public class SalesServlet extends HttpServlet {
                 ordLine.saveEx();
             }
 
-            // Complete the Document
+            // Complete Document
             ordH.setDocAction(MOrder.DOCACTION_Complete);
 
             if (!ordH.processIt(MOrder.DOCACTION_Complete)) {
@@ -250,7 +248,7 @@ public class SalesServlet extends HttpServlet {
             }
             ordH.saveEx();
 
-            String docNo = ordH.getDocumentNo(); // CRITICAL: Get the document number
+            String docNo = ordH.getDocumentNo();
             System.out.println("Order Completed. Document No: " + docNo);
 
             // ===== Generate PDF and send WhatsApp =====
@@ -266,14 +264,15 @@ public class SalesServlet extends HttpServlet {
             // Generate PDF
             String pdfInfo = GenerateTextileBillPDF.generate(pdfFile, ordH.get_ID(), phone, ctx);
 
-            // Send WhatsApp (Non-blocking on error)
+            // Send WhatsApp (Non-blocking on error) - Only if phone exists
             try {
-                String phoneToSend = phone.replaceAll("[\\s\\+\\-\\(\\)]", "");
-                String caption = "Invoice #" + docNo;
-                WhatsAppSender.sendDocument(phoneToSend, pdfInfo, caption);
+                if (phone != null && !phone.trim().isEmpty()) {
+                    String phoneToSend = phone.replaceAll("[\\s\\+\\-\\(\\)]", "");
+                    String caption = "Invoice #" + docNo;
+                    WhatsAppSender.sendDocument(phoneToSend, pdfInfo, caption);
+                }
             } catch (Exception waex) {
-                // Do not fail the transaction if WA fails. Just log it.
-                System.err.println("WhatsApp sending failed for " + docNo);
+                System.err.println("WhatsApp sending failed (or skipped) for " + docNo);
                 waex.printStackTrace();
             }
 
@@ -286,9 +285,13 @@ public class SalesServlet extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
             response.setStatus(500);
-            // Escape quotes in error message
-            String errorMsg = e.getMessage().replace("\"", "'");
-            response.getWriter().write("{\"status\":\"error\", \"error\":\"" + errorMsg + "\"}");
+            // Return error in perfect JSON format
+            String errorMsg = e.getMessage() != null ? e.getMessage().replace("\"", "'") : "Unknown Error";
+            try {
+                response.getWriter().write("{\"status\":\"error\", \"error\":\"" + errorMsg + "\"}");
+            } catch(Exception io) {
+                // Fallback if response is already committed
+            }
         }
     }
 }

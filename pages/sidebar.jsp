@@ -26,16 +26,19 @@ if (username == null || username.trim().isEmpty()) {
 final int ROLE_ADMIN  = ROLE_ADMIN1.intValue();
 final int ROLE_CASHIER = ROLE_CASHIERObj.intValue();
 String orgNamee = "SKV";
+
+// Helper for Avatar Initials
+String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperCase() : "GU";
 %>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= orgNamee %> ERP - Dashboard</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
@@ -51,15 +54,28 @@ String orgNamee = "SKV";
             --footer-height: 60px;
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            
+            /* Light Theme Defaults */
+            --bg-body: #f4f7fe;
+            --text-main: #333;
+            --card-bg: #ffffff;
+        }
+
+        /* Dark Theme Overrides */
+        [data-bs-theme="dark"] {
+            --bg-body: #0b1120;
+            --text-main: #e2e8f0;
+            --card-bg: #1e293b;
         }
 
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f4f7fe;
+            background-color: var(--bg-body);
+            color: var(--text-main);
             margin: 0;
             padding-top: var(--header-height);
             padding-bottom: var(--footer-height);
-            transition: var(--transition);
+            transition: background-color 0.3s, color 0.3s;
             overflow-x: hidden;
             min-height: 100vh;
         }
@@ -79,6 +95,8 @@ String orgNamee = "SKV";
             overflow-x: hidden;
             scrollbar-width: thin;
             scrollbar-color: var(--accent-primary) transparent;
+            display: flex;
+            flex-direction: column;
         }
 
         .sidebar-header {
@@ -92,6 +110,7 @@ String orgNamee = "SKV";
             top: 0;
             background: var(--panel-bg);
             z-index: 10;
+            flex-shrink: 0;
         }
 
         .mobile-close-btn {
@@ -141,11 +160,13 @@ String orgNamee = "SKV";
             list-style: none;
             padding: 5px 0;
             margin: 0 15px 10px 15px;
-            background: rgba(255, 255, 255, 0.03);
+            background: rgba(0, 0, 0, 0.2);
             border-radius: 10px;
-            border-left: 2px solid var(--accent-primary);
+            display: none; 
         }
         
+        .submenu-container.show { display: block; animation: fadeIn 0.3s ease; }
+
         .submenu-link {
             padding: 8px 15px 8px 20px !important;
             font-size: 0.82rem !important;
@@ -155,6 +176,7 @@ String orgNamee = "SKV";
             color: rgba(255, 255, 255, 0.5) !important;
             text-decoration: none !important;
             width: 100% !important;
+            border-radius: 8px !important;
         }
 
         .submenu-link:hover {
@@ -163,13 +185,15 @@ String orgNamee = "SKV";
         }
 
         .submenu-link i { color: var(--accent-primary); margin-right: 12px; font-size: 1rem; }
+        
+        .submenu-arrow { transition: transform 0.3s ease; font-size: 0.8rem; margin-left: auto; }
+        .sidebar-link.expanded .submenu-arrow { transform: rotate(180deg); }
 
-        .bi-chevron-down {
-            transition: transform 0.3s ease;
-            font-size: 0.8rem;
-        }
-        .sidebar-link:not(.collapsed) .bi-chevron-down {
-            transform: rotate(180deg);
+        /* Mobile Logout in Sidebar Footer */
+        .sidebar-footer-logout {
+            margin-top: auto;
+            padding: 15px;
+            border-top: 1px solid rgba(255,255,255,0.1);
         }
 
         /* === HEADER === */
@@ -186,6 +210,66 @@ String orgNamee = "SKV";
             transition: var(--transition);
             display: flex;
             align-items: center;
+        }
+
+        .search-bar {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            color: white;
+            padding: 8px 15px;
+            width: 250px;
+            transition: var(--transition);
+        }
+        .search-bar:focus {
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 0 2px var(--accent-primary);
+            color: white;
+        }
+        .search-bar::placeholder { color: rgba(255,255,255,0.5); }
+
+        .icon-btn {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: white;
+            background: rgba(255,255,255,0.05);
+            transition: 0.2s;
+            cursor: pointer;
+            text-decoration: none;
+            position: relative;
+        }
+        .icon-btn:hover { background: rgba(255,255,255,0.15); color: var(--accent-primary); }
+        
+        /* Correct Logout Button Styling (Visible on md-lg screens) */
+        .btn-logout-header {
+            background: rgba(220, 53, 69, 0.15);
+            border: 1px solid rgba(220, 53, 69, 0.4);
+            color: #ff6b6b;
+            border-radius: 10px;
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: var(--transition);
+            display: flex; align-items: center; gap: 8px;
+            text-decoration: none;
+        }
+        .btn-logout-header:hover {
+            background: #dc3545;
+            color: white;
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+        }
+
+        /* === USER AVATAR ASPECT === */
+        .user-avatar-circle {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.9rem;
+            box-shadow: 0 4px 10px rgba(25, 182, 176, 0.3);
+            cursor: pointer;
         }
 
         /* === FOOTER === */
@@ -205,24 +289,91 @@ String orgNamee = "SKV";
             color: rgba(255, 255, 255, 0.7);
         }
 
-        /* === STAT CARDS === */
+        /* === DASHBOARD WIDGETS === */
         .stat-card {
-            background: #fff;
+            background: var(--card-bg);
             border-radius: 15px;
             padding: 20px;
-            border: none;
+            border: 1px solid rgba(0,0,0,0.05);
             box-shadow: var(--card-shadow);
             height: 100%;
-            transition: transform 0.2s;
+            transition: transform 0.2s, background-color 0.3s;
+            position: relative;
+            overflow: hidden;
         }
-        .stat-card:hover { transform: translateY(-5px); }
-        .stat-label { font-size: 0.75rem; font-weight: 700; color: #444; text-transform: uppercase; margin-bottom: 10px; display: block; }
-        .stat-value { font-size: 1.8rem; font-weight: 800; display: block; }
-        .stat-desc { font-size: 0.7rem; color: #888; }
+        [data-bs-theme="dark"] .stat-card { border: 1px solid rgba(255,255,255,0.05); }
 
+        .stat-card:hover { transform: translateY(-5px); }
+        .stat-card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%;
+            background: var(--accent-primary);
+        }
+        .stat-label { font-size: 0.75rem; font-weight: 700; color: #888; text-transform: uppercase; margin-bottom: 10px; display: block; }
+        .stat-value { font-size: 1.8rem; font-weight: 800; display: block; color: var(--text-main); }
+        
+        /* Quick Action Buttons */
+        .quick-action-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 1px dashed var(--accent-primary);
+            cursor: pointer;
+            transition: 0.3s;
+            height: 100%;
+        }
+        .quick-action-card:hover {
+            background: rgba(25, 182, 176, 0.05);
+            transform: scale(1.02);
+        }
+        .quick-icon {
+            font-size: 2rem;
+            color: var(--accent-primary);
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+
+        /* === FLOATING ACTION BUTTON (FAB) === */
+        .fab {
+            position: fixed;
+            bottom: 80px;
+            right: 30px;
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            box-shadow: 0 10px 25px rgba(25, 182, 176, 0.4);
+            cursor: pointer;
+            z-index: 900;
+            transition: 0.3s;
+        }
+        .fab:hover { transform: rotate(90deg) scale(1.1); }
+
+        /* === TOAST NOTIFICATIONS (Correct Way) === */
+        .toast-custom {
+            backdrop-filter: blur(10px);
+            background: rgba(30, 41, 59, 0.9) !important;
+            color: #fff !important;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .toast-header-custom {
+            background: transparent;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        /* === ANIMATIONS === */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        /* Main Content */
         .main-content { padding: 25px; transition: var(--transition); }
 
-        /* === MEDIA QUERIES & SIDEBAR ACTIONS === */
+        /* === MEDIA QUERIES === */
         @media (min-width: 992px) {
             body { padding-left: var(--sidebar-width); }
             body.collapsed-sidebar { padding-left: var(--sidebar-collapsed); }
@@ -233,11 +384,10 @@ String orgNamee = "SKV";
             
             body.collapsed-sidebar .sidebar-link span, 
             body.collapsed-sidebar .brand-text, 
-            body.collapsed-sidebar .bi-chevron-down, 
-            body.collapsed-sidebar .analytics-label { 
+            body.collapsed-sidebar .submenu-arrow,
+            body.collapsed-sidebar .submenu-container { 
                 display: none !important; 
             }
-            body.collapsed-sidebar .collapse.show { display: none !important; }
         }
 
         @media (max-width: 991px) {
@@ -251,6 +401,9 @@ String orgNamee = "SKV";
                 z-index: 1055; display: none; backdrop-filter: blur(4px);
             }
             body.mobile-open .mobile-overlay { display: block; }
+            .search-bar { width: 150px; }
+            .fab { bottom: 20px; right: 20px; }
+            .sidebar-footer-logout { display: block; } /* Ensure logout visible on mobile sidebar */
         }
 
         .brand-text {
@@ -259,25 +412,52 @@ String orgNamee = "SKV";
             -webkit-text-fill-color: transparent;
             font-weight: 800;
         }
-
-        .btn-logout {
-            background: linear-gradient(135deg, #ff4b2b, #ff416c);
-            border: none; color: white; border-radius: 10px;
-            padding: 8px 16px; font-weight: 600; text-decoration: none; font-size: 0.9rem;
-        }
-        
-        .version-badge {
-            background: rgba(25, 182, 176, 0.2);
-            color: var(--accent-primary);
-            padding: 1px 8px; border-radius: 20px;
-            font-size: 0.65rem; font-weight: 700; border: 1px solid var(--accent-primary);
-        }
     </style>
 </head>
 <body>
 
+<!-- Mobile Overlay -->
 <div class="mobile-overlay" id="mobileOverlay"></div>
 
+<!-- Toast Notification Container (Fixed Position) -->
+<!-- <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 2000" id="toastPlacement"></div>
+ -->
+<!-- Floating Action Button -->
+<% if (roleId == ROLE_ADMIN || roleId == ROLE_CASHIER) { %>
+<div class="fab" onclick="showToast('Creating new sale invoice...', 'success')" title="New Sale">
+    <i class="bi bi-plus-lg"></i>
+</div>
+<% } %>
+
+<!-- Keyboard Shortcuts Modal -->
+<div class="modal fade" id="shortcutsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="background: var(--card-bg); color: var(--text-main); border:none;">
+      <div class="modal-header border-bottom-0">
+        <h5 class="modal-title fw-bold"><i class="bi bi-keyboard me-2 text-info"></i>Keyboard Shortcuts</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
+            <span><i class="bi bi-search me-2"></i>Global Search</span>
+            <kbd class="bg-dark text-white rounded px-2 py-1 small">Ctrl + K</kbd>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
+            <span><i class="bi bi-cart3 me-2"></i>New Sale</span>
+            <kbd class="bg-dark text-white rounded px-2 py-1 small">Alt + S</kbd>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
+            <span><i class="bi bi-lightbulb me-2"></i>Toggle Theme</span>
+            <kbd class="bg-dark text-white rounded px-2 py-1 small">Alt + D</kbd>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Sidebar -->
 <aside class="sidebar-wrapper" id="sidebar">
     <div class="sidebar-header">
         <div class="d-flex align-items-center">
@@ -287,61 +467,92 @@ String orgNamee = "SKV";
         <button class="mobile-close-btn" id="mobileClose"><i class="bi bi-x-lg"></i></button>
     </div>
 
+    <div class="d-flex flex-column py-3" style="flex-grow:1;">
+        <!-- Dashboard -->
+        <% if (roleId == ROLE_ADMIN) { %>
+        <a href="<%=request.getContextPath()%>/pages/dashboard.jsp" class="sidebar-link active" id="nav-dashboard">
+            <i class="bi bi-speedometer2 me-2"></i> <span>Dashboard</span>
+        </a>
+        <% } %>
 
-    <!-- Dashboard (ALL ROLES) -->
-    <% if (roleId == ROLE_ADMIN) { %>
-    <a href="<%=request.getContextPath()%>/pages/dashboard.jsp" class="sidebar-link">
-        <i class="bi bi-speedometer2 me-2"></i> Dashboard
-    </a>
- <% } %>
-    <!-- Sales (ADMIN + CASHIER) -->
-    <% if (roleId == ROLE_ADMIN || roleId == ROLE_CASHIER) { %>
-    <a href="<%=request.getContextPath()%>/SalesServlet" class="sidebar-link">
-        <i class="bi bi-cart3 me-2"></i> Sales
-    </a>
-    <% } %>
+        <!-- Operations (Grouped) -->
+        <div class="nav-item mt-2">
+            <a href="#" class="sidebar-link" onclick="toggleSubmenu('opsMenu', this)">
+                <i class="bi bi-grid-fill me-2"></i> 
+                <span>Operations</span>
+                <i class="bi bi-chevron-down submenu-arrow"></i>
+            </a>
+            <ul class="submenu-container" id="opsMenu">
+                <% if (roleId == ROLE_ADMIN || roleId == ROLE_CASHIER) { %>
+                <li><a href="<%=request.getContextPath()%>/SalesServlet" class="sidebar-link submenu-link">
+                    <i class="bi bi-cart3"></i> Sales
+                </a></li>
+                <li><a href="<%=request.getContextPath()%>/PurchaseServlet" class="sidebar-link submenu-link">
+                    <i class="bi bi-bag-check"></i> Purchase
+                </a></li>
+                <% } %>
+            </ul>
+        </div>
 
-    <!-- Purchase (ADMIN + MANAGER) -->
-    <% if (roleId == ROLE_ADMIN || roleId == ROLE_CASHIER) { %>
-    <a href="<%=request.getContextPath()%>/PurchaseServlet" class="sidebar-link">
-        <i class="bi bi-bag-check me-2"></i> Purchase
-    </a>
-    <% } %>
+        <!-- Inventory (Grouped) -->
+        <% if (roleId == ROLE_ADMIN) { %>
+        <div class="nav-item mt-2">
+            <a href="#" class="sidebar-link" onclick="toggleSubmenu('invMenu', this)">
+                <i class="bi bi-box-seam me-2"></i> 
+                <span>Inventory</span>
+                <i class="bi bi-chevron-down submenu-arrow"></i>
+            </a>
+            <ul class="submenu-container" id="invMenu">
+                <li><a href="<%=request.getContextPath()%>/pages/productCategory.jsp" class="sidebar-link submenu-link">
+                    <i class="bi bi-collection"></i> Categories
+                </a></li>
+                <li><a href="<%=request.getContextPath()%>/Product" class="sidebar-link submenu-link">
+                    <i class="bi bi-box-seam"></i> Products
+                </a></li>
+            </ul>
+        </div>
+        <% } %>
 
-    <!-- Products (ADMIN ONLY) -->
-    <% if (roleId == ROLE_ADMIN) { %>
-    <a href="<%=request.getContextPath()%>/pages/productCategory.jsp" class="sidebar-link">
-        <i class="bi bi-collection me-2"></i> Categories
-    </a>
-    <a href="<%=request.getContextPath()%>/Product" class="sidebar-link">
-        <i class="bi bi-box-seam me-2"></i> Products
-    </a>
-    <% } %>
+        <!-- Finance -->
+        <% if (roleId == ROLE_ADMIN ) { %>
+        <a href="<%=request.getContextPath()%>/ExpenseEntryServlet" class="sidebar-link mt-2">
+            <i class="bi bi-wallet2 me-2"></i> <span>Expenses</span>
+        </a>
+        
+        <hr class="text-secondary mx-3 my-2">
+        
+        <div class="nav-item mt-2">
+            <a href="#" class="sidebar-link" onclick="toggleSubmenu('reportMenu', this)">
+                <i class="bi bi-bar-chart-line me-2"></i> 
+                <span>Reports</span>
+                <i class="bi bi-chevron-down submenu-arrow"></i>
+            </a>
+            <ul class="submenu-container" id="reportMenu">
+                <li><a href="<%=request.getContextPath()%>/PrintPurchaseReportServlet" class="sidebar-link submenu-link">
+                    <i class="bi bi-file-earmark-bar-graph"></i> Sales & Purchase
+                </a></li>
+                <li><a href="<%=request.getContextPath()%>/ProfitAndLossReport" class="sidebar-link submenu-link">
+                    <i class="bi bi-graph-up"></i> Profit & Loss
+                </a></li>
+                <li><a href="<%=request.getContextPath()%>/CashBookReport" class="sidebar-link submenu-link">
+                    <i class="bi bi-journal-check"></i> Expense Summary
+                </a></li>
+            </ul>
+        </div>
+        <% } %>
+    </div>
 
-    <!-- Expenses (ADMIN + MANAGER) -->
-    <% if (roleId == ROLE_ADMIN ) { %>
-    <a href="<%=request.getContextPath()%>/ExpenseEntryServlet" class="sidebar-link">
-        <i class="bi bi-wallet2 me-2"></i> Expenses
-    </a>
-    <% } %>
-
-    <!-- Reports -->
-    <% if (roleId == ROLE_ADMIN ) { %>
-    <hr class="text-secondary">
-    <a href="<%=request.getContextPath()%>/PrintPurchaseReportServlet" class="sidebar-link">
-        <i class="bi bi-bar-chart-line me-2"></i> Sales & Purchase
-    </a>
-    <a href="<%=request.getContextPath()%>/ProfitAndLossReport" class="sidebar-link">
-        <i class="bi bi-graph-up me-2"></i> Profit & Loss
-    </a>
-    <a href="<%=request.getContextPath()%>/CashBookReport" class="sidebar-link">
-        <i class="bi bi-journal-check me-2"></i> Expense Summary
-    </a>
-    <% } %>
+    <!-- Mobile Sidebar Footer (Visible on mobile only) -->
+    <div class="sidebar-footer-logout d-lg-none">
+        <a href="${pageContext.request.contextPath}/pages/loginpage.jsp" class="btn btn-danger w-100 text-white">
+            <i class="bi bi-box-arrow-right"></i> Logout
+        </a>
+    </div>
 </aside>
 
+<!-- Header -->
 <header class="app-header">
-    <div class="container-fluid d-flex align-items-center justify-content-between">
+    <div class="container-fluid d-flex align-items-center justify-content-between px-4">
         <div class="d-flex align-items-center">
             <button class="btn text-white fs-2 p-0 me-3" id="sidebarToggle" type="button">
                 <i class="bi bi-list"></i>
@@ -352,25 +563,105 @@ String orgNamee = "SKV";
             </div>
         </div>
         
-        <div class="d-flex align-items-center gap-2 gap-md-3">
-            <div class="text-end d-none d-sm-block">
-               <!--  <span class="version-badge"></span> -->
-                <span class="text-white fw-bold d-block" style="font-size: 0.9rem;"><%= username %></span>
-                <small class="text-muted opacity-75" style="font-size: 0.65rem;">Status: Online</small>
+        <!-- Center Search -->
+        <!-- <div class="d-none d-md-flex flex-grow-1 justify-content-center">
+            <div class="position-relative" style="max-width: 400px; width: 100%;">
+                <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"></i>
+                <input type="text" class="form-control search-bar ps-5" placeholder="Search (Ctrl+K)...">
             </div>
-            <a href="${pageContext.request.contextPath}/pages/loginpage.jsp" class="btn btn-logout d-flex align-items-center">
-                <i class="bi bi-power me-md-2"></i><span>Logout</span>
+        </div> -->
+        
+        <div class="d-flex align-items-center gap-2 gap-md-3 ms-md-3">
+            
+            <!-- Theme Toggle -->
+         <!--   <a href="#" class="icon-btn d-none d-sm-flex" onclick="toggleTheme()" title="Toggle Theme (Alt+D)">
+                <i class="bi bi-moon-stars-fill" id="themeIcon"></i>
+            </a> 
+             -->
+            <!-- Shortcuts Help -->
+          <!--   <a href="#" class="icon-btn d-none d-sm-flex" data-bs-toggle="modal" data-bs-target="#shortcutsModal" title="Keyboard Shortcuts">
+                <i class="bi bi-keyboard"></i>
+            </a>
+ -->
+            <!-- User Profile Dropdown -->
+            <div class="dropdown">
+                <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" data-bs-toggle="dropdown">
+                    <div class="user-avatar-circle me-2"><%= userInitials %></div>
+                    <div class="text-end d-none d-sm-block">
+                        <span class="d-block text-white fw-bold" style="font-size: 0.85rem; line-height: 1;"><%= username %></span>
+                        <small class="text-success" style="font-size: 0.65rem;">● Online</small>
+                    </div>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="min-width: 200px;">
+                    <li><a class="dropdown-item small" href="#"><i class="bi bi-person me-2"></i> My Profile</a></li>
+                    <li><a class="dropdown-item small" href="#"><i class="bi bi-gear me-2"></i> Settings</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a href="${pageContext.request.contextPath}/pages/loginpage.jsp" class="dropdown-item small text-danger"><i class="bi bi-box-arrow-right me-2"></i> Logout</a></li>
+                </ul>
+            </div>
+
+            <!-- EXPLICIT LOGOUT BUTTON (Visible on Desktop/Tablet) -->
+            <a href="${pageContext.request.contextPath}/pages/loginpage.jsp" class="btn-logout-header d-none d-md-flex" title="Logout">
+                <i class="bi bi-power"></i> <span>Logout</span>
             </a>
         </div>
     </div>
 </header>
 
+<!-- Main Content -->
+<main class="main-content">
+    <% if (roleId == ROLE_ADMIN) { %>
+    
+    <!-- Quick Actions Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <h6 class="fw-bold text-uppercase text-muted mb-3" style="font-size: 0.75rem; letter-spacing: 1px;">Quick Actions</h6>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="quick-action-card" onclick="window.location.href='<%=request.getContextPath()%>/SalesServlet'">
+                <div class="quick-icon"><i class="bi bi-cart-plus"></i></div>
+                <h6 class="fw-bold mb-0">New Sale</h6>
+                <small class="text-muted">Create POS Invoice</small>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="quick-action-card" onclick="window.location.href='<%=request.getContextPath()%>/pages/productCategory.jsp'">
+                <div class="quick-icon"><i class="bi bi-box-seam"></i></div>
+                <h6 class="fw-bold mb-0">Add Product</h6>
+                <small class="text-muted">Update Inventory</small>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="quick-action-card" onclick="window.location.href='<%=request.getContextPath()%>/PurchaseServlet'">
+                <div class="quick-icon"><i class="bi bi-bag-plus"></i></div>
+                <h6 class="fw-bold mb-0">Purchase</h6>
+                <small class="text-muted">Stock Entry</small>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="quick-action-card" onclick="window.location.href='<%=request.getContextPath()%>/PrintPurchaseReportServlet'">
+                <div class="quick-icon"><i class="bi bi-printer"></i></div>
+                <h6 class="fw-bold mb-0">Reports</h6>
+                <small class="text-muted">View Analytics</small>
+            </div>
+        </div>
+    </div>
 
+    <% } else { %>
+        <!-- Cashier View -->
+        <div class="text-center mt-5">
+            <div class="user-avatar-circle mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem;"><%= userInitials %></div>
+            <h3>Welcome, <%= username %></h3>
+            <p class="text-muted">Ready to process transactions.</p>
+            <a href="<%=request.getContextPath()%>/SalesServlet" class="btn btn-lg btn-info text-white mt-3 shadow px-5">Start New Sale <i class="bi bi-arrow-right"></i></a>
+        </div>
+    <% } %>
+</main>
 
 <footer class="app-footer">
     <div class="container-fluid d-flex flex-column flex-md-row justify-content-between align-items-center px-4 small">
         <div class="mb-1 mb-md-0 text-white">
-            &copy; <span id="year"></span> <strong><%= orgNamee %></strong> | System v44.1
+            &copy; <span id="year"></span> <strong><%= orgNamee %></strong> | System v44.1 (Trending)
         </div>
         <div class="text-center text-md-end">
             Design & Developed by 
@@ -383,56 +674,147 @@ String orgNamee = "SKV";
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    // === UI REFERENCES ===
     const sidebarToggle = document.getElementById('sidebarToggle');
     const mobileClose = document.getElementById('mobileClose');
     const mobileOverlay = document.getElementById('mobileOverlay');
     const body = document.body;
 
-    // Corrected Sidebar Action Logic
+    // === SIDEBAR TOGGLE LOGIC ===
     sidebarToggle.addEventListener('click', function(e) {
         e.preventDefault();
         if (window.innerWidth < 992) {
-            // Logic for Mobile: Slide sidebar in
             body.classList.toggle('mobile-open');
         } else {
-            // Logic for Desktop: Collapse sidebar to icons only
             body.classList.toggle('collapsed-sidebar');
             
-            // Auto-collapse open menus if sidebar is shrunk
-            const reportMenu = document.getElementById('reportMenu');
-            if (body.classList.contains('collapsed-sidebar')) {
-                const bsCollapse = bootstrap.Collapse.getInstance(reportMenu);
-                if (bsCollapse) bsCollapse.hide();
-            }
+            document.querySelectorAll('.submenu-container').forEach(menu => {
+                menu.classList.remove('show');
+            });
+            document.querySelectorAll('.sidebar-link.expanded').forEach(link => {
+                link.classList.remove('expanded');
+            });
         }
     });
 
-    // Close mobile sidebar when clicking "X" or the blurred overlay
     [mobileClose, mobileOverlay].forEach(el => {
         el.addEventListener('click', () => {
             body.classList.remove('mobile-open');
         });
     });
 
-    // Reset mobile state if window is resized to desktop width
     window.addEventListener('resize', () => {
         if (window.innerWidth >= 992) {
             body.classList.remove('mobile-open');
         }
     });
 
-    // UI Updates (Time & Username Greeting)
+    // === SUBMENU TOGGLE LOGIC ===
+    function toggleSubmenu(menuId, triggerElement) {
+        if(triggerElement.getAttribute('href') === '#') {
+            event.preventDefault();
+        }
+        const menu = document.getElementById(menuId);
+        menu.classList.toggle('show');
+        triggerElement.classList.toggle('expanded');
+    }
+
+    // === DARK MODE LOGIC ===
+    function toggleTheme() {
+        const html = document.documentElement;
+        const currentTheme = html.getAttribute('data-bs-theme');
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        
+        html.setAttribute('data-bs-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        
+        // Update Icon
+        const icon = document.getElementById('themeIcon');
+        if(newTheme === 'dark') {
+            icon.classList.remove('bi-moon-stars-fill');
+            icon.classList.add('bi-sun-fill');
+        } else {
+            icon.classList.remove('bi-sun-fill');
+            icon.classList.add('bi-moon-stars-fill');
+        }
+    }
+
+    // Initialize Theme
+    const savedTheme = localStorage.getItem('theme');
+    if(savedTheme) {
+        document.documentElement.setAttribute('data-bs-theme', savedTheme);
+        if(savedTheme === 'dark') {
+            const icon = document.getElementById('themeIcon');
+            if(icon) {
+                icon.classList.remove('bi-moon-stars-fill');
+                icon.classList.add('bi-sun-fill');
+            }
+        }
+    }
+
+    // === CORRECT TOAST NOTIFICATION LOGIC (Bootstrap 5 Native) ===
+    function showToast(message, type = 'success') {
+        const toastContainer = document.getElementById('toastPlacement');
+        
+        // Select Icon and Color based on type
+        let iconClass = 'bi-check-circle-fill';
+        let bgClass = 'bg-success';
+        if(type === 'danger') { iconClass = 'bi-exclamation-triangle-fill'; bgClass = 'bg-danger'; }
+        if(type === 'info') { iconClass = 'bi-info-circle-fill'; bgClass = 'bg-info'; }
+
+        // Create Toast HTML
+        const toastEl = document.createElement('div');
+        toastEl.className = `toast toast-custom align-items-center border-0 mb-2`;
+        toastEl.setAttribute('role', 'alert');
+        toastEl.setAttribute('aria-live', 'assertive');
+        toastEl.setAttribute('aria-atomic', 'true');
+        
+        toastEl.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-center">
+                    <i class="bi ${iconClass} fs-5 me-2"></i>
+                    <span class="fw-medium">${message}</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        `;
+
+        toastContainer.appendChild(toastEl);
+        
+        // Initialize and Show Bootstrap Toast
+        const bsToast = new bootstrap.Toast(toastEl, { delay: 3000 });
+        bsToast.show();
+
+        // Clean up DOM after hide
+        toastEl.addEventListener('hidden.bs.toast', () => {
+            toastEl.remove();
+        });
+    }
+
+    // === KEYBOARD SHORTCUTS ===
+    document.addEventListener('keydown', (e) => {
+        // Alt + D for Dark Mode
+        if (e.altKey && e.key === 'd') {
+            e.preventDefault();
+            toggleTheme();
+        }
+        // Alt + S for Sale
+        if (e.altKey && e.key === 's') {
+            e.preventDefault();
+            window.location.href = '<%=request.getContextPath()%>/SalesServlet';
+        }
+    });
+
+    // === CLOCK & GREETING ===
     function updateUI() {
         const now = new Date();
         const hrs = now.getHours();
         
-        // Update clock and year
         const liveClockEl = document.getElementById('liveClock');
         const yearEl = document.getElementById('year');
         if(liveClockEl) liveClockEl.innerText = now.toDateString() + " | " + now.toLocaleTimeString();
         if(yearEl) yearEl.innerText = now.getFullYear();
 
-        // Inject Username correctly
         const serverUser = "<%= username %>";
         let greetText = (hrs < 12) ? "Good Morning" : (hrs < 17) ? "Good Afternoon" : "Good Evening";
         
@@ -441,10 +823,34 @@ String orgNamee = "SKV";
             greetingEl.innerHTML = greetText + `, <span class="text-info">${serverUser}</span>`;
         }
     }
-    
-    // Refresh every second
+
+    function setActiveLink() {
+        const currentPath = window.location.pathname;
+        const links = document.querySelectorAll('.sidebar-link');
+        links.forEach(link => {
+            const href = link.getAttribute('href');
+            if(href && currentPath.includes(href)) {
+                link.classList.add('active');
+                const parentMenu = link.closest('.submenu-container');
+                if(parentMenu) {
+                    parentMenu.classList.add('show');
+                    const trigger = parentMenu.previousElementSibling;
+                    if(trigger) trigger.classList.add('expanded');
+                }
+            }
+        });
+    }
+
     setInterval(updateUI, 1000);
     updateUI();
+    setActiveLink();
+    
+    // Welcome Toast on Load
+    window.onload = function() {
+        setTimeout(() => {
+            showToast("Welcome back, " + "<%= username %>!");
+        }, 800);
+    };
 </script>
 
 </body>
