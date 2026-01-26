@@ -2,429 +2,481 @@ package org.vijaytech.oilshop;
 
 import java.awt.Color;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.io.OutputStream;
+import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
+import javax.servlet.http.*;
 
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.compiere.model.MProduct;
 import org.compiere.model.MProductCategory;
 import org.compiere.model.Query;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.syvasoft.tallyfrontcrusher.model.TF_MProduct;
-import org.syvasoft.tallyfrontcrusher.model.TF_MProductCategory;
 
 import com.lowagie.text.Document;
 import com.lowagie.text.Element;
 import com.lowagie.text.Font;
+import com.lowagie.text.FontFactory;
 import com.lowagie.text.PageSize;
 import com.lowagie.text.Paragraph;
 import com.lowagie.text.Phrase;
+import com.lowagie.text.Rectangle;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 
 public class ProfitAndLossReport extends HttpServlet {
 
-    /* =========================
-       GET → Render JSP
-       ========================= */
-    @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
+    private static final long serialVersionUID = 1L;
 
+    // -------------------------------------------------
+    // ================ DO GET =============
+    // -------------------------------------------------
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
+        
+        // ---- SINGLE INVOICE PDF CHECK ----
+        String docNo = req.getParameter("docNo");
+        if (docNo != null && !docNo.isEmpty()) {
+            try {
+                generateSingleInvoicePDF(req, resp, docNo);
+                return;
+            } catch (Exception e) {
+                e.printStackTrace();
+                sendErrorJSON(resp, "PDF Generation Failed", e);
+            }
+        }
+
+        // ---- SESSION CHECK ----
         HttpSession session = req.getSession(false);
         if (session == null || session.getAttribute("ctx") == null) {
-            resp.sendRedirect("login.jsp");
+            resp.sendRedirect("userlogin.jsp?error=session_expired");
             return;
         }
 
         Properties ctx = (Properties) session.getAttribute("ctx");
         Env.setCtx(ctx);
 
-        List<TF_MProduct> products = new Query(
-                ctx, TF_MProduct.Table_Name, "IsActive='Y'", null)
-                .setClient_ID()
-                .list();
+        // Set Context Defaults if missing
+        if (Env.getAD_Client_ID(ctx) == 0) Env.setContext(ctx, "#AD_Client_ID", 1000000);
+        if (Env.getAD_Org_ID(ctx) == 0) Env.setContext(ctx, "#AD_Org_ID", 1000000);
+        if (Env.getAD_User_ID(ctx) == 0) Env.setContext(ctx, "#AD_User_ID", 100);
+        if (Env.getContextAsInt(ctx, "#AD_Role_ID") == 0) Env.setContext(ctx, "#AD_Role_ID", 102);
 
-        List<TF_MProductCategory> cats = new Query(
-                ctx, TF_MProductCategory.Table_Name, "IsActive='Y'", null)
-                .setClient_ID()
-                .list();
+        try {
+            // Load Dropdown Data using STANDARD ADempiere Models
+            List<Map<String, Object>> categoryList = new ArrayList<>();
+            List<Map<String, Object>> productList = new ArrayList<>();
 
-        List<Map<String, Object>> categoryList = new ArrayList<>();
-        List<Map<String, Object>> productList = new ArrayList<>();
+            // Using MProductCategory (Standard)
+            List<MProductCategory> cats = new Query(ctx, MProductCategory.Table_Name, "IsActive='Y'", null)
+                    .setClient_ID()
+                    .list();
 
-        for (MProductCategory c : cats) {
-            Map<String, Object> m = new HashMap<>();
-            m.put("id", c.getM_Product_Category_ID());
-            m.put("name", c.getName());
-            categoryList.add(m);
+            for (MProductCategory c : cats) {
+                Map<String, Object> m = new HashMap<>();
+                m.put("id", c.get_ID());
+                m.put("name", c.getName());
+                categoryList.add(m);
+            }
+            
+            // Using MProduct (Standard)
+            List<MProduct> prods = new Query(ctx, MProduct.Table_Name, "IsActive='Y'", null)
+                    .setClient_ID()
+                    .list();
+            for (MProduct p : prods) {
+                Map<String, Object> m = new HashMap<>();
+                m.put("id", p.get_ID());
+                m.put("name", p.getName());
+                productList.add(m);
+            }
+
+            req.setAttribute("categoryList", categoryList);
+            req.setAttribute("productList", productList);
+
+            RequestDispatcher rd = req.getRequestDispatcher("/pages/profitandloss.jsp");
+            rd.forward(req, resp);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ServletException("Error loading Report", e);
         }
-
-        for (TF_MProduct p : products) {
-            Map<String, Object> m = new HashMap<>();
-            m.put("id", p.getM_Product_ID());
-            m.put("name", p.getName());
-            m.put("categoryId", p.getM_Product_Category_ID());
-            productList.add(m);
-        }
-
-        req.setAttribute("categoryList", categoryList);
-        req.setAttribute("productList", productList);
-
-        RequestDispatcher rd =
-                req.getRequestDispatcher("/pages/profitandloss.jsp");
-        rd.forward(req, resp);
     }
 
-    /* =========================
-       POST → Load Report
-       ========================= */
+    // -------------------------------------------------
+    // ================ DO POST (JSON DATA) =============
+    // -------------------------------------------------
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-
-        HttpSession session = req.getSession(false);
-        Properties ctx = (Properties) session.getAttribute("ctx");
-        Env.setCtx(ctx);
-        
-       
-
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
 
         StringBuilder sb = new StringBuilder();
-        try (BufferedReader br = req.getReader()) {
-            String line;
-            while ((line = br.readLine()) != null)
-                sb.append(line);
+        try (BufferedReader br = request.getReader()) {
+            String line; 
+            while ((line = br.readLine()) != null) { 
+                sb.append(line); 
+            }
+        }
+
+        if(sb.length() == 0) {
+            sendErrorJSON(response, "Invalid Request", new Exception("No JSON data received"));
+            return;
         }
 
         JSONObject json = new JSONObject(sb.toString());
 
-        String from = json.getString("from");
-        String to   = json.getString("to");
+        String from = json.optString("from");
+        String to = json.optString("to");
+        String category = json.optString("category");
+        String product = json.optString("product");
 
-        /* =========================
-           OPENING STOCK (PRODUCT)
-           ========================= */
-        Map<Integer, Double> openingMap = new HashMap<>();
-
-        String openingSql =
-            "SELECT m.M_Product_ID, SUM(m.MovementQty) " +
-            "FROM M_Transaction m " +
-            "WHERE m.MovementDate < ?::DATE " +
-            "AND m.AD_Client_ID = ? " +
-            "GROUP BY m.M_Product_ID";
-
-        List<List<Object>> openRows =
-            DB.getSQLArrayObjectsEx(
-                null,
-                openingSql,
-                new Object[]{ from, Env.getAD_Client_ID(ctx) }
-            );
-
-        for (List<Object> r : openRows) {
-            openingMap.put(
-                ((Number) r.get(0)).intValue(),
-                ((Number) r.get(1)).doubleValue()
-            );
+        // Validate Dates
+        if(from == null || from.isEmpty() || to == null || to.isEmpty()) {
+            sendErrorJSON(response, "Invalid Parameters", new Exception("Date range is required"));
+            return;
         }
 
-        /* =========================
-           SALES & PURCHASE (INVOICE)
-           ========================= */
-        String sql =
-            "WITH sales AS ( " +
-            " SELECT il.M_Product_ID, " +
-            "        p.Value AS code, p.Name AS name, " +
-            "        SUM(il.QtyInvoiced) qty, SUM(il.LineNetAmt) amt " +
-            " FROM C_Invoice i " +
-            " JOIN C_InvoiceLine il ON i.C_Invoice_ID=il.C_Invoice_ID " +
-            " JOIN M_Product p ON p.M_Product_ID=il.M_Product_ID " +
-            " WHERE i.IsSOTrx='Y' AND i.DocStatus IN ('CO','CL') " +
-            " AND i.DateAcct BETWEEN ?::DATE AND ?::DATE " +
-            " GROUP BY il.M_Product_ID, p.Value, p.Name ), " +
+        try {
+            // 1. Fetch Sales Data
+            List<Map<String, Object>> salesList = fetchTransactionData(true, from, to, category, product);
+            
+            // 2. Fetch Purchase Data
+            List<Map<String, Object>> purchaseList = fetchTransactionData(false, from, to, category, product);
 
-            "purchase AS ( " +
-            " SELECT il.M_Product_ID, " +
-            "        p.Value AS code, p.Name AS name, " +
-            "        SUM(il.QtyInvoiced) qty, SUM(il.LineNetAmt) amt " +
-            " FROM C_Invoice i " +
-            " JOIN C_InvoiceLine il ON i.C_Invoice_ID=il.C_Invoice_ID " +
-            " JOIN M_Product p ON p.M_Product_ID=il.M_Product_ID " +
-            " WHERE i.IsSOTrx='N' AND i.DocStatus IN ('CO','CL') " +
-            " AND i.DateAcct BETWEEN ?::DATE AND ?::DATE " +
-            " GROUP BY il.M_Product_ID, p.Value, p.Name ) " +
+            // 3. Merge Data
+            Map<String, Map<String, Object>> mergedMap = new LinkedHashMap<>();
+            
+            BigDecimal grandSales = BigDecimal.ZERO;
+            BigDecimal grandPurchase = BigDecimal.ZERO;
+            BigDecimal grandProfit = BigDecimal.ZERO;
+            BigDecimal grandQty = BigDecimal.ZERO;
 
-            "SELECT COALESCE(s.M_Product_ID,p.M_Product_ID) pid, " +
-            "       COALESCE(s.code,p.code), " +
-            "       COALESCE(s.name,p.name), " +
-            "       COALESCE(s.qty,0), COALESCE(s.amt,0), " +
-            "       COALESCE(p.qty,0), COALESCE(p.amt,0) " +
-            "FROM sales s FULL JOIN purchase p " +
-            "ON s.M_Product_ID=p.M_Product_ID";
+            // Process Sales
+            for (Map<String, Object> row : salesList) {
+                String code = (String) row.get("Code");
+                Map<String, Object> m = new HashMap<>();
+                m.put("productCode", code);
+                m.put("productName", row.get("Product"));
+                m.put("salesQty", row.get("Qty"));
+                m.put("salesAmount", row.get("Amount"));
+                m.put("purchaseQty", BigDecimal.ZERO);
+                m.put("purchaseAmount", BigDecimal.ZERO);
+                m.put("balanceQty", row.get("Qty"));
+                m.put("profit", row.get("Amount"));
+                mergedMap.put(code, m);
+            }
 
-        List<List<Object>> rows =
-            DB.getSQLArrayObjectsEx(
-                null,
-                sql,
-                new Object[]{ from, to, from, to }
-            );
+            // Process Purchases and Merge
+            for (Map<String, Object> row : purchaseList) {
+                String code = (String) row.get("Code");
+                Map<String, Object> m = mergedMap.get(code);
+                
+                BigDecimal purchQty = (BigDecimal) row.get("Qty");
+                BigDecimal purchAmt = (BigDecimal) row.get("Amount");
+                String prodName = (String) row.get("Product");
 
-        JSONArray data = new JSONArray();
-        double totalSales = 0, totalPurchase = 0;
+                if (m == null) {
+                    m = new HashMap<>();
+                    m.put("productCode", code);
+                    m.put("productName", prodName);
+                    m.put("salesQty", BigDecimal.ZERO);
+                    m.put("salesAmount", BigDecimal.ZERO);
+                    m.put("purchaseQty", purchQty);
+                    m.put("purchaseAmount", purchAmt);
+                    m.put("balanceQty", purchQty);
+                    m.put("profit", purchAmt.negate());
+                    mergedMap.put(code, m);
+                } else {
+                    m.put("productName", prodName);
+                    m.put("purchaseQty", purchQty);
+                    m.put("purchaseAmount", purchAmt);
+                    
+                    BigDecimal sAmt = (BigDecimal) m.get("salesAmount");
+                    BigDecimal pAmt = (BigDecimal) m.get("purchaseAmount");
+                    BigDecimal sQty = (BigDecimal) m.get("salesQty");
+                    BigDecimal pQty = (BigDecimal) m.get("purchaseQty");
 
-        for (List<Object> r : rows) {
+                    BigDecimal profit = sAmt.subtract(pAmt);
+                    BigDecimal balQty = sQty.subtract(pQty);
 
-            int productId = ((Number) r.get(0)).intValue();
-            double salesQty = ((Number) r.get(3)).doubleValue();
-            double salesAmt = ((Number) r.get(4)).doubleValue();
-            double purQty   = ((Number) r.get(5)).doubleValue();
-            double purAmt   = ((Number) r.get(6)).doubleValue();
+                    m.put("profit", profit);
+                    m.put("balanceQty", balQty);
+                }
+            }
 
-            double opening = openingMap.getOrDefault(productId, 0.0);
-            double balance = opening + purQty - salesQty;
+            // Build Final Response
+            JSONArray resultRows = new JSONArray();
+            for (Map<String, Object> entry : mergedMap.values()) {
+                JSONObject j = new JSONObject(entry);
+                
+                BigDecimal sAmt = num((BigDecimal) entry.get("salesAmount"));
+                BigDecimal pAmt = num((BigDecimal) entry.get("purchaseAmount"));
+                BigDecimal profit = sAmt.subtract(pAmt);
+                BigDecimal qty = (BigDecimal) entry.get("balanceQty");
 
-            JSONObject o = new JSONObject();
-            o.put("productId", productId);
-            o.put("productCode", r.get(1));
-            o.put("productName", r.get(2));
-            o.put("openingQty", opening);
-            o.put("purchaseQty", purQty);
-            o.put("salesQty", salesQty);
-            o.put("balanceQty", balance);
-            o.put("negativeBalance", balance < 0);
-            o.put("purchaseAmount", purAmt);
-            o.put("salesAmount", salesAmt);
-            o.put("profit", salesAmt - purAmt);
+                grandSales = grandSales.add(sAmt);
+                grandPurchase = grandPurchase.add(pAmt);
+                grandProfit = grandProfit.add(profit);
+                grandQty = grandQty.add(qty);
 
-            totalSales += salesAmt;
-            totalPurchase += purAmt;
+                resultRows.put(j);
+            }
 
-            data.put(o);
+            // Create Totals Object
+            JSONObject totals = new JSONObject();
+            totals.put("totalSalesAmount", grandSales);
+            totals.put("totalPurchaseAmount", grandPurchase);
+            totals.put("totalProfit", grandProfit);
+            totals.put("balanceQty", grandQty);
+
+            // Create Main Response
+            JSONObject responseObj = new JSONObject();
+            responseObj.put("rows", resultRows);
+            responseObj.put("totals", totals);
+
+            response.setContentType("application/json");
+            response.getWriter().write(responseObj.toString());
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            sendErrorJSON(response, "Server Error", ex);
+        }
+    }
+
+    // Helper to fetch Sales or Purchase
+    private List<Map<String, Object>> fetchTransactionData(boolean isSOTrx, String from, String to, String category, String product) {
+        List<Map<String, Object>> list = new ArrayList<>();
+        StringBuilder sql = new StringBuilder();
+
+        sql.append("SELECT p.Value AS Code, p.Name AS Product, SUM(il.QtyInvoiced) AS Qty, SUM(il.LineNetAmt) AS Amount ");
+        sql.append("FROM C_Invoice i ");
+        sql.append("JOIN C_InvoiceLine il ON i.C_Invoice_ID = il.C_Invoice_ID ");
+        sql.append("LEFT JOIN M_Product p ON il.M_Product_ID = p.M_Product_ID ");
+        sql.append("WHERE i.IsSOTrx=? AND i.DocStatus IN ('CO','CL') ");
+        sql.append("AND i.DateInvoiced BETWEEN ? AND ? ");
+
+        List<Object> params = new ArrayList<>();
+        params.add(isSOTrx ? "Y" : "N");
+        params.add(toTs(from));
+        params.add(toTsEnd(to));
+
+        if (category != null && !category.isEmpty()) {
+            sql.append("AND p.M_Product_Category_ID=? ");
+            params.add(Integer.parseInt(category));
         }
 
-        JSONObject out = new JSONObject();
-        out.put("rows", data);
+        if (product != null && !product.isEmpty()) {
+            sql.append("AND p.M_Product_ID=? ");
+            params.add(Integer.parseInt(product));
+        }
 
-        JSONObject totals = new JSONObject();
-        totals.put("totalSalesAmount", totalSales);
-        totals.put("totalPurchaseAmount", totalPurchase);
-        totals.put("totalProfit", totalSales - totalPurchase);
-        out.put("totals", totals);
+        sql.append("GROUP BY p.Value, p.Name ");
+        sql.append("ORDER BY p.Name");
+
+        try (Connection conn = DB.getConnectionRW();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            
+            int idx = 1;
+            for(Object p : params) {
+                if(p instanceof Timestamp) {
+                    ps.setTimestamp(idx++, (Timestamp)p);
+                } else {
+                    ps.setObject(idx++, p);
+                }
+            }
+
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Map<String, Object> row = new HashMap<>();
+                row.put("Code", rs.getString("Code"));
+                row.put("Product", rs.getString("Product"));
+                row.put("Qty", rs.getBigDecimal("Qty"));
+                row.put("Amount", rs.getBigDecimal("Amount"));
+                list.add(row);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    // ==================================================
+    // ============ SINGLE INVOICE PDF (iText/Lowagie) ========
+    // ==================================================
+    private void generateSingleInvoicePDF(HttpServletRequest req, HttpServletResponse resp, String docNo) throws Exception {
+        HttpSession session = req.getSession(false);
+        if (session == null || session.getAttribute("ctx") == null) {
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Session Expired");
+            return;
+        }
+        Properties ctx = (Properties) session.getAttribute("ctx");
+        Env.setCtx(ctx);
+
+        StringBuilder sqlHeader = new StringBuilder();
+        StringBuilder sqlLines = new StringBuilder();
+
+        sqlHeader.append("SELECT i.DocumentNo, i.DateInvoiced, i.GrandTotal, bp.Name AS BPartner, bp.Name2, bp.City, bp.Postal, ");
+        sqlHeader.append("org.Name AS OrgName ");
+        sqlHeader.append("FROM C_Invoice i ");
+        sqlHeader.append("JOIN C_BPartner bp ON i.C_BPartner_ID = bp.C_BPartner_ID ");
+        sqlHeader.append("JOIN AD_Org org ON i.AD_Org_ID = org.AD_Org_ID ");
+        sqlHeader.append("WHERE i.DocumentNo = ?");
+
+        sqlLines.append("SELECT p.Name, il.QtyInvoiced, il.PriceActual, il.LineNetAmt ");
+        sqlLines.append("FROM C_InvoiceLine il ");
+        sqlLines.append("LEFT JOIN M_Product p ON il.M_Product_ID = p.M_Product_ID ");
+        sqlLines.append("WHERE il.C_Invoice_ID = (SELECT C_Invoice_ID FROM C_Invoice WHERE DocumentNo = ?)");
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        Document document = new Document(PageSize.A4);
         
-        String exportType = req.getParameter("export");
-        if (exportType == null) exportType = "json";
+        PdfWriter writer = PdfWriter.getInstance(document, baos);
+        document.open();
 
-        if ("excel".equalsIgnoreCase(exportType)) {
-            exportExcel(resp, data);
-            return;
+        Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12);
+        Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 10);
+        Font tableHeaderFont = FontFactory.getFont(FontFactory.HELVETICA, 9, Font.BOLD);
+
+        // Organization Header
+        PdfPTable headerTable = new PdfPTable(1);
+        headerTable.setWidthPercentage(100);
+        PdfPCell orgCell = new PdfPCell(new Phrase("Vijay Tech Orbit", headerFont));
+        
+        orgCell.setBorder(Rectangle.NO_BORDER);
+        orgCell.setPadding(10);
+        orgCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        headerTable.addCell(orgCell);
+        document.add(headerTable);
+
+        String invoiceOrg = "Not Found";
+        BigDecimal grandTotal = BigDecimal.ZERO;
+        String dateStr = "";
+        String partnerName = "";
+
+        try (Connection conn = DB.getConnectionRW()) {
+            // Header Info
+            try (PreparedStatement psH = conn.prepareStatement(sqlHeader.toString())) {
+                psH.setString(1, docNo);
+                try (ResultSet rs = psH.executeQuery()) {
+                    if (rs.next()) {
+                        invoiceOrg = rs.getString("OrgName");
+                        grandTotal = rs.getBigDecimal("GrandTotal");
+                        partnerName = rs.getString("BPartner");
+                        Timestamp d = rs.getTimestamp("DateInvoiced");
+                        dateStr = new SimpleDateFormat("dd-MMM-yyyy").format(d);
+                    } else {
+                        throw new ServletException("Document Not Found");
+                    }
+                }
+            }
+
+            Paragraph info = new Paragraph();
+            info.add(new Phrase("Invoice No: ", headerFont));
+            info.add(new Phrase(docNo + "\n", normalFont));
+            info.add(new Phrase("Date: ", headerFont));
+            info.add(new Phrase(dateStr + "\n", normalFont));
+            info.add(new Phrase("Customer: ", headerFont));
+            info.add(new Phrase(partnerName + "\n\n", normalFont));
+            document.add(info);
+
+            // Lines Table
+            PdfPTable table = new PdfPTable(4);
+            table.setWidthPercentage(100);
+            table.setWidths(new float[]{3f, 1f, 1f, 1f});
+            
+            table.addCell(createCell("Product", tableHeaderFont));
+            table.addCell(createCell("Qty", tableHeaderFont));
+            table.addCell(createCell("Price", tableHeaderFont));
+            table.addCell(createCell("Total", tableHeaderFont));
+
+            try (PreparedStatement psL = conn.prepareStatement(sqlLines.toString())) {
+                psL.setString(1, docNo);
+                try (ResultSet rs = psL.executeQuery()) {
+                    while (rs.next()) {
+                        table.addCell(createCell(rs.getString("Name"), normalFont));
+                        table.addCell(createCell(rs.getBigDecimal("QtyInvoiced").toString(), normalFont));
+                        table.addCell(createCell(rs.getBigDecimal("PriceActual").toString(), normalFont));
+                        table.addCell(createCell(rs.getBigDecimal("LineNetAmt").toString(), normalFont));
+                    }
+                }
+            }
+            
+            if ("Not Found".equals(invoiceOrg)) {
+                throw new ServletException("Invoice Not Found");
+            }
+
+            document.add(table);
+
+            // Total
+            Paragraph totalPara = new Paragraph("Grand Total: " + grandTotal, headerFont);
+            totalPara.setAlignment(Element.ALIGN_RIGHT);
+            totalPara.setSpacingBefore(15);
+            document.add(totalPara);
+
+            document.close();
+
+            resp.setContentType("application/pdf");
+            resp.setHeader("Content-Disposition", "attachment; filename=Invoice_" + docNo + ".pdf");
+            resp.setContentLength(baos.size());
+            OutputStream os = resp.getOutputStream();
+            baos.writeTo(os);
+            os.flush();
+            os.close();
+
+        } catch (Exception e) {
+            throw new ServletException(e);
         }
-
-        if ("csv".equalsIgnoreCase(exportType)) {
-            exportCSV(resp, data);
-            return;
-        }
-
-        if ("pdf".equalsIgnoreCase(exportType)) {
-            exportPDF(resp, data, totals);
-            return;
-        }
-
-        resp.setContentType("application/json");
-        resp.getWriter().write(out.toString());
-
     }
 
-
-
-	    /* ================= CSV ================= */
-	    private void exportCSV(HttpServletResponse resp, JSONArray arr) throws IOException {
-
-	        resp.setContentType("text/csv");
-	        resp.setHeader("Content-Disposition", "attachment; filename=stock_report.csv");
-
-	        PrintWriter out = resp.getWriter();
-	        out.println("Product,Opening,Purchase,Sales,Balance,Negative");
-
-	        for (int i = 0; i < arr.length(); i++) {
-	            JSONObject o = arr.getJSONObject(i);
-	            out.println(
-	                o.getString("productName") + "," +
-	                o.getDouble("openingQty") + "," +
-	                o.getDouble("purchaseQty") + "," +
-	                o.getDouble("salesQty") + "," +
-	                o.getDouble("balanceQty") + "," +
-	                o.getBoolean("negativeBalance")
-	            );
-	        }
-	        out.flush();
-	    }
-
-	    /* ================= EXCEL ================= */
-	    private void exportExcel(HttpServletResponse resp, JSONArray arr) throws IOException {
-
-	        XSSFWorkbook wb = new XSSFWorkbook();
-	        XSSFSheet sh = wb.createSheet("P&L Report");
-
-	        int rowNum = 0;
-
-	        // Header
-	        Row h = sh.createRow(rowNum++);
-	        String[] heads = {
-	            "Product Code",
-	            "Product Name",
-	            "Opening Qty",
-	            "Purchase Qty",
-	            "Sales Qty",
-	            "Balance Qty",
-	            "Purchase Amount",
-	            "Sales Amount",
-	            "Profit",
-	            "Negative Balance"
-	        };
-
-	        for (int i = 0; i < heads.length; i++) {
-	            h.createCell(i).setCellValue(heads[i]);
-	        }
-
-	        // Data rows
-	        for (int i = 0; i < arr.length(); i++) {
-	            JSONObject o = arr.getJSONObject(i);
-	            Row r = sh.createRow(rowNum++);
-
-	            r.createCell(0).setCellValue(o.optString("productCode"));
-	            r.createCell(1).setCellValue(o.optString("productName"));
-	            r.createCell(2).setCellValue(o.optDouble("openingQty"));
-	            r.createCell(3).setCellValue(o.optDouble("purchaseQty"));
-	            r.createCell(4).setCellValue(o.optDouble("salesQty"));
-	            r.createCell(5).setCellValue(o.optDouble("balanceQty"));
-	            r.createCell(6).setCellValue(o.optDouble("purchaseAmount"));
-	            r.createCell(7).setCellValue(o.optDouble("salesAmount"));
-	            r.createCell(8).setCellValue(o.optDouble("profit"));
-	            r.createCell(9).setCellValue(o.optBoolean("negativeBalance") ? "YES" : "NO");
-	        }
-
-	        // Auto-size columns
-	        for (int i = 0; i < heads.length; i++) {
-	            sh.autoSizeColumn(i);
-	        }
-
-	        resp.setContentType(
-	            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-	        resp.setHeader(
-	            "Content-Disposition",
-	            "attachment; filename=P&L_Report.xlsx");
-
-	        wb.write(resp.getOutputStream());
-	        wb.close();
-	    }
-
-
-	    
-private void exportPDF(HttpServletResponse resp, JSONArray arr, JSONObject totals)
-        throws IOException {
-
-    resp.setContentType("application/pdf");
-    resp.setHeader(
-        "Content-Disposition",
-        "attachment; filename=P&L_Report.pdf"
-    );
-
-    Document document = new Document(PageSize.A4.rotate(), 20, 20, 20, 20);
-    PdfWriter.getInstance(document, resp.getOutputStream());
-    document.open();
-
-    /* ================= TITLE ================= */
-    Font titleFont = new Font(Font.HELVETICA, 14, Font.BOLD);
-    Paragraph title = new Paragraph(
-        "Purchase & Sales Profit and Loss Report",
-        titleFont
-    );
-    title.setAlignment(Element.ALIGN_CENTER);
-    document.add(title);
-    document.add(new Paragraph(" "));
-
-    /* ================= TABLE ================= */
-    PdfPTable table = new PdfPTable(9);
-    table.setWidthPercentage(100);
-    table.setWidths(new float[]{
-        2f, 4f, 2f, 2f, 2f, 2f, 2f, 2f, 2f
-    });
-
-    Font headerFont = new Font(Font.HELVETICA, 9, Font.BOLD);
-    Font bodyFont   = new Font(Font.HELVETICA, 9);
-    Font redFont    = new Font(Font.HELVETICA, 9, Font.BOLD, Color.RED);
-
-    /* ---------- HEADER ---------- */
-    String[] headers = {
-        "Product Code", "Product Name",
-        "Opening Qty", "Purchase Qty", "Sales Qty",
-        "Balance Qty", "Purchase Amt", "Sales Amt", "Profit"
-    };
-
-    for (String h : headers) {
-        PdfPCell c = new PdfPCell(new Phrase(h, headerFont));
-        c.setHorizontalAlignment(Element.ALIGN_CENTER);
-        c.setBackgroundColor(new Color(230,230,230));
-        c.setPadding(5);
-        table.addCell(c);
+    private PdfPCell createCell(String text, Font font) {
+        PdfPCell cell = new PdfPCell(new Phrase(text, font));
+        cell.setBorderColor(Color.LIGHT_GRAY);
+        cell.setPadding(5);
+        return cell;
     }
 
-    /* ---------- DATA ROWS ---------- */
-    for (int i = 0; i < arr.length(); i++) {
-        JSONObject o = arr.getJSONObject(i);
-
-        boolean negative = o.optBoolean("negativeBalance");
-
-        Font rowFont = negative ? redFont : bodyFont;
-
-        table.addCell(new Phrase(o.optString("productCode"), rowFont));
-        table.addCell(new Phrase(o.optString("productName"), rowFont));
-        table.addCell(new Phrase(o.optString("openingQty"), rowFont));
-        table.addCell(new Phrase(o.optString("purchaseQty"), rowFont));
-        table.addCell(new Phrase(o.optString("salesQty"), rowFont));
-        table.addCell(new Phrase(o.optString("balanceQty"), rowFont));
-        table.addCell(new Phrase(o.optString("purchaseAmount"), rowFont));
-        table.addCell(new Phrase(o.optString("salesAmount"), rowFont));
-        table.addCell(new Phrase(o.optString("profit"), rowFont));
+    private void sendErrorJSON(HttpServletResponse response, String title, Exception e) throws IOException {
+        JSONObject err = new JSONObject();
+        err.put("error", title);
+        try {
+            String msg = e.getMessage();
+            if (msg == null) msg = "Internal Server Error";
+            err.put("message", msg);
+        } catch (Exception ex) {
+            err.put("message", ex.getMessage());
+        }
+        response.setContentType("application/json");
+        response.getWriter().write(err.toString());
     }
 
-    /* ---------- TOTAL ROW ---------- */
-    PdfPCell totalCell = new PdfPCell(
-        new Phrase("GRAND TOTAL", headerFont)
-    );
-    totalCell.setColspan(6);
-    totalCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
-    totalCell.setPadding(6);
-    table.addCell(totalCell);
+    private BigDecimal num(BigDecimal bd) {
+        return bd == null ? BigDecimal.ZERO : bd;
+    }
 
-    table.addCell(new Phrase(
-        totals.optString("totalPurchaseAmount"), headerFont));
-    table.addCell(new Phrase(
-        totals.optString("totalSalesAmount"), headerFont));
-    table.addCell(new Phrase(
-        totals.optString("totalProfit"), headerFont));
+    private Timestamp toTs(String dateStr) {
+        try {
+            return Timestamp.valueOf(dateStr + " 00:00:00");
+        } catch (Exception e) {
+            return null;
+        }
+    }
 
-    document.add(table);
-    document.close();
+    private Timestamp toTsEnd(String dateStr) {
+        try {
+            return Timestamp.valueOf(dateStr + " 23:59:59");
+        } catch (Exception e) {
+            return null;
+        }
+    }
 }
-
-}
-
-

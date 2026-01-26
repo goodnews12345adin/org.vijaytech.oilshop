@@ -286,38 +286,48 @@ public class CashBookReport extends HttpServlet{
 	    
 	    private void createPDF(List<Map<String,Object>> rows, OutputStream out) throws Exception {
 
-	        Document document = new Document(PageSize.A4.rotate(), 20, 20, 70, 45);
+	        Document document = new Document(PageSize.A4.rotate(), 20, 20, 80, 50);
+
 	        PdfWriter writer = PdfWriter.getInstance(document, out);
 	        writer.setPageEvent(new PageNumberFooter());
+
 	        document.open();
 
-	        // ===============================
-	        // Fonts
-	        // ===============================
-	        Font companyFont = new Font(Font.HELVETICA, 15, Font.BOLD);
-	        Font titleFont   = new Font(Font.HELVETICA, 12, Font.BOLD);
+	        /* ===============================
+	           ✅ Fonts
+	        =============================== */
+	        Font companyFont = new Font(Font.HELVETICA, 16, Font.BOLD);
+	        Font gstFont     = new Font(Font.HELVETICA, 10, Font.BOLD);
+	        Font titleFont   = new Font(Font.HELVETICA, 13, Font.BOLD);
+
 	        Font headerFont  = new Font(Font.HELVETICA, 9, Font.BOLD);
 	        Font bodyFont    = new Font(Font.HELVETICA, 9);
 	        Font totalFont   = new Font(Font.HELVETICA, 9, Font.BOLD);
 
-	        // ===============================
-	        // LOGO (CENTERED)
-	        // ===============================
+	        /* ===============================
+	           ✅ LOGO (Optional)
+	        =============================== */
 	        try {
 	            Image logo = Image.getInstance("/opt/idempiere/logo/company_logo.png");
-	            logo.scaleToFit(70, 70);
+	            logo.scaleToFit(60, 60);
 	            logo.setAlignment(Image.ALIGN_CENTER);
 	            document.add(logo);
 	        } catch (Exception e) {
-	            // logo optional
+	            // Logo optional
 	        }
 
-	        // ===============================
-	        // CENTERED HEADER TEXT
-	        // ===============================
-	        Paragraph company = new Paragraph("HAPPY LADY FASHIONS", companyFont);
+	        /* ===============================
+	           ✅ COMPANY HEADER
+	        =============================== */
+
+	        Paragraph company = new Paragraph("SKV OIL STORE", companyFont);
 	        company.setAlignment(Element.ALIGN_CENTER);
 	        document.add(company);
+
+	        Paragraph gst = new Paragraph("GSTIN : 33ABCDE1234F1Z5", gstFont);
+	        gst.setAlignment(Element.ALIGN_CENTER);
+	        gst.setSpacingBefore(3);
+	        document.add(gst);
 
 	        Paragraph address = new Paragraph(
 	            "No.12, Main Road, Chennai – 600001",
@@ -328,17 +338,27 @@ public class CashBookReport extends HttpServlet{
 
 	        Paragraph report = new Paragraph("CASH BOOK REPORT", titleFont);
 	        report.setAlignment(Element.ALIGN_CENTER);
-	        report.setSpacingBefore(6);
-	        report.setSpacingAfter(10);
+	        report.setSpacingBefore(8);
+	        report.setSpacingAfter(12);
 	        document.add(report);
 
-	        // ===============================
-	        // DATA TABLE
-	        // ===============================
+	        /* ✅ Line Separator */
+	        document.add(new Paragraph("------------------------------------------------------------"));
+
+	        document.add(Chunk.NEWLINE);
+
+	        /* ===============================
+	           ✅ TABLE STRUCTURE
+	        =============================== */
 	        PdfPTable table = new PdfPTable(8);
 	        table.setWidthPercentage(100);
-	        table.setWidths(new float[]{10, 14, 18, 18, 24, 10, 10, 12});
+	        table.setSpacingBefore(8);
 
+	        table.setWidths(new float[]{
+	            12, 16, 18, 18, 26, 10, 10, 12
+	        });
+
+	        /* ✅ Table Header */
 	        addHeaderCell(table, "Date", headerFont);
 	        addHeaderCell(table, "Document No", headerFont);
 	        addHeaderCell(table, "BP Name", headerFont);
@@ -348,6 +368,9 @@ public class CashBookReport extends HttpServlet{
 	        addHeaderCell(table, "Payment", headerFont);
 	        addHeaderCell(table, "Balance", headerFont);
 
+	        /* ===============================
+	           ✅ TOTALS CALCULATION
+	        =============================== */
 	        double totalReceipt = 0;
 	        double totalPayment = 0;
 	        double closingBalance = 0;
@@ -369,26 +392,39 @@ public class CashBookReport extends HttpServlet{
 
 	            table.addCell(amountCell(receipt, bodyFont));
 	            table.addCell(amountCell(payment, bodyFont));
-	            table.addCell(amountCell(closingBalance, bodyFont));
+
+	            // ✅ Balance cell highlight if negative
+	            PdfPCell balCell = amountCell(closingBalance, bodyFont);
+	            if (closingBalance < 0) {
+	                balCell.setPhrase(new Phrase(String.format("%.2f", closingBalance),
+	                        new Font(Font.HELVETICA, 9, Font.BOLD, Color.RED)));
+	            }
+	            table.addCell(balCell);
 	        }
 
-	        // ===============================
-	        // TOTAL FOOTER ROW
-	        // ===============================
-	        PdfPCell totalLabel = new PdfPCell(new Phrase("TOTAL", totalFont));
+	        /* ===============================
+	           ✅ TOTAL FOOTER ROW
+	        =============================== */
+	        PdfPCell totalLabel =
+	                new PdfPCell(new Phrase("GRAND TOTAL", totalFont));
+
 	        totalLabel.setColspan(5);
 	        totalLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
 	        totalLabel.setBackgroundColor(new Color(230,230,230));
-	        totalLabel.setPadding(6);
+	        totalLabel.setPadding(7);
+
 	        table.addCell(totalLabel);
 
 	        table.addCell(amountCell(totalReceipt, totalFont));
 	        table.addCell(amountCell(totalPayment, totalFont));
 	        table.addCell(amountCell(closingBalance, totalFont));
 
+	        /* ✅ Add Table to Document */
 	        document.add(table);
+
 	        document.close();
 	    }
+
 
 
 	    class PageNumberFooter extends PdfPageEventHelper {
