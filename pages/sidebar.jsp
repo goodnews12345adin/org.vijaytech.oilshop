@@ -848,8 +848,8 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
     // Welcome Toast on Load
     window.onload = function() {
         setTimeout(() => {
-            showToast("Welcome back, " + "<%= username %>!");
-        }, 800);
+<%--             showToast("Welcome back, " + "<%= username %>!");
+ --%>        }, 800);
     };
 </script>
 

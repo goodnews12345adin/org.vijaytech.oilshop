@@ -20,6 +20,7 @@ import javax.servlet.http.HttpSession;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MBPartnerLocation;
 import org.compiere.model.MOrder;
+import org.compiere.model.MWarehouse;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.json.JSONArray;
@@ -83,16 +84,39 @@ public class SalesSaveServlet extends HttpServlet {
                 Env.setContext(ctx, "#AD_Org_ID", 1000000);
             if (Env.getAD_User_ID(ctx) == 0)
                 Env.setContext(ctx, "#AD_User_ID", 100);
-            if (Env.getContextAsInt(ctx, "#M_Warehouse_ID") == 0)
-                Env.setContext(ctx, "#M_Warehouse_ID", 1000113);
-            
-            // Ensure ctx is not null for subsequent calls
-            if (ctx == null) ctx = Env.getCtx();
 
             int adClientId = Env.getAD_Client_ID(ctx);
             int adOrgId = Env.getAD_Org_ID(ctx);
 
-            // 4. Customer Details (Phone NOT Mandatory)
+            // 4. FIX: Validate Warehouse ID
+            // The log shows "NO Data found for M_Warehouse_ID=1000113".
+            // We check if the hardcoded ID exists, if not, we find a valid one.
+            int warehouseId = 1000113;
+            MWarehouse wh = MWarehouse.get(ctx, warehouseId);
+            
+            if (wh == null || wh.get_ID() == 0) {
+                // Try to find a valid warehouse for this Client/Org
+                int validWhId = DB.getSQLValue(null, 
+                    "SELECT M_Warehouse_ID FROM M_Warehouse WHERE AD_Client_ID=? AND AD_Org_ID=? AND IsActive='Y'", 
+                    adClientId, adOrgId);
+                
+                if (validWhId > 0) {
+                    warehouseId = validWhId;
+                    System.out.println("Corrected warehouse ID to: " + warehouseId);
+                } else {
+                    // If still no warehouse, try getting any warehouse for the client
+                    validWhId = DB.getSQLValue(null, "SELECT M_Warehouse_ID FROM M_Warehouse WHERE AD_Client_ID=? AND IsActive='Y'", adClientId);
+                    if (validWhId > 0) {
+                        warehouseId = validWhId;
+                        System.out.println("Corrected warehouse ID to: " + warehouseId);
+                    } else {
+                        throw new AdempiereException("No valid Warehouse found for Client " + adClientId);
+                    }
+                }
+            }
+            Env.setContext(ctx, "#M_Warehouse_ID", warehouseId);
+
+            // 5. Customer Details
             JSONObject customer = salesData.getJSONObject("customer");
             String name = customer.optString("name", "Walk-in").trim();
             String address = customer.optString("address", "").trim();
@@ -100,11 +124,10 @@ public class SalesSaveServlet extends HttpServlet {
 
             // Fix: Defaults for null/empty values
             if (address == null || address.isBlank()) address = "NA";
-            // Phone is now optional. If empty, BP name/phone logic needs handling.
             
             System.out.println("Customer: " + name + " | Phone: " + phone + " (Optional)");
 
-            // 5. Discount Parsing
+            // 6. Discount Parsing
             BigDecimal discount = BigDecimal.ZERO;
             try {
                 String dStr = salesData.optString("discount", "0").trim();
@@ -115,7 +138,7 @@ public class SalesSaveServlet extends HttpServlet {
                 discount = BigDecimal.ZERO;
             }
 
-            // 6. Business Partner (BP) Lookup Logic
+            // 7. Business Partner (BP) Logic
             TF_MBPartner bp;
             int existingBP_ID = 0;
 
@@ -156,6 +179,16 @@ public class SalesSaveServlet extends HttpServlet {
                 bp.setC_BP_Group_ID(1000001);
             }
 
+            // FIX: Set the BP Value (Search Key) to avoid "FillMandatory - Value" error
+            if (bp.getValue() == null || bp.getValue().isEmpty()) {
+                if (phone != null && !phone.isEmpty()) {
+                    bp.setValue(phone);
+                } else {
+                    // Generate a unique value for Walk-in customers
+                    bp.setValue("WALKIN-" + System.currentTimeMillis());
+                }
+            }
+
             try {
                 bp.saveEx();
             } catch (Exception e) {
@@ -174,7 +207,7 @@ public class SalesSaveServlet extends HttpServlet {
                 Env.setContext(ctx, "#AD_Org_ID", adOrgId);
             }
 
-            // 7. Handle Location
+            // 8. Handle Location
             MBPartnerLocation primaryLoc = null;
             try {
                 int primaryLocId = bp.getPrimaryC_BPartner_Location_ID();
@@ -185,7 +218,7 @@ public class SalesSaveServlet extends HttpServlet {
                 // ignore location fetch errors
             }
 
-            // 8. Create Order Header
+            // 9. Create Order Header
             TF_MOrder ordH = new TF_MOrder(ctx, 0, null);
             ordH.setAD_Org_ID(adOrgId);
             ordH.setC_BPartner_ID(bp.getC_BPartner_ID());
@@ -199,7 +232,8 @@ public class SalesSaveServlet extends HttpServlet {
             
             ordH.setC_DocType_ID(1000041);
             ordH.setC_DocTypeTarget_ID(1000041);
-            ordH.setM_Warehouse_ID(Env.getContextAsInt(ctx, "#M_Warehouse_ID"));
+            // Use the validated warehouseId variable instead of blindly reading context
+            ordH.setM_Warehouse_ID(warehouseId);
             ordH.setPaymentRule("B");
             ordH.setM_PriceList_ID(1000058);
             ordH.setC_BankAccount_ID(1000094);
@@ -210,7 +244,7 @@ public class SalesSaveServlet extends HttpServlet {
 
             System.out.println("Order Header Created: " + ordH.get_ID());
 
-            // 9. Create Order Lines
+            // 10. Create Order Lines
             JSONArray items = salesData.getJSONArray("items");
 
             for (int i = 0; i < items.length(); i++) {
@@ -242,7 +276,7 @@ public class SalesSaveServlet extends HttpServlet {
                 ordLine.saveEx();
             }
 
-            // 10. Complete Document
+            // 11. Complete Document
             ordH.setDocAction(MOrder.DOCACTION_Complete);
 
             if (!ordH.processIt(MOrder.DOCACTION_Complete)) {
@@ -253,7 +287,7 @@ public class SalesSaveServlet extends HttpServlet {
             String docNo = ordH.getDocumentNo();
             System.out.println("Order Completed. Document No: " + docNo);
 
-            // 11. Generate PDF and Printing
+            // 12. Generate PDF and Printing
             String filename = "invoice_" + docNo + ".pdf";
             String invoicesFolder = req.getServletContext().getRealPath("/invoices");
             
@@ -285,7 +319,7 @@ public class SalesSaveServlet extends HttpServlet {
                 System.err.println("Thermal Print Error (Non-blocking): " + printEx.getMessage());
             }
 
-            // 12. Return JSON Response
+            // 13. Return JSON Response
             String publicPdfUrl = req.getContextPath() + "/invoices/" + filename;
             
             JSONObject result = new JSONObject();

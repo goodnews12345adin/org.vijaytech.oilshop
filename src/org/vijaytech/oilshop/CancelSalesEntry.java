@@ -1,10 +1,7 @@
 package org.vijaytech.oilshop;
 
 import java.io.IOException;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.PrintWriter;
 import java.util.Properties;
 
 import javax.servlet.ServletException;
@@ -13,146 +10,103 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MOrder;
-import org.compiere.process.DocAction;
 import org.compiere.util.DB;
+import org.compiere.util.Env;
 import org.json.JSONObject;
+import org.syvasoft.tallyfrontcrusher.model.TF_MOrder;
 
 public class CancelSalesEntry extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
 
-    // ================================
-    // LOAD SALES ENTRY LIST
-    // ================================
     @Override
-    protected void doGet(HttpServletRequest req,
-                         HttpServletResponse resp)
-            throws ServletException, IOException {
-
-        HttpSession session = req.getSession(false);
-        Properties ctx = null;
-
-        if (session != null) {
-            ctx = (Properties) session.getAttribute("ctx");
-        }
-
-        if (ctx == null) {
-            resp.sendRedirect("userlogin.jsp?error=session_expired");
-            return;
-        }
-
-        List<String> salesList = new ArrayList<>();
-
-        String sql =
-            "SELECT DocumentNo " +
-            "FROM C_Order " +
-            "WHERE IsSOTrx='Y' " +
-            "AND IsActive='Y' " +
-            "AND DocStatus IN ('DR','IP','CO') " +
-            "ORDER BY Created DESC";
-
-        try (PreparedStatement ps =
-                     DB.prepareStatement(sql, null);
-             ResultSet rs = ps.executeQuery()) {
-
-            while (rs.next()) {
-                salesList.add(rs.getString("documentno"));
-            }
-
-        } catch (Exception e) {
-            req.setAttribute("error", "Failed to load sales entries");
-        }
-
-        req.setAttribute("salesList", salesList);
-        req.getRequestDispatcher("pages/cancelSalesEntry.jsp")
-           .forward(req, resp);
-    }
-
-    // ================================
-    // CANCEL SALES ENTRY
-    // ================================
-    @Override
-    protected void doPost(HttpServletRequest req,
-                          HttpServletResponse resp)
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
         resp.setContentType("application/json");
         resp.setCharacterEncoding("UTF-8");
-
-        JSONObject json = new JSONObject();
-
         HttpSession session = req.getSession(false);
-        Properties ctx = (session != null) ? (Properties) session.getAttribute("ctx") : null;
-
-        if (ctx == null) {
-            json.put("status", "error");
-            json.put("message", "Session expired");
-            resp.getWriter().write(json.toString());
-            return;
-        }
-
-        String documentNo = req.getParameter("documentNo");
-        System.out.println("document no :" + documentNo);
-
-        if (documentNo == null || documentNo.trim().isEmpty()) {
-            json.put("status", "error");
-            json.put("message", "Sales Order selection is required");
-            resp.getWriter().write(json.toString());
-            return;
-        }
-
-        int orderId = 0;
-
-        String sql =
-            "SELECT C_Order_ID FROM C_Order " +
-            "WHERE DocumentNo=? AND IsSOTrx='Y' AND IsActive='Y'";
-
-        try (PreparedStatement ps = DB.prepareStatement(sql, null)) {
-
-            ps.setString(1, documentNo);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    orderId = rs.getInt(1);
-                }
-            }
-        } catch (Exception e) {
-            json.put("status", "error");
-            json.put("message", "Database error");
-            resp.getWriter().write(json.toString());
-            return;
-        }
-
-        if (orderId == 0) {
-            json.put("status", "error");
-            json.put("message", "Sales Order not found");
-            resp.getWriter().write(json.toString());
-            return;
-        }
+        PrintWriter out = resp.getWriter();
 
         try {
-            MOrder order = new MOrder(ctx, orderId, null);
-
-            if ("CO".equals(order.getDocStatus()) && order.isProcessed()) {
-                order.setDocAction(DocAction.ACTION_Void);
-                if (!order.processIt(DocAction.ACTION_Void)) {
-                    throw new Exception(order.getProcessMsg());
-                }
-            } else {
-                order.setDocStatus(DocAction.STATUS_Voided);
+            // 1. Check Session
+            if (session == null || session.getAttribute("ctx") == null) {
+                // In AJAX, return JSON error instead of redirect
+                out.write("{\"status\":\"error\", \"message\":\"Session expired. Please login again.\"}");
+                return;
             }
 
-            order.saveEx();
+            Properties ctx = (Properties) session.getAttribute("ctx");
+            if (ctx == null) ctx = Env.getCtx();
 
-            json.put("status", "success");
-            json.put("message", "Sales Order " + documentNo + " cancelled successfully");
+            // Ensure mandatory context
+            if (Env.getAD_Client_ID(ctx) == 0)
+                Env.setContext(ctx, "#AD_Client_ID", 1000000);
+            if (Env.getAD_Org_ID(ctx) == 0)
+                Env.setContext(ctx, "#AD_Org_ID", 1000000);
+
+            // 2. Get Document No from Request
+            String documentNo = req.getParameter("documentNo");
+            if (documentNo == null || documentNo.trim().isEmpty()) {
+                throw new AdempiereException("Document No is missing");
+            }
+
+            // 3. Find Order ID based on DocumentNo
+            int orderId = DB.getSQLValue(null,
+                "SELECT C_Order_ID FROM C_Order WHERE DocumentNo = ? AND AD_Client_ID = ?",
+                documentNo, Env.getAD_Client_ID(ctx));
+
+            if (orderId <= 0) {
+                throw new AdempiereException("Order not found: " + documentNo);
+            }
+
+            // 4. Load Order using TF_MOrder
+            TF_MOrder ord = new TF_MOrder(ctx, orderId, null);
+
+            // 5. Check Status before cancelling
+            // We usually cannot Void an order that is already Voided, Reversed, or Closed.
+            if (MOrder.DOCSTATUS_Voided.equals(ord.getDocStatus()) ||
+                MOrder.DOCSTATUS_Reversed.equals(ord.getDocStatus()) ||
+                MOrder.DOCSTATUS_Closed.equals(ord.getDocStatus())) {
+                throw new AdempiereException("Order is already closed or voided.");
+            }
+            
+            // We also typically don't Void a Drafted order; we just delete it or ignore it. 
+            // But for POS logic, usually it is "Completed".
+            if (!MOrder.DOCSTATUS_Completed.equals(ord.getDocStatus()) && 
+                !MOrder.DOCSTATUS_Drafted.equals(ord.getDocStatus())) {
+                 throw new AdempiereException("Cannot cancel order in status: " + ord.getDocStatus());
+            }
+
+            // 6. Void Logic (Reversing/Voiding is safer than hard delete in ERP)
+            // If the order is Completed, we Void it to reverse inventory movement.
+            // If it is Drafted, we can try to delete it, but Void is a safer generic action.
+            
+            ord.setDocAction(MOrder.DOCACTION_Void);
+            
+            if (!ord.processIt(MOrder.DOCACTION_Void)) {
+                 // If Void fails (e.g. if it has closed shipments/invoices that can't be voided), try Close
+                 ord.setDocAction(MOrder.DOCACTION_Close);
+                 if(!ord.processIt(MOrder.DOCACTION_Close)) {
+                     throw new AdempiereException("Could not Void or Close order: " + ord.getProcessMsg());
+                 }
+            }
+            ord.saveEx();
+
+            System.out.println("Order Cancelled/Voided: " + documentNo);
+
+            // 7. Return Success
+            JSONObject result = new JSONObject();
+            result.put("status", "success");
+            result.put("message", "Order cancelled successfully.");
+            out.write(result.toString());
 
         } catch (Exception e) {
-            json.put("status", "error");
-            json.put("message", "Cancel failed: " + e.getMessage());
+            e.printStackTrace();
+            String errorMsg = e.getMessage() != null ? e.getMessage().replace("\"", "'") : "Unknown Error";
+            out.write("{\"status\":\"error\", \"message\":\"" + errorMsg + "\"}");
         }
-
-        resp.getWriter().write(json.toString());
     }
-
 }
