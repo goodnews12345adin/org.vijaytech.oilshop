@@ -39,6 +39,14 @@ public class ExpenseEntryServlet extends HttpServlet {
         }
 
         Properties ctx = (Properties) session.getAttribute("ctx");
+        
+        String msg = (String) session.getAttribute("successMsg");
+
+        if (msg != null) {
+            request.setAttribute("successMsg", msg);
+            session.removeAttribute("successMsg"); // show only once
+        }
+
 
         try {
 
@@ -276,7 +284,9 @@ private List<Map<String,Object>> mapExpenseAccount(List<MElementValue> list) {
               // --------------------------------------------------------------------
               // 8. Redirect success
               // --------------------------------------------------------------------
-              resp.sendRedirect("ExpenseEntryServlet?action=success&docno=" + pay.getDocumentNo());
+              session.setAttribute("successMsg", "Expense Saved Successfully!");
+              resp.sendRedirect("ExpenseEntryServlet");
+              return;
 
           } catch (Exception ex) {
               ex.printStackTrace();

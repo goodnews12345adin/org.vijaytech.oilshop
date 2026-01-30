@@ -396,12 +396,106 @@
         <p class="text-muted" style="margin-top:-25px; margin-bottom:30px; font-weight:500;">
           Record outgoing payments or expenses. Organization: <strong><%= orgName %></strong>
         </p>
+<% if (request.getAttribute("successMsg") != null) { %>
 
+<!-- ✅ Overlay Background -->
+<div id="successPopup"
+     style="position:fixed;
+            inset:0;
+            background:rgba(0,0,0,0.45);
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            z-index:9999;">
+
+  <!-- ✅ Popup Card -->
+  <div style="
+      width:380px;
+      background:#fff;
+      border-radius:25px;
+      padding:35px 25px;
+      text-align:center;
+      box-shadow:0 20px 50px rgba(0,0,0,0.25);
+      font-family:'Plus Jakarta Sans', sans-serif;
+  ">
+
+    <!-- ✅ Icon Circle -->
+    <div style="
+        width:70px;
+        height:70px;
+        margin:0 auto 18px auto;
+        border-radius:50%;
+        background:#16a34a;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        box-shadow:0 8px 20px rgba(22,163,74,0.35);
+    ">
+      <i class="bi bi-check-lg" style="font-size:38px;color:white;"></i>
+    </div>
+
+    <!-- ✅ Title -->
+    <h3 style="font-weight:800;
+               margin-bottom:10px;
+               color:#0f172a;">
+      Saved Successfully
+    </h3>
+
+    <!-- ✅ Subtitle -->
+    <p style="font-size:15px;
+              color:#64748b;
+              margin-bottom:25px;">
+      <%= request.getAttribute("successMsg") %>
+    </p>
+
+    <!-- ✅ OK Button -->
+    <button onclick="closeSuccessPopup()"
+            style="
+              background:#19b6b0;
+              border:none;
+              padding:12px 55px;
+              border-radius:30px;
+              font-size:15px;
+              font-weight:700;
+              color:white;
+              cursor:pointer;
+              box-shadow:0 10px 20px rgba(25,182,176,0.35);
+              transition:0.3s;
+            "
+            onmouseover="this.style.opacity='0.85'"
+            onmouseout="this.style.opacity='1'">
+      OK
+    </button>
+
+  </div>
+</div>
+
+<script>
+  function closeSuccessPopup() {
+    document.getElementById("successPopup").style.display = "none";
+  }
+</script>
+
+<% } %>
+
+
+
+
+
+
+    <!-- ✅ ERROR MESSAGE -->
+    <% if (request.getAttribute("errorMsg") != null) { %>
+      <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+        <i class="bi bi-x-circle-fill me-2"></i>
+        <%= request.getAttribute("errorMsg") %>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    <% } %>
         <form id="expenseForm" method="post" action="<%=request.getContextPath()%>/ExpenseEntryServlet" class="needs-validation" novalidate>
           <input type="hidden" name="action" value="save">
 
           <div class="row g-4 mb-4">
-            <div class="col-md-4 col-12">
+            <div class="col-md-6 col-12">
               <label class="form-label required-label">Bank / Cash Account</label>
               <select name="bank_account_id" class="form-select" required>
                 <option value="">-- Select Bank/Cash --</option>
@@ -411,15 +505,7 @@
               </select>
             </div>
 
-            <div class="col-md-4 col-12">
-              <label class="form-label">Document Number</label>
-              <div class="input-group">
-                  <span class="input-group-text"><i class="bi bi-hash"></i></span>
-                  <input type="text" name="document_no" class="form-control" placeholder="Automatic if empty">
-              </div>
-            </div>
-
-            <div class="col-md-4 col-12">
+            <div class="col-md-6 col-12">
               <label class="form-label required-label">Transaction Date</label>
               <input type="datetime-local" name="transaction_date" class="form-control" required
                      value="<%= new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm").format(new java.util.Date()) %>">
