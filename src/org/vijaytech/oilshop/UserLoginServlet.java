@@ -116,7 +116,7 @@ public class UserLoginServlet extends HttpServlet {
                 session.setAttribute("username", username);
                 System.out.println(AD_Role_ID);
 
-                response.sendRedirect("pages/sidebar.jsp");
+                response.sendRedirect("pages/dashboard.jsp");
             } else {
                 setiDempiereContext(request);
                 response.sendRedirect("pages/loginpage.jsp?error=1");
