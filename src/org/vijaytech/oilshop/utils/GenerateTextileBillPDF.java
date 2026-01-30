@@ -462,13 +462,31 @@ public class GenerateTextileBillPDF {
         Font normal = new Font(Font.COURIER, 9);
         Font bold   = new Font(Font.COURIER, 9, Font.BOLD);
         Font title  = new Font(Font.COURIER, 10, Font.BOLD);
+        Font companyFont = new Font(Font.HELVETICA, 16, Font.BOLD);
+        Font gstFont     = new Font(Font.HELVETICA, 10, Font.BOLD);
+        Font titleFont   = new Font(Font.HELVETICA, 13, Font.BOLD);
+
+        Font headerFont  = new Font(Font.HELVETICA, 9, Font.BOLD);
+        Font bodyFont    = new Font(Font.HELVETICA, 9);
+        Font totalFont   = new Font(Font.HELVETICA, 9, Font.BOLD);
 
         SimpleDateFormat df = new SimpleDateFormat("dd/MM/yy HH:mm");
 
         // ================= HEADER =================
-        Paragraph p = new Paragraph("SKV OILS", title);
+        Paragraph p = new Paragraph("THIRU SENTHILATHIPATHI OIL STORE", title);
         p.setAlignment(Element.ALIGN_CENTER);
         doc.add(p);
+        Paragraph gst = new Paragraph("GSTIN : 33AFFPR4639J1Z6", gstFont);
+        gst.setAlignment(Element.ALIGN_CENTER);
+        gst.setSpacingBefore(3);
+        doc.add(gst);
+
+        Paragraph addr = new Paragraph(
+            "No.42,Krishna Moorthi Bavanam,Madakulam Main Road,Palangantham,Madurai – 625003",
+            bodyFont
+        );
+        addr.setAlignment(Element.ALIGN_CENTER);
+        doc.add(addr);
         doc.add(new Paragraph("--------------------------------", normal));
 
         doc.add(new Paragraph("| BILL NO : " + billNo, normal));

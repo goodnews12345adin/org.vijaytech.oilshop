@@ -90,9 +90,9 @@ public class PrintPurchaseReportServlet extends HttpServlet {
 
             req.setAttribute("supplierList", supplierList);
 
-            req.setAttribute("orgName", "Vijay Tech Orbit");
-            req.setAttribute("orgGST", "29ABCDE1234F1Z5");
-            req.setAttribute("orgAddress", "123 Tech Park, Bangalore, India");
+            req.setAttribute("orgName", "THIRU SENTHILATHIPATHI OIL STORE");
+            req.setAttribute("orgGST", "33AFFPR4639J1Z6");
+            req.setAttribute("orgAddress", "No.42,Krishna Moorthi Bavanam,Madakulam Main Road,Palangantham,Madurai – 625003");
 
             RequestDispatcher rd = req.getRequestDispatcher("/pages/purchaseReport.jsp");
             rd.forward(req, resp);
@@ -338,9 +338,10 @@ public class PrintPurchaseReportServlet extends HttpServlet {
 
         // HEADER
         out.println("<div class='header'>");
-        out.println("<div class='store-name'>SKV OIL STORE</div>");
-        out.println("<div style='font-size:11px;'>Bangalore, India</div>");
-        out.println("<div style='font-size:10px; font-weight:bold;'>GST: 29ABCDE1234F1Z5</div>");
+        out.println("<div class='store-name'>THIRU SENTHILATHIPATHI OIL STORE</div>");
+        out.println("<div style='font-size:11px;'> \"No.42,Krishna Moorthi Bavanam,Madakulam Main Road,"
+        		+ "Palangantham,Madurai – 625003\"</div>");
+        out.println("<div style='font-size:10px; font-weight:bold;'>GST: 33AFFPR4639J1Z6</div>");
         out.println("</div>");
 
         // META
@@ -427,13 +428,22 @@ public class PrintPurchaseReportServlet extends HttpServlet {
             mainTitle.setAlignment(Element.ALIGN_CENTER);
             headerCell.addElement(mainTitle);
 
-            Paragraph companyInfo = new Paragraph("VIJAY TECH ORBIT", fontSubTitle);
+            Paragraph companyInfo = new Paragraph("THIRU SENTHILATHIPATHI OIL STORE", fontSubTitle);
             companyInfo.setAlignment(Element.ALIGN_CENTER);
             headerCell.addElement(companyInfo);
 
-            Paragraph addressInfo = new Paragraph("123 Tech Park, Bangalore, India | GST: 29ABCDE1234F1Z5", FontFactory.getFont(FontFactory.HELVETICA, 10, Color.WHITE));
+            Paragraph addressInfo = new Paragraph(" No.42,Krishna Moorthi Bavanam,Madakulam Main Road,Palangantham,Madurai – 625003", FontFactory.getFont(FontFactory.HELVETICA, 10, Color.WHITE));
             addressInfo.setAlignment(Element.ALIGN_CENTER);
             headerCell.addElement(addressInfo);
+            
+            Paragraph address = new Paragraph(" GST: 29ABCDE1234F1Z5", FontFactory.getFont(FontFactory.HELVETICA, 10, Color.WHITE));
+            Paragraph fssai = new Paragraph(" FSSAI: 22422574000176", FontFactory.getFont(FontFactory.HELVETICA, 10, Color.WHITE));
+            address.setAlignment(Element.ALIGN_CENTER);
+            headerCell.addElement(address);
+            
+            fssai.setAlignment(Element.ALIGN_CENTER);
+            headerCell.addElement(fssai);
+            
 
             headerBox.addCell(headerCell);
             document.add(headerBox);

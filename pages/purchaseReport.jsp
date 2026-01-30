@@ -860,26 +860,37 @@
             var doc = new jsPDFObj.jsPDF();
             
             // Add Corporate Headers
-            doc.setFontSize(18);
-            doc.setTextColor(21, 160, 198); // Brand Color
-            doc.text("<%=sessionOrgName%>", 14, 20);
-            
-            doc.setFontSize(10);
-            doc.setTextColor(100);
-            doc.text("<%=sessionOrgAddress%>", 14, 26);
-            doc.text("GSTIN: <%=sessionOrgGST%>", 14, 32);
-            
-            // Report Meta Info
-            doc.setFontSize(12);
-            doc.setTextColor(0);
-            doc.text("Purchase / Sales Report", 14, 42);
+            // ✅ Get Page Width Center
+var pageWidth = doc.internal.pageSize.getWidth();
+var centerX = pageWidth / 2;
+
+// ✅ Company Name (Centered)
+doc.setFontSize(18);
+doc.setTextColor(21, 160, 198);
+doc.text("<%=sessionOrgName%>", centerX, 20, { align: "center" });
+
+// ✅ Address (Centered)
+doc.setFontSize(10);
+doc.setTextColor(100);
+doc.text("<%=sessionOrgAddress%>", centerX, 26, { align: "center" });
+
+// ✅ GSTIN (Centered)
+doc.text("GSTIN: <%=sessionOrgGST%>", centerX, 32, { align: "center" });
+
+// ✅ Report Title (Centered)
+
             
             doc.setFontSize(10);
             doc.setTextColor(60);
             var supplier = $("#supplier option:selected").text();
             var type = $("#type option:selected").text();
             var range = $("#fromDate").val() + " to " + $("#toDate").val();
-            
+            var reportTitle = type + " Report";
+
+         // ✅ Print Title Center
+         doc.setFontSize(12);
+         doc.setTextColor(0);
+         doc.text(reportTitle, centerX, 42, { align: "center" });
             if(supplier && supplier !== "--Select Supplier--") doc.text("Supplier: " + supplier, 14, 50);
             doc.text("Type: " + type, 14, 56);
             doc.text("Date Range: " + range, 14, 62);

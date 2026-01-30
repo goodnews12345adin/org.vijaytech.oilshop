@@ -83,8 +83,9 @@ public class ThermalPrintServer {
             SimpleDateFormat df = new SimpleDateFormat("dd-MM-yyyy HH:mm");
 
             TvsRawPdfPrinter.printBill(
-                    "SKV OIL STORE",
-                    "33ABCDE1234F1Z5",   // GSTIN
+                    "THIRU SENTHILATHIPATHI OIL STORE",
+                    "33AFFPR4639J1Z6",
+                    "22422574000176",// GSTIN
                     billNo,
                     df.format(billDate),
                     items,

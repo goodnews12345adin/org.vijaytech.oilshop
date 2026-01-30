@@ -25,7 +25,7 @@ if (username == null || username.trim().isEmpty()) {
 
 final int ROLE_ADMIN  = ROLE_ADMIN1.intValue();
 final int ROLE_CASHIER = ROLE_CASHIERObj.intValue();
-String orgNamee = "SKV";
+String orgNamee = " TSA OIL STORE";
 
 // Helper for Avatar Initials
 String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperCase() : "GU";

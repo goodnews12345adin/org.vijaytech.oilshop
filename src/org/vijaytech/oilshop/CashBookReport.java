@@ -320,17 +320,17 @@ public class CashBookReport extends HttpServlet{
 	           ✅ COMPANY HEADER
 	        =============================== */
 
-	        Paragraph company = new Paragraph("SKV OIL STORE", companyFont);
+	        Paragraph company = new Paragraph("THIRU SENTHILATHIPATHI OIL STORE", companyFont);
 	        company.setAlignment(Element.ALIGN_CENTER);
 	        document.add(company);
 
-	        Paragraph gst = new Paragraph("GSTIN : 33ABCDE1234F1Z5", gstFont);
+	        Paragraph gst = new Paragraph("GSTIN : 33AFFPR4639J1Z6", gstFont);
 	        gst.setAlignment(Element.ALIGN_CENTER);
 	        gst.setSpacingBefore(3);
 	        document.add(gst);
 
 	        Paragraph address = new Paragraph(
-	            "No.12, Main Road, Chennai – 600001",
+	            "No.42,Krishna Moorthi Bavanam,Madakulam Main Road,Palangantham,Madurai – 625003",
 	            bodyFont
 	        );
 	        address.setAlignment(Element.ALIGN_CENTER);
@@ -343,7 +343,7 @@ public class CashBookReport extends HttpServlet{
 	        document.add(report);
 
 	        /* ✅ Line Separator */
-	        document.add(new Paragraph("------------------------------------------------------------"));
+	        document.add(new Paragraph("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"));
 
 	        document.add(Chunk.NEWLINE);
 

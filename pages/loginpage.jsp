@@ -351,7 +351,7 @@
                 <img id="shopLogoImg" src="shop-logo.png" alt="Shop logo" onerror="this.style.display='none'; document.getElementById('shopLogoFallback').style.display='grid'">
                 <div id="shopLogoFallback" class="logo-fallback" style="display:none;font-size:12px;padding:6px">Textile</div>
               </div>
-              <div id="shopName" class="shop-name" title="Textile Shop">SKV OilStore</div>
+              <div id="shopName" class="shop-name" title="Textile Shop">TSA OilStore</div>
             </div>
           </div>
 

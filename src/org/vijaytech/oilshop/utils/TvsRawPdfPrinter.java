@@ -24,6 +24,7 @@ public class TvsRawPdfPrinter {
     public static void printBill(
             String shopName,
             String gstNo,
+            String fssai,
             String billNo,
             String billDate,
             List<Item> items,
@@ -41,6 +42,7 @@ public class TvsRawPdfPrinter {
         sb.append(shopName).append("\n");
         sb.append(BOLD_OFF);
         sb.append("GSTIN: ").append(gstNo).append("\n");
+        sb.append("FSSAI: ").append(fssai).append("\n");
         sb.append("--------------------------------\n");
 
         sb.append(ALIGN_CENTER);
@@ -71,7 +73,7 @@ public class TvsRawPdfPrinter {
         double gstAmount = subTotal * gstRate / 100;
         double cgst = gstAmount / 2;
         double sgst = gstAmount / 2;
-        double grandTotal = subTotal + gstAmount;
+        double grandTotal = subTotal;
 
         sb.append(formatLine("SUB TOTAL", subTotal));
         sb.append(formatLine("CGST " + (gstRate / 2) + "%", cgst));

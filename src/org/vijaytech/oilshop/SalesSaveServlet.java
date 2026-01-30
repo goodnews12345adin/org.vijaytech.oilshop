@@ -121,7 +121,7 @@ public class SalesSaveServlet extends HttpServlet {
             String name = customer.optString("name", "Walk-in").trim();
             String address = customer.optString("address", "").trim();
             String phone = customer.optString("phone", "").trim();
-
+            
             // Fix: Defaults for null/empty values
             if (address == null || address.isBlank()) address = "NA";
             
@@ -137,6 +137,8 @@ public class SalesSaveServlet extends HttpServlet {
             } catch (Exception e) {
                 discount = BigDecimal.ZERO;
             }
+            boolean printRequired =
+            		salesData.getBoolean("printRequired");
 
             // 7. Business Partner (BP) Logic
             TF_MBPartner bp;
@@ -236,6 +238,8 @@ public class SalesSaveServlet extends HttpServlet {
             ordH.setM_Warehouse_ID(warehouseId);
             ordH.setPaymentRule("B");
             ordH.setM_PriceList_ID(1000058);
+            ordH.setSalesDiscountAmt(discount);
+            ordH.setIsTaxIncluded(true);
             ordH.setC_BankAccount_ID(1000094);
             ordH.setDateAcct(new Timestamp(System.currentTimeMillis()));
             ordH.setDateOrdered(new Timestamp(System.currentTimeMillis()));
@@ -271,6 +275,7 @@ public class SalesSaveServlet extends HttpServlet {
                 ordLine.setQty(qty);
                 ordLine.setQtyOrdered(qty);
                 ordLine.setPrice(rate);
+                ordLine.setIsTaxIncluded(true);
                 ordLine.setPriceActual(rate); // Use priceactual as per snippet
                 ordLine.setC_Tax_ID(1000021); // Specific Tax ID from snippet
                 ordLine.saveEx();
@@ -311,14 +316,14 @@ public class SalesSaveServlet extends HttpServlet {
             } catch (Exception pdfEx) {
                 System.err.println("PDF Generation Error (Non-blocking): " + pdfEx.getMessage());
             }
-
+            if(printRequired) {
             // Thermal Print Server
             try {
                 ThermalPrintServer.printGstBill(ordH.get_ID());
             } catch (Exception printEx) {
                 System.err.println("Thermal Print Error (Non-blocking): " + printEx.getMessage());
             }
-
+            }
             // 13. Return JSON Response
             String publicPdfUrl = req.getContextPath() + "/invoices/" + filename;
             

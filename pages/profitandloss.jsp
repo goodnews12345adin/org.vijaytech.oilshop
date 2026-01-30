@@ -905,12 +905,43 @@ function exportFile(type){
     return;
   }
 
-  let csvContent = "Product Code,Product Name,Sales Qty,Sales Amount,Purchase Qty,Purchase Amount,Balance Qty,Profit\n";
+  let csvContent = "";
+
+  /* ============================
+     ✅ Company Header Info
+  ============================ */
+
+  csvContent += "THIRU SENTHILATHIPATHI OIL STORE\n";
+  csvContent += "No.42, Krishna Moorthi Bavanam, Madakulam Main Road,\n";
+  csvContent += "Palangantham, Madurai – 625003\n";
+  csvContent += "GST: 29ABCDE1234F1Z5\n\n";
+
+  /* ============================
+     ✅ Date Range (Optional)
+  ============================ */
+
+  let fromDate = document.getElementById("fromDate").value;
+  let toDate   = document.getElementById("toDate").value;
+
+  csvContent += "Profit & Loss Report\n";
+  csvContent += "Period: " + fromDate + " to " + toDate + "\n\n";
+
+  /* ============================
+     ✅ Table Header Row
+  ============================ */
+
+  csvContent +=
+    "Product Code,Product Name,Sales Qty,Sales Amount," +
+    "Purchase Qty,Purchase Amount,Balance Qty,Profit\n";
+
+  /* ============================
+     ✅ Table Data Rows
+  ============================ */
 
   tableData.forEach(row => {
 
-    let pCode = (row.productCode || "").replace(/,/g," ");
-    let pName = (row.productName || "").replace(/,/g," ");
+    let pCode = (row.productCode || "").replace(/,/g, " ");
+    let pName = (row.productName || "").replace(/,/g, " ");
 
     csvContent +=
       pCode + "," +
@@ -922,6 +953,10 @@ function exportFile(type){
       (row.balanceQty || 0) + "," +
       fmt(row.profit) + "\n";
   });
+
+  /* ============================
+     ✅ Download CSV File
+  ============================ */
 
   let blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
 
@@ -943,20 +978,55 @@ function downloadTablePDF() {
     /* ============================
        ✅ Report Title
     ============================ */
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    doc.text("Profit & Loss Report", 14, 18);
-
     /* ============================
-       ✅ Date Range
-    ============================ */
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
+    ✅ Company Header
+ ============================ */
 
-    let fromDate = document.getElementById("fromDate").value;
-    let toDate   = document.getElementById("toDate").value;
+ // Company Name
+ doc.setFontSize(18);
+ doc.setFont("helvetica", "bold");
+ doc.text("THIRU SENTHILATHIPATHI OIL STORE", 105, 15, { align: "center" });
 
-    doc.text("Period: " + fromDate + " to " + toDate, 14, 25);
+ // Address Line
+ doc.setFontSize(10);
+ doc.setFont("helvetica", "normal");
+ doc.text(
+   "No.42, Krishna Moorthi Bavanam, Madakulam Main Road,",
+   105,
+   22,
+   { align: "center" }
+ );
+
+ doc.text(
+   "Palangantham, Madurai – 625003",
+   105,
+   27,
+   { align: "center" }
+ );
+
+ // GST Line
+ doc.setFontSize(10);
+ doc.setFont("helvetica", "bold");
+ doc.text("GST: 29ABCDE1234F1Z5", 105, 32, { align: "center" });
+ /* ============================
+ ✅ Report Title
+============================ */
+
+doc.setFontSize(16);
+doc.setFont("helvetica", "bold");
+doc.text("Profit & Loss Report", 14, 45);
+
+doc.setFontSize(10);
+doc.setFont("helvetica", "normal");
+
+let fromDate = document.getElementById("fromDate").value;
+let toDate   = document.getElementById("toDate").value;
+
+doc.text("Period: " + fromDate + " to " + toDate, 14, 52);
+
+ // Divider Line
+ doc.setDrawColor(0);
+ doc.line(14, 36, 196, 36);
 
     /* ============================
        ✅ Prepare Table Data

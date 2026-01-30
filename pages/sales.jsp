@@ -749,10 +749,15 @@
                 <button id="recalculate" class="btn btn-light border shadow-sm">
                     <i class="bi bi-arrow-clockwise me-2"></i>Recalc
                 </button>
-                <button id="send-btn" class="btn btn-success px-5 shadow">
-                    <i class="bi bi-printer-fill me-2"></i>Save & Print
-                </button>
-            </div>
+					<button id="save-btn" class="btn btn-success px-5 shadow">
+						<i class="bi bi-save me-2"></i>Save
+					</button>
+
+					<button id="save-print-btn" class="btn btn-primary px-5 shadow">
+						<i class="bi bi-printer-fill me-2"></i>Save & Print
+					</button>
+
+				</div>
         </div>
     </main>
 </div>
@@ -1327,85 +1332,133 @@
          }
      });
  }
-    /* ===========================
-       AJAX SAVE
-    =========================== */
-    $("#send-btn").on("click", function () {
-        if ($("#items-body tr").length === 0) {
-            showWonderfulBox('warning', 'Missing Items', 'Please add at least one product to proceed.');
-            return;
-        }
+ /* ===========================
+ ✅ SAVE + SAVE PRINT LOGIC
+=========================== */
 
-        var balAmt = parseFloat($("#Bal-amt").text()) || 0;
-        
-        if (balAmt < -0.1) {
-            showWonderfulBox('error', 'Payment Error', 'Payment amount exceeds the total invoice amount!');
-            return;
-        }
+//✅ Save Only Button
+$("#save-btn").on("click", function (e) {
+  e.preventDefault();
+  saveInvoice(false); // send boolean FALSE
+});
 
-        // Activate Loader
-        $("#loader").css("display", "flex").addClass("active");
+//✅ Save + Print Button
+$("#save-print-btn").on("click", function (e) {
+  e.preventDefault();
+  saveInvoice(true); // send boolean TRUE
+});
 
-        const data = {
-            discountType: $("#disc-type-toggle").is(":checked") ? "PERCENT" : "FIXED",
-            discount: parseFloat($("#discount").val()) || 0,
-            subtotal: $("#subtotal").text(),
-            total: $("#grand-total").text(),
-            customer: {
-                name: $("#cust-name").val(),
-                address: $("#cust-address").val(),
-                phone: $("#cust-phone").val()
-            },
-            items: []
-        };
 
-        $("#items-body tr").each(function () {
-            const row = $(this);
-            data.items.push({
-                prodId: row.find(".ProdId").val(),
-                product: row.find(".desc").val(),
-                unit: row.find(".uom").val(),
-                qty: parseFloat(row.find(".qty").val()) || 0,
-                rate: parseFloat(row.find(".rate").val()) || 0,
-                amount: parseFloat(row.find(".amount").text()) || 0
-            });
-        });
+/* ===========================
+ ✅ MAIN SAVE FUNCTION
+=========================== */
 
-        $.ajax({
-            type: "POST",
-            url: "<%= request.getContextPath() %>/SalesSaveServlet",
-            data: JSON.stringify({ salesData: data }),
-            contentType: "application/json; charset=utf-8",
-            dataType: "json",
-            success: function (response) {
-                $("#loader").removeClass("active");
-                setTimeout(() => { $("#loader").hide(); }, 300);
+function saveInvoice(printAfterSave) {
 
-                if (response && response.status === "success") {
-                    const docNo = response.docNo;
-                    $("#cancelId").val(docNo);
-                    toggleCancelButton();
-                    
-                    showWonderfulBox('success', 'Invoice Saved', `Invoice No. <strong>${docNo}</strong> saved successfully! Printing receipt...`);
-                        
-                    printThermalReceipt(docNo);
-                    
-                    resetInvoiceForm();
+  if ($("#items-body tr").length === 0) {
+      showWonderfulBox('warning', 'Missing Items',
+          'Please add at least one product to proceed.');
+      return;
+  }
 
-                } else {
-                    const err = response ? (response.error || response.message) : "Unknown error";
-                    showWonderfulBox('error', 'Save Failed', err);
-                }
-            },
-            error: function (xhr, status, error) {
-                $("#loader").removeClass("active");
-                setTimeout(() => { $("#loader").hide(); }, 300);
-                // Show error in Wonderful Box
-                showWonderfulBox('error', 'Connection Failed', 'Server Connection Failed: ' + error);
-                console.error(xhr);
-            }
-        });
-    });
+  var balAmt = parseFloat($("#Bal-amt").text()) || 0;
+
+  if (balAmt < -0.1) {
+      showWonderfulBox('error', 'Payment Error',
+          'Payment amount exceeds the total invoice amount!');
+      return;
+  }
+
+  // ✅ Show Loader
+  $("#loader").css("display", "flex").addClass("active");
+
+  // ✅ Prepare JSON Data
+  const data = {
+      discountType: $("#disc-type-toggle").is(":checked") ? "PERCENT" : "FIXED",
+      discount: parseFloat($("#discount").val()) || 0,
+      subtotal: parseFloat($("#subtotal").text()) || 0,
+      total: parseFloat($("#grand-total").text()) || 0,
+
+      // ✅ Boolean Value Sent to Servlet
+      printRequired: printAfterSave,
+
+      customer: {
+          name: $("#cust-name").val(),
+          address: $("#cust-address").val(),
+          phone: $("#cust-phone").val()
+      },
+
+      items: []
+  };
+
+  // ✅ Collect Items
+  $("#items-body tr").each(function () {
+      const row = $(this);
+
+      data.items.push({
+          prodId: row.find(".ProdId").val(),
+          product: row.find(".desc").val(),
+          unit: row.find(".uom").val(),
+          qty: parseFloat(row.find(".qty").val()) || 0,
+          rate: parseFloat(row.find(".rate").val()) || 0,
+          amount: parseFloat(row.find(".amount").text()) || 0
+      });
+  });
+
+  console.log("Sending Data:", data);
+
+  // ✅ AJAX Call
+  $.ajax({
+      type: "POST",
+      url: "<%= request.getContextPath() %>/SalesSaveServlet",
+      data: JSON.stringify({ salesData: data }),
+      contentType: "application/json; charset=utf-8",
+      dataType: "json",
+
+      success: function (response) {
+
+          $("#loader").removeClass("active");
+          setTimeout(() => { $("#loader").hide(); }, 300);
+
+          if (response && response.status === "success") {
+
+              const docNo = response.docNo;
+
+              showWonderfulBox(
+                  'success',
+                  'Invoice Saved',
+                  `Invoice No. <b>${docNo}</b> saved successfully!`
+              );
+
+              // ✅ Print ONLY if Save+Print
+              if (printAfterSave) {
+                  printThermalReceipt(docNo);
+              }
+
+              resetInvoiceForm();
+
+          } else {
+
+              const err = response ? response.message : "Unknown Error";
+              showWonderfulBox('error', 'Save Failed', err);
+          }
+      },
+
+      error: function (xhr, status, error) {
+
+          $("#loader").removeClass("active");
+          setTimeout(() => { $("#loader").hide(); }, 300);
+
+          showWonderfulBox(
+              'error',
+              'Server Error',
+              "Connection Failed: " + error
+          );
+
+          console.error(xhr.responseText);
+      }
+  });
+}
     
     /* ===========================
        CANCEL ENTRY LOGIC
