@@ -846,76 +846,186 @@
     // ==============================
     //  DOWNLOAD TABLE AS PDF (List PDF)
     // ==============================
-    function downloadTablePdf(){
-        var table = document.getElementById("reportTable");
-        if (!table) {
-            showToast("Error", "No report data to download");
-            return;
+   function downloadTablePdf() {
+
+    var table = document.getElementById("reportTable");
+    if (!table) {
+        showToast("Error", "No report data to download");
+        return;
+    }
+
+    // ✅ Show Loader
+    $("#global-loader").css("display", "flex").hide().fadeIn(200);
+
+    setTimeout(() => {
+
+        const jsPDFObj = window.jspdf;
+        var doc = new jsPDFObj.jsPDF();
+
+        /* =====================================
+           ✅ PAGE CENTER ALIGN
+        ===================================== */
+        var pageWidth = doc.internal.pageSize.getWidth();
+        var centerX = pageWidth / 2;
+
+        /* =====================================
+           ✅ COMPANY HEADER
+        ===================================== */
+        doc.setFontSize(18);
+        doc.setTextColor(21, 160, 198);
+        doc.text("<%=sessionOrgName%>", centerX, 20, { align: "center" });
+
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text("<%=sessionOrgAddress%>", centerX, 26, { align: "center" });
+
+        doc.text("GSTIN: <%=sessionOrgGST%>", centerX, 32, { align: "center" });
+
+        /* =====================================
+           ✅ REPORT TITLE + FILTERS
+        ===================================== */
+        var supplier = $("#supplier option:selected").text();
+        var type = $("#type option:selected").text();
+        var range = $("#fromDate").val() + " to " + $("#toDate").val();
+        var reportTitle = type + " Report";
+
+        doc.setFontSize(13);
+        doc.setTextColor(0);
+        doc.text(reportTitle, centerX, 42, { align: "center" });
+
+        doc.setFontSize(10);
+        doc.setTextColor(60);
+
+        if (supplier && supplier !== "--Select Supplier--") {
+            doc.text("Supplier: " + supplier, 14, 50);
         }
 
-        $("#global-loader").css("display","flex").hide().fadeIn(200);
+        doc.text("Type: " + type, 14, 56);
+        doc.text("Date Range: " + range, 14, 62);
 
-        setTimeout(() => {
-             const jsPDFObj = window.jspdf;
-            var doc = new jsPDFObj.jsPDF();
-            
-            // Add Corporate Headers
-            // ✅ Get Page Width Center
-var pageWidth = doc.internal.pageSize.getWidth();
-var centerX = pageWidth / 2;
+        // ✅ Divider Line
+        doc.setLineWidth(0.5);
+        doc.setDrawColor(200);
+        doc.line(14, 65, 196, 65);
 
-// ✅ Company Name (Centered)
-doc.setFontSize(18);
-doc.setTextColor(21, 160, 198);
-doc.text("<%=sessionOrgName%>", centerX, 20, { align: "center" });
+        /* =====================================
+           ✅ READ TABLE DATA + CALCULATE TOTALS
+        ===================================== */
 
-// ✅ Address (Centered)
-doc.setFontSize(10);
-doc.setTextColor(100);
-doc.text("<%=sessionOrgAddress%>", centerX, 26, { align: "center" });
+        let bodyData = [];
 
-// ✅ GSTIN (Centered)
-doc.text("GSTIN: <%=sessionOrgGST%>", centerX, 32, { align: "center" });
+        let totalQty = 0;
+        let totalAmount = 0;
 
-// ✅ Report Title (Centered)
+        $("#reportTable tbody tr").each(function () {
 
-            
-            doc.setFontSize(10);
-            doc.setTextColor(60);
-            var supplier = $("#supplier option:selected").text();
-            var type = $("#type option:selected").text();
-            var range = $("#fromDate").val() + " to " + $("#toDate").val();
-            var reportTitle = type + " Report";
+            let row = [];
 
-         // ✅ Print Title Center
-         doc.setFontSize(12);
-         doc.setTextColor(0);
-         doc.text(reportTitle, centerX, 42, { align: "center" });
-            if(supplier && supplier !== "--Select Supplier--") doc.text("Supplier: " + supplier, 14, 50);
-            doc.text("Type: " + type, 14, 56);
-            doc.text("Date Range: " + range, 14, 62);
+            let date   = $(this).find("td:eq(0)").text().trim();
+            let docNo  = $(this).find("td:eq(1)").text().trim();
+            let bp     = $(this).find("td:eq(2)").text().trim();
+            let prod   = $(this).find("td:eq(3)").text().trim();
 
-            // Draw Line
-            doc.setLineWidth(0.5);
-            doc.setDrawColor(200);
-            doc.line(14, 65, 196, 65);
+            let qty    = parseFloat($(this).find("td:eq(4)").text()) || 0;
+            let price  = parseFloat($(this).find("td:eq(5)").text()) || 0;
+            let amount = parseFloat($(this).find("td:eq(6)").text()) || 0;
 
-            // Table
-            doc.autoTable({ html: '#reportTable', startY: 70, styles: { fontSize: 8 }, theme: 'grid' });
-            
-            // Footer
-            var pageCount = doc.internal.getNumberOfPages();
-            doc.setFontSize(8);
-            for(let i = 1; i <= pageCount; i++) {
-                 doc.setPage(i);
-                 doc.text('Page ' + String(i) + ' of ' + String(pageCount), 196-20, 285, {align: 'right'});
-            }
-            
-            doc.save("Report_List.pdf");
-            
-            $("#global-loader").fadeOut(200);
-        }, 500);
-    }
+            // ✅ Totals
+            totalQty += qty;
+            totalAmount += amount;
+
+            row.push(date);
+            row.push(docNo);
+            row.push(bp);
+            row.push(prod);
+            row.push(qty.toFixed(2));
+            row.push(price.toFixed(2));
+            row.push(amount.toFixed(2));
+            row.push(""); // Action column blank
+
+            bodyData.push(row);
+        });
+
+        /* =====================================
+           ✅ TABLE HEADERS
+        ===================================== */
+        let headData = [[
+            "Date",
+            "DocumentNo",
+            "BPartner",
+            "Product",
+            "Qty",
+            "Price",
+            "Amount",
+            "Action"
+        ]];
+
+        /* =====================================
+           ✅ AUTO TABLE EXPORT (NO FOOTER REPEAT)
+        ===================================== */
+        doc.autoTable({
+            head: headData,
+            body: bodyData,
+            startY: 70,
+            theme: "grid",
+            styles: { fontSize: 8 },
+
+            // ✅ Prevent total repeating on every page
+            showFoot: "never"
+        });
+
+        /* =====================================
+           ✅ TOTAL ROW ONLY ON LAST PAGE
+        ===================================== */
+
+        let finalY = doc.lastAutoTable.finalY + 10;
+
+        // ✅ Total Background
+        doc.setFillColor(21, 160, 198);
+        doc.rect(14, finalY, 182, 10, "F");
+
+        // ✅ Total Text Style
+        doc.setFontSize(10);
+        doc.setTextColor(255, 255, 255);
+        doc.setFont("helvetica", "bold");
+
+        // ✅ Column Positions (Match Your Table)
+        doc.text("TOTAL", 16, finalY + 7);
+        doc.text(totalQty.toFixed(2), 125, finalY + 7);
+        doc.text(totalAmount.toFixed(2), 160, finalY + 7);
+
+        // ✅ Reset
+        doc.setTextColor(0, 0, 0);
+        doc.setFont("helvetica", "normal");
+
+        /* =====================================
+           ✅ PAGE NUMBER FOOTER
+        ===================================== */
+        var pageCount = doc.internal.getNumberOfPages();
+        doc.setFontSize(8);
+
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.text(
+                "Page " + i + " of " + pageCount,
+                190,
+                285,
+                { align: "right" }
+            );
+        }
+
+        /* =====================================
+           ✅ SAVE PDF
+        ===================================== */
+        doc.save("Report_List.pdf");
+
+        // ✅ Hide Loader
+        $("#global-loader").fadeOut(200);
+
+    }, 500);
+}
+
+
 
     // ==============================
     //  QUICK DATE LOGIC
