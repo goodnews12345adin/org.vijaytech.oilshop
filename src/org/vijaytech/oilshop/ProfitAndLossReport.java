@@ -113,7 +113,7 @@ public class ProfitAndLossReport extends HttpServlet {
             e.printStackTrace();
             throw new ServletException("Error loading Report", e);
         }
-    }
+    }	
 
     // -------------------------------------------------
     // ================ DO POST (JSON DATA) =============
@@ -208,7 +208,7 @@ public class ProfitAndLossReport extends HttpServlet {
                     BigDecimal pQty = (BigDecimal) m.get("purchaseQty");
 
                     BigDecimal profit = sAmt.subtract(pAmt);
-                    BigDecimal balQty = sQty.subtract(pQty);
+                    BigDecimal balQty = pQty.subtract(sQty);
 
                     m.put("profit", profit);
                     m.put("balanceQty", balQty);

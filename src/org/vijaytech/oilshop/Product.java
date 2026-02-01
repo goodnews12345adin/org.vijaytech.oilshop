@@ -280,7 +280,8 @@ public class Product extends HttpServlet {
 
             product.setIsSummary(false);
             product.setProductType(MProduct.PRODUCTTYPE_Item);
-            product.setC_TaxCategory_ID(1000000);
+            product.setC_TaxCategory_ID(1000005);
+            product.setC_Activity_ID(1000000);
             product.setIsStocked(true);
 
             String entryType = json.optString("EntryType", "").trim();

@@ -58,10 +58,11 @@ public class SalesServlet extends HttpServlet {
             int AD_Org_ID = Integer.parseInt(session.getAttribute("AD_Org_ID").toString());
             int AD_Client_ID = Integer.parseInt(session.getAttribute("AD_Client_ID").toString());
 
-            // Fetch product list
             List<TF_MProduct> prodList = new Query(ctx, TF_MProduct.Table_Name,
-                    "IsSold ='Y' AND WeighmentEnabled ='Y' AND  isActive ='Y' AND ProductType ='I' ", null)
-                    .setClient_ID()
+                    "IsSold='Y' AND WeighmentEnabled='Y' AND IsActive='Y' AND ProductType='I' AND AD_Org_ID=?",
+                    null)
+                    .setClient_ID()         // tenant-safe
+                    .setParameters(1000000) // your org; change to Env.getAD_Org_ID(ctx) if needed
                     .list();
 
             List<Map<String, Object>> productData = new ArrayList<>();

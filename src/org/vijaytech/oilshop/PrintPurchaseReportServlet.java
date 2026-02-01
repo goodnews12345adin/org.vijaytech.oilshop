@@ -26,6 +26,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.syvasoft.tallyfrontcrusher.model.TF_MBPartner;
 
+import com.google.gson.Gson;
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.*;
 
@@ -133,14 +134,19 @@ public class PrintPurchaseReportServlet extends HttpServlet {
         StringBuilder sql = new StringBuilder();
 
         if (summary.equals("Y")) {
-            sql.append("SELECT i.DateInvoiced, bp.Name AS BPartner, p.Name AS Product, ")
-               .append("SUM(il.QtyInvoiced) AS Qty, AVG(il.PriceActual) AS Price, SUM(il.LineNetAmt) AS Amount ")
-               .append("FROM C_Invoice i ")
-               .append("JOIN C_InvoiceLine il ON i.C_Invoice_ID = il.C_Invoice_ID ")
-               .append("LEFT JOIN C_BPartner bp ON i.C_BPartner_ID = bp.C_BPartner_ID ")
-               .append("LEFT JOIN M_Product p ON il.M_Product_ID = p.M_Product_ID ")
-               .append("WHERE i.IsSOTrx=? AND i.DocStatus IN ('CO','CL') ")
-               .append("AND i.DateInvoiced BETWEEN ? AND ? ");
+        	sql.append("SELECT i.DateInvoiced, bp.Name AS BPartner, ")
+        	   .append("p.Name AS Product, u.Name AS UOM, ")
+        	   .append("SUM(il.QtyInvoiced) AS Qty, ")
+        	   .append("AVG(il.PriceActual) AS Price, ")
+        	   .append("SUM(il.LineNetAmt) AS Amount ")
+        	   .append("FROM C_Invoice i ")
+        	   .append("JOIN C_InvoiceLine il ON i.C_Invoice_ID = il.C_Invoice_ID ")
+        	   .append("LEFT JOIN C_BPartner bp ON i.C_BPartner_ID = bp.C_BPartner_ID ")
+        	   .append("LEFT JOIN M_Product p ON il.M_Product_ID = p.M_Product_ID ")
+        	   .append("LEFT JOIN C_UOM u ON il.C_UOM_ID = u.C_UOM_ID ")
+        	   .append("WHERE i.IsSOTrx=? AND i.DocStatus IN ('CO','CL') ")
+        	   .append("AND i.DateInvoiced BETWEEN ? AND ? ");
+
 
             if (org != null && !org.isEmpty())
                 sql.append("AND i.AD_Org_ID=").append(org);
@@ -151,14 +157,18 @@ public class PrintPurchaseReportServlet extends HttpServlet {
                .append(" ORDER BY i.DateInvoiced");
 
         } else {
-            sql.append("SELECT i.DateInvoiced, i.DocumentNo, bp.Name AS BPartner, p.Name AS Product, ")
-               .append("il.QtyInvoiced AS Qty, il.PriceActual AS Price, il.LineNetAmt AS Amount ")
-               .append("FROM C_Invoice i ")
-               .append("JOIN C_InvoiceLine il ON i.C_Invoice_ID = il.C_Invoice_ID ")
-               .append("LEFT JOIN C_BPartner bp ON i.C_BPartner_ID = bp.C_BPartner_ID ")
-               .append("LEFT JOIN M_Product p ON il.M_Product_ID = p.M_Product_ID ")
-               .append("WHERE i.IsSOTrx=? AND i.DocStatus IN ('CO','CL') ")
-               .append("AND i.DateInvoiced BETWEEN ? AND ? ");
+        	sql.append("SELECT i.DateInvoiced, i.DocumentNo, bp.Name AS BPartner, ")
+        	   .append("p.Name AS Product, u.Name AS UOM, ")
+        	   .append("il.QtyInvoiced AS Qty, ")
+        	   .append("il.PriceActual AS Price, ")
+        	   .append("il.LineNetAmt AS Amount ")
+        	   .append("FROM C_Invoice i ")
+        	   .append("JOIN C_InvoiceLine il ON i.C_Invoice_ID = il.C_Invoice_ID ")
+        	   .append("LEFT JOIN C_BPartner bp ON i.C_BPartner_ID = bp.C_BPartner_ID ")
+        	   .append("LEFT JOIN M_Product p ON il.M_Product_ID = p.M_Product_ID ")
+        	   .append("LEFT JOIN C_UOM u ON il.C_UOM_ID = u.C_UOM_ID ")
+        	   .append("WHERE i.IsSOTrx=? AND i.DocStatus IN ('CO','CL') ")
+        	   .append("AND i.DateInvoiced BETWEEN ? AND ? ");
 
             if (org != null && !org.isEmpty())
                 sql.append("AND i.AD_Org_ID=").append(org);
@@ -193,6 +203,7 @@ public class PrintPurchaseReportServlet extends HttpServlet {
                 if (summary.equals("N")) row.put("DocumentNo", rs.getString("DocumentNo"));
                 row.put("BPartner", rs.getString("BPartner"));
                 row.put("Product", rs.getString("Product"));
+                row.put("UOM", rs.getString("UOM"));
                 row.put("Qty", safe(rs.getBigDecimal("Qty")));
                 row.put("Price", safe(rs.getBigDecimal("Price")));
                 row.put("Amount", safe(rs.getBigDecimal("Amount")));
@@ -212,96 +223,104 @@ public class PrintPurchaseReportServlet extends HttpServlet {
         response.getWriter().write(result.toString());
     }
 
-    private void generateInvoiceOutput(HttpServletRequest req, HttpServletResponse resp, String docNo, String format)
-            throws IOException {
+	private void generateInvoiceOutput(HttpServletRequest req, HttpServletResponse resp, String docNo, String format)
+			throws IOException {
 
-        List<Map<String, String>> lines = new ArrayList<>();
-        List<Map<String, String>> taxes = new ArrayList<>();
+		List<Map<String, String>> lines = new ArrayList<>();
+		List<Map<String, String>> taxes = new ArrayList<>();
 
-        String bPartner = "";
-        String docDate = "";
-        String grandTotal = "0.00";
-        String taxTotal = "0.00";
-        BigDecimal subTotal = BigDecimal.ZERO;
+		String bPartner = "";
+		String docDate = "";
+		String grandTotal = "0.00";
+		BigDecimal subTotal = BigDecimal.ZERO;
 
-        String sql = "SELECT i.DateInvoiced, i.GrandTotal, i.TotalLines, bp.Name, " +
-                     "il.LineNetAmt, il.PriceActual, il.QtyInvoiced, p.Name AS ProductName, p.Value AS ProductCode, " +
-                     "COALESCE(p.HSNCode, '') AS HSNCode " +
-                     "FROM C_Invoice i " +
-                     "JOIN C_BPartner bp ON i.C_BPartner_ID = bp.C_BPartner_ID " +
-                     "JOIN C_InvoiceLine il ON i.C_Invoice_ID = il.C_Invoice_ID " +
-                     "LEFT JOIN M_Product p ON il.M_Product_ID = p.M_Product_ID " +
-                     "WHERE i.DocumentNo = ?";
+// ---------------- HEADER + LINES ----------------
+		String sql = "SELECT i.DateInvoiced, i.GrandTotal, i.TotalLines, bp.Name, "
+				+ "il.LineNetAmt, il.PriceActual, il.QtyInvoiced, "
+				+ "p.Name AS ProductName, COALESCE(p.HSNCode,'') AS HSNCode " + "FROM C_Invoice i "
+				+ "JOIN C_BPartner bp ON i.C_BPartner_ID = bp.C_BPartner_ID "
+				+ "JOIN C_InvoiceLine il ON i.C_Invoice_ID = il.C_Invoice_ID "
+				+ "LEFT JOIN M_Product p ON il.M_Product_ID = p.M_Product_ID " + "WHERE i.DocumentNo=?";
 
-        try (Connection conn = DB.getConnectionRW();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+		try (Connection conn = DB.getConnectionRW(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setString(1, docNo);
-            ResultSet rs = ps.executeQuery();
+			ps.setString(1, docNo);
+			ResultSet rs = ps.executeQuery();
 
-            while (rs.next()) {
-                if (bPartner.isEmpty()) {
-                    bPartner = rs.getString("Name");
-                    Timestamp ts = rs.getTimestamp("DateInvoiced");
-                    SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm");
-                    docDate = sdf.format(ts);
-                    grandTotal = safe(rs.getBigDecimal("GrandTotal"));
-                    subTotal = rs.getBigDecimal("TotalLines");
-                    taxTotal = safe(rs.getBigDecimal("GrandTotal").subtract(rs.getBigDecimal("TotalLines")));
-                }
-                Map<String, String> line = new HashMap<>();
-                line.put("Product", rs.getString("ProductName"));
-                line.put("Code", rs.getString("ProductCode"));
-                line.put("HSN", rs.getString("HSNCode"));
-                line.put("Qty", safe(rs.getBigDecimal("QtyInvoiced")));
-                line.put("Price", safe(rs.getBigDecimal("PriceActual")));
-                line.put("Total", safe(rs.getBigDecimal("LineNetAmt")));
-                lines.add(line);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            if ("thermal".equals(format)) {
-                resp.setContentType("text/html");
-                resp.getWriter().println("<h1>Error loading invoice</h1>");
-            } else {
-                resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            }
-            return;
-        }
+			while (rs.next()) {
 
-        String taxSql = "SELECT t.Name, it.TaxAmt, it.TaxBaseAmt " +
-                        "FROM C_InvoiceTax it " +
-                        "JOIN C_Tax t ON it.C_Tax_ID = t.C_Tax_ID " +
-                        "JOIN C_Invoice i ON it.C_Invoice_ID = i.C_Invoice_ID " +
-                        "WHERE i.DocumentNo = ?";
+				if (bPartner.isEmpty()) {
+					bPartner = rs.getString("Name");
 
-        try (Connection conn = DB.getConnectionRW();
-             PreparedStatement ps = conn.prepareStatement(taxSql)) {
+					Timestamp ts = rs.getTimestamp("DateInvoiced");
+					docDate = new SimpleDateFormat("dd-MM-yyyy HH:mm").format(ts);
 
-            ps.setString(1, docNo);
-            ResultSet rs = ps.executeQuery();
+					grandTotal = safe(rs.getBigDecimal("GrandTotal"));
+					subTotal = rs.getBigDecimal("TotalLines"); // ✅ Taxable Base
+				}
 
-            while (rs.next()) {
-                Map<String, String> tax = new HashMap<>();
-                String name = rs.getString("Name");
-                if (name.contains("CGST") || name.contains("Central")) name = "CGST";
-                else if (name.contains("SGST") || name.contains("State")) name = "SGST";
-                else if (name.contains("IGST")) name = "IGST";
+				Map<String, String> line = new HashMap<>();
+				line.put("Product", rs.getString("ProductName"));
+				line.put("HSN", rs.getString("HSNCode"));
+				line.put("Qty", safe(rs.getBigDecimal("QtyInvoiced")));
+				line.put("Price", safe(rs.getBigDecimal("PriceActual")));
+				line.put("Total", safe(rs.getBigDecimal("LineNetAmt"))); // taxable per item
+				lines.add(line);
+			}
 
-                tax.put("Name", name);
-                tax.put("Amt", safe(rs.getBigDecimal("TaxAmt")));
-                taxes.add(tax);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+		} catch (Exception e) {
+			e.printStackTrace();
+			resp.sendError(500);
+			return;
+		}
 
-        if ("thermal".equals(format)) {
-            generateThermalHtml(resp, docNo, bPartner, docDate, grandTotal, subTotal, lines, taxes);
-        } else {
-            generateA4Pdf(resp, docNo, bPartner, docDate, grandTotal, subTotal, lines, taxes);
-        }
-    }
+			// ---------------- TAX BREAKUP ----------------
+		String taxSql = "SELECT t.Name, it.TaxAmt, it.TaxBaseAmt " + "FROM C_InvoiceTax it "
+				+ "JOIN C_Tax t ON it.C_Tax_ID = t.C_Tax_ID " + "JOIN C_Invoice i ON it.C_Invoice_ID = i.C_Invoice_ID "
+				+ "WHERE i.DocumentNo=?";
+
+		try (Connection conn = DB.getConnectionRW(); PreparedStatement ps = conn.prepareStatement(taxSql)) {
+
+			ps.setString(1, docNo);
+			ResultSet rs = ps.executeQuery();
+
+			while (rs.next()) {
+
+				Map<String, String> tax = new HashMap<>();
+
+				String name = rs.getString("Name");
+				if (name.contains("CGST"))
+					name = "CGST";
+				else if (name.contains("SGST"))
+					name = "SGST";
+				else if (name.contains("IGST"))
+					name = "IGST";
+
+				BigDecimal taxAmt = rs.getBigDecimal("TaxAmt");
+				BigDecimal baseAmt = rs.getBigDecimal("TaxBaseAmt");
+
+// ✅ Calculate Rate %
+				BigDecimal rate = BigDecimal.ZERO;
+				if (baseAmt.compareTo(BigDecimal.ZERO) > 0) {
+					rate = taxAmt.multiply(new BigDecimal(100)).divide(baseAmt, 2, BigDecimal.ROUND_HALF_UP);
+				}
+
+				tax.put("Name", name + " @" + rate + "%");
+				tax.put("Amt", safe(taxAmt));
+				taxes.add(tax);
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+// ---------------- OUTPUT ----------------
+		if ("thermal".equals(format)) {
+			generateThermalHtml(resp, docNo, bPartner, docDate, grandTotal, subTotal, lines, taxes);
+		} else {
+			generateA4Pdf(resp, docNo, bPartner, docDate, grandTotal, subTotal, lines, taxes);
+		}
+	}
 
     private void generateThermalHtml(HttpServletResponse resp, String docNo, String bp, String date,
                                      String total, BigDecimal subTotal, List<Map<String, String>> lines, List<Map<String, String>> taxes) throws IOException {
@@ -370,16 +389,45 @@ public class PrintPurchaseReportServlet extends HttpServlet {
             out.println("</div>");
         }
 
-        // TOTALS
         out.println("<div class='totals-section'>");
-        out.println("<div class='total-row'><span>Sub Total:</span><span>" + safe(subTotal) + "</span></div>");
-        for (Map<String, String> tax : taxes) {
-            out.println("<div class='total-row'><span>" + tax.get("Name") + ":</span><span>" + tax.get("Amt") + "</span></div>");
-        }
-        out.println("<div class='grand-total'>");
-        out.println("<span style='font-size:12px'>TOTAL</span><span>" + total + "</span>");
-        out.println("</div>");
-        out.println("</div>");
+
+     // Taxable
+     out.println("<div class='total-row'><span>Taxable Amount:</span><span>"
+             + safe(subTotal) + "</span></div>");
+
+     // GST breakup safely
+     for (Map<String, String> tax : taxes) {
+
+         String taxName = tax.get("Name");
+
+         String taxAmtStr = tax.get("Amt");
+         if (taxAmtStr == null) taxAmtStr = "0.00";
+
+         String baseAmtStr = tax.get("taxableAmt");
+         if (baseAmtStr == null) baseAmtStr = safe(subTotal);
+
+         BigDecimal taxAmount = new BigDecimal(taxAmtStr);
+         BigDecimal taxableBase = new BigDecimal(baseAmtStr);
+
+         BigDecimal rate = BigDecimal.ZERO;
+         if (taxableBase.compareTo(BigDecimal.ZERO) > 0) {
+             rate = taxAmount.multiply(new BigDecimal("100"))
+                             .divide(taxableBase, 2, BigDecimal.ROUND_HALF_UP);
+         }
+
+         out.println("<div class='total-row'><span>"
+                 + taxName + " @" + rate + "%:</span><span>"
+                 + safe(taxAmount) + "</span></div>");
+     }
+
+     // Grand Total
+     out.println("<div class='grand-total'>");
+     out.println("<span style='font-size:12px'>TOTAL</span><span>" + total + "</span>");
+     out.println("</div>");
+
+     out.println("</div>");
+
+
 
         // FOOTER
         out.println("<div class='footer'>");

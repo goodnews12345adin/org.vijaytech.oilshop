@@ -709,7 +709,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
    <script>
-const servletUrl = "<%=request.getContextPath()%>/ProfitAndLossReport";
+const servletUrl = "<%=request.getContextPath()%>/StockReport";
 
 let tableData = [];
 let responseTotals = {};
@@ -761,8 +761,8 @@ function loadReport(e){
       responseTotals = res.totals || {};
 
       renderTable();
-      renderStats();
-      renderChart();
+   //   renderStats();
+    //  renderChart();
 
       $("#dashboard-stats").hide().slideDown(500);
     },
@@ -824,13 +824,10 @@ function renderTable(){
     html += `<td>\${row.productName || ""}</td>`;
 
     html += `<td class="text-end">\${row.salesQty || 0}</td>`;
-    html += `<td class="text-end">\${fmt(row.salesAmount)}</td>`;
 
     html += `<td class="text-end">\${row.purchaseQty || 0}</td>`;
-    html += `<td class="text-end">\${fmt(row.purchaseAmount)}</td>`;
 
     html += `<td class="text-end">\${row.balanceQty || 0}</td>`;
-    html += `<td class="text-end fw-bold">\${fmt(row.profit)}</td>`;
 
     html += `</tr>`;
   });
@@ -954,9 +951,9 @@ function exportFile(type){
       fmt(row.profit) + "\n";
   });
 
-  /* ============================
+  /*============================
      ✅ Download CSV File
-  ============================ */
+  ============================*/
 
   let blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
 
@@ -964,154 +961,6 @@ function exportFile(type){
   link.href = URL.createObjectURL(blob);
   link.download = "PNL_Report.csv";
   link.click();
-}
-function downloadTablePDF() {
-
-    if (tableData.length === 0) {
-        alert("No data available to export!");
-        return;
-    }
-
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF("p", "mm", "a4");
-
-    /* ============================
-       ✅ Report Title
-    ============================ */
-    /* ============================
-    ✅ Company Header
- ============================ */
-
- // Company Name
- doc.setFontSize(18);
- doc.setFont("helvetica", "bold");
- doc.text("THIRU SENTHILATHIPATHI OIL STORE", 105, 15, { align: "center" });
-
- // Address Line
- doc.setFontSize(10);
- doc.setFont("helvetica", "normal");
- doc.text(
-   "No.42, Krishna Moorthi Bavanam, Madakulam Main Road,",
-   105,
-   22,
-   { align: "center" }
- );
-
- doc.text(
-   "Palangantham, Madurai – 625003",
-   105,
-   27,
-   { align: "center" }
- );
-
- // GST Line
- doc.setFontSize(10);
- doc.setFont("helvetica", "bold");
- doc.text("GST: 29ABCDE1234F1Z5", 105, 32, { align: "center" });
- /* ============================
- ✅ Report Title
-============================ */
-
-doc.setFontSize(16);
-doc.setFont("helvetica", "bold");
-doc.text("Profit & Loss Report", 14, 45);
-
-doc.setFontSize(10);
-doc.setFont("helvetica", "normal");
-
-let fromDate = document.getElementById("fromDate").value;
-let toDate   = document.getElementById("toDate").value;
-
-doc.text("Period: " + fromDate + " to " + toDate, 14, 52);
-
- // Divider Line
- doc.setDrawColor(0);
- doc.line(14, 36, 196, 36);
-
-    /* ============================
-       ✅ Prepare Table Data
-    ============================ */
-    let bodyData = [];
-
-    tableData.forEach(row => {
-        bodyData.push([
-            row.productCode || "",
-            row.productName || "",
-            row.salesQty || 0,
-            fmt(row.salesAmount),
-            row.purchaseQty || 0,
-            fmt(row.purchaseAmount),
-            fmt(row.profit)
-        ]);
-    });
-
-    /* ============================
-       ✅ Grand Totals Row
-    ============================ */
-    let totalSales    = fmt(responseTotals.totalSalesAmount || 0);
-    let totalPurchase = fmt(responseTotals.totalPurchaseAmount || 0);
-    let totalProfit   = fmt(responseTotals.totalProfit || 0);
-
-    bodyData.push([
-        "", 
-        "GRAND TOTAL",
-        "",
-        totalSales,
-        "",
-        totalPurchase,
-        totalProfit
-    ]);
-
-    /* ============================
-       ✅ Export Table + Totals Row
-    ============================ */
-    doc.autoTable({
-        head: [[
-            "Code",
-            "Product",
-            "Sales Qty",
-            "Sales Amt",
-            "Purch Qty",
-            "Purch Amt",
-            "Profit"
-        ]],
-        body: bodyData,
-        startY: 35,
-        theme: "grid",
-        styles: {
-            fontSize: 8,
-            cellPadding: 2
-        },
-        headStyles: {
-            fontStyle: "bold"
-        },
-
-        /* ✅ Style Grand Total Row */
-        didParseCell: function (data) {
-            if (data.row.index === bodyData.length - 1) {
-                data.cell.styles.fontStyle = "bold";
-                data.cell.styles.fillColor = [240, 240, 240];
-            }
-        }
-    });
-
-    /* ============================
-       ✅ Save PDF
-    ============================ */
-    doc.save("Profit_Loss_Report.pdf");
-}
-
-
-
-/* ---------- download Single Invoice ---------- */
-function downloadSinglePDF(docId){
-
-  if(!docId){
-    alert("Document ID missing.");
-    return;
-  }
-
-  window.open(servletUrl + "?docNo=" + docId, "_blank");
 }
 </script>
 </body>

@@ -165,6 +165,15 @@
 </servlet-mapping>
 
 <servlet>
+    <servlet-name>StockReport</servlet-name>
+    <servlet-class>org.vijaytech.oilshop.StockReport</servlet-class>
+</servlet>
+<servlet-mapping>
+    <servlet-name>StockReport</servlet-name>
+    <url-pattern>/StockReport</url-pattern>
+</servlet-mapping>
+
+<servlet>
     <servlet-name>SingleInvoicePDF</servlet-name>
     <servlet-class>org.vijaytech.oilshop.utils.SingleInvoicePDF</servlet-class>
 </servlet>

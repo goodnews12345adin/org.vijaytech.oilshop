@@ -89,10 +89,10 @@
         String baseExpense =
         	    "FROM C_Payment " +
         	    "WHERE AD_Client_ID = "+AD_Client_ID +""+
-        	    "AND AD_Org_ID = "+AD_Org_ID +""+
-        	    "AND IsReceipt = 'N' " +
-        	    "AND TenderType = 'X' " +
-        	    "AND DocStatus = 'CO' ";
+        	    " AND AD_Org_ID = "+AD_Org_ID +""+
+        	    " AND IsReceipt = 'N' " +
+        	    " AND TenderType = 'X' " +
+        	    " AND DocStatus = 'CO' ";
 
         String SQL_WEEKLY_EXPENSE_AMOUNT =
         	    "SELECT COALESCE(SUM(PayAmt),0) " + baseExpense +
