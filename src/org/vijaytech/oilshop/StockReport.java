@@ -1,6 +1,10 @@
 package org.vijaytech.oilshop;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,7 +21,10 @@ import javax.servlet.http.HttpSession;
 import org.compiere.model.MProduct;
 import org.compiere.model.MProductCategory;
 import org.compiere.model.Query;
+import org.compiere.util.DB;
 import org.compiere.util.Env;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 public class StockReport extends HttpServlet{
 	
@@ -59,21 +66,10 @@ public class StockReport extends HttpServlet{
 
 	        try {
 	            // Load Dropdown Data using STANDARD ADempiere Models
-	            List<Map<String, Object>> categoryList = new ArrayList<>();
 	            List<Map<String, Object>> productList = new ArrayList<>();
 
 	            // Using MProductCategory (Standard)
-	            List<MProductCategory> cats = new Query(ctx, MProductCategory.Table_Name, "IsActive='Y'", null)
-	                    .setClient_ID()
-	                    .list();
-
-	            for (MProductCategory c : cats) {
-	                Map<String, Object> m = new HashMap<>();
-	                m.put("id", c.get_ID());
-	                m.put("name", c.getName());
-	                categoryList.add(m);
-	            }
-	            
+	          
 	            // Using MProduct (Standard)
 	            List<MProduct> prods = new Query(ctx, MProduct.Table_Name, "IsActive='Y'", null)
 	                    .setClient_ID()
@@ -84,11 +80,9 @@ public class StockReport extends HttpServlet{
 	                m.put("name", p.getName());
 	                productList.add(m);
 	            }
-
-	            req.setAttribute("categoryList", categoryList);
 	            req.setAttribute("productList", productList);
 
-	            RequestDispatcher rd = req.getRequestDispatcher("/pages/profitandloss.jsp");
+	            RequestDispatcher rd = req.getRequestDispatcher("/pages/StockReport.jsp");
 	            rd.forward(req, resp);
 
 	        } catch (Exception e) {
@@ -96,4 +90,109 @@ public class StockReport extends HttpServlet{
 	            throw new ServletException("Error loading Report", e);
 	        }
 	    }
+	    
+	    @Override
+	    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+	            throws ServletException, IOException {
+
+	        String productIdStr = req.getParameter("productId");
+	        String fromDateStr  = req.getParameter("fromDate");
+	        String toDateStr    = req.getParameter("toDate");
+
+	        JSONArray result = new JSONArray();
+
+	        // ✅ Dates are mandatory
+	        if (fromDateStr == null || fromDateStr.isEmpty() ||
+	            toDateStr == null || toDateStr.isEmpty()) {
+
+	            resp.setContentType("application/json");
+	            resp.getWriter().write("{\"error\":\"From Date and To Date are required\"}");
+	            return;
+	        }
+
+	        // ✅ Base Query
+	        String sql =
+	            "SELECT t.MovementDate, p.Value AS ProductCode, p.Name AS ProductName, " +
+	            "u.Name AS UOM, " +
+	            "CASE WHEN t.MovementQty > 0 THEN t.MovementQty ELSE 0 END AS InQty, " +
+	            "CASE WHEN t.MovementQty < 0 THEN ABS(t.MovementQty) ELSE 0 END AS OutQty, " +
+	            "SUM(t.MovementQty) OVER (ORDER BY t.MovementDate, t.M_Transaction_ID) AS BalanceQty " +
+	            "FROM M_Transaction t " +
+	            "JOIN M_Product p ON t.M_Product_ID = p.M_Product_ID " +
+	            "JOIN C_UOM u ON p.C_UOM_ID = u.C_UOM_ID " +
+	            "WHERE t.MovementDate BETWEEN ? AND ? ";
+
+	        // ✅ Product filter only if provided
+	        boolean hasProduct = (productIdStr != null && !productIdStr.trim().isEmpty());
+
+	        if (hasProduct) {
+	            sql += " AND p.M_Product_ID = ? ";
+	        }
+
+	        sql += " ORDER BY t.MovementDate";
+
+	        try (Connection con = DB.getConnectionRW();
+	             PreparedStatement ps = con.prepareStatement(sql)) {
+
+	            // ✅ Convert dates properly
+	            Timestamp fromTs = Timestamp.valueOf(fromDateStr + " 00:00:00");
+	            Timestamp toTs   = Timestamp.valueOf(toDateStr + " 23:59:59");
+
+	            // ✅ Bind mandatory params
+	            ps.setTimestamp(1, fromTs);
+	            ps.setTimestamp(2, toTs);
+
+	            // ✅ Bind optional product
+	            if (hasProduct) {
+	                ps.setInt(3, Integer.parseInt(productIdStr));
+	            }
+
+	            // ✅ Execute query
+	            try (ResultSet rs = ps.executeQuery()) {
+
+	                while (rs.next()) {
+	                    JSONObject row = new JSONObject();
+
+	                    row.put("date", rs.getTimestamp("MovementDate").toString());
+	                    row.put("productCode", rs.getString("ProductCode"));
+	                    row.put("productName", rs.getString("ProductName"));
+	                    row.put("uom", rs.getString("UOM"));
+
+	                    row.put("inQty", rs.getBigDecimal("InQty"));
+	                    row.put("outQty", rs.getBigDecimal("OutQty"));
+	                    row.put("balanceQty", rs.getBigDecimal("BalanceQty"));
+
+	                    result.put(row);
+	                }
+	            }
+
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	            resp.setContentType("application/json");
+	            resp.getWriter().write("{\"error\":\"" + e.getMessage() + "\"}");
+	            return;
+	        }
+
+	        // ✅ Response
+	        resp.setContentType("application/json");
+	        resp.getWriter().write(result.toString());
+	    }
+	    
+	    private Timestamp toTs(String dateStr) {
+	        try {
+	            return Timestamp.valueOf(dateStr + " 00:00:00");
+	        } catch (Exception e) {
+	            return null;
+	        }
+	    }
+
+	    private Timestamp toTsEnd(String dateStr) {
+	        try {
+	            return Timestamp.valueOf(dateStr + " 23:59:59");
+	        } catch (Exception e) {
+	            return null;
+	        }
+	    }
 }
+
+

@@ -534,6 +534,9 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
                 <li><a href="<%=request.getContextPath()%>/ProfitAndLossReport" class="sidebar-link submenu-link">
                     <i class="bi bi-graph-up"></i> Profit & Loss
                 </a></li>
+                <li><a href="<%=request.getContextPath()%>/StockReport" class="sidebar-link submenu-link">
+                    <i class="bi bi-box-seam"></i> Stock Report
+                </a></li>
                 <li><a href="<%=request.getContextPath()%>/CashBookReport" class="sidebar-link submenu-link">
                     <i class="bi bi-journal-check"></i> Expense Summary
                 </a></li>
