@@ -236,7 +236,7 @@ public class SalesSaveServlet extends HttpServlet {
             ordH.setC_DocTypeTarget_ID(1000041);
             // Use the validated warehouseId variable instead of blindly reading context
             ordH.setM_Warehouse_ID(warehouseId);
-            ordH.setPaymentRule("B");
+            ordH.setPaymentRule("O");
             ordH.setM_PriceList_ID(1000058);
             ordH.setSalesDiscountAmt(discount);
             ordH.setIsTaxIncluded(true);

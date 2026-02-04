@@ -230,14 +230,23 @@ public class PrintPurchaseReportServlet extends HttpServlet {
 		List<Map<String, String>> taxes = new ArrayList<>();
 
 		String bPartner = "";
+		String phone = "";
 		String docDate = "";
 		String grandTotal = "0.00";
-		BigDecimal subTotal = BigDecimal.ZERO;
 
-// ---------------- HEADER + LINES ----------------
-		String sql = "SELECT i.DateInvoiced, i.GrandTotal, i.TotalLines, bp.Name, "
-				+ "il.LineNetAmt, il.PriceActual, il.QtyInvoiced, "
-				+ "p.Name AS ProductName, COALESCE(p.HSNCode,'') AS HSNCode " + "FROM C_Invoice i "
+		int invoiceId = 0;
+
+		BigDecimal taxableTotal = BigDecimal.ZERO; // ✅ Correct Base
+		BigDecimal gstTotal = BigDecimal.ZERO; // ✅ Total Tax
+
+		/*
+		 * ========================================================== ✅ HEADER + INVOICE
+		 * LINES (No Design Change)
+		 * ==========================================================
+		 */
+		String sql = "SELECT i.C_Invoice_ID, i.DateInvoiced, i.GrandTotal, " + "       bp.Name,bp.phone, "
+				+ "       il.LineNetAmt, il.PriceActual, il.QtyInvoiced, "
+				+ "       p.Name AS ProductName, COALESCE(p.HSNCode,'') AS HSNCode " + "FROM C_Invoice i "
 				+ "JOIN C_BPartner bp ON i.C_BPartner_ID = bp.C_BPartner_ID "
 				+ "JOIN C_InvoiceLine il ON i.C_Invoice_ID = il.C_Invoice_ID "
 				+ "LEFT JOIN M_Product p ON il.M_Product_ID = p.M_Product_ID " + "WHERE i.DocumentNo=?";
@@ -249,14 +258,16 @@ public class PrintPurchaseReportServlet extends HttpServlet {
 
 			while (rs.next()) {
 
-				if (bPartner.isEmpty()) {
+				if (invoiceId == 0) {
+					invoiceId = rs.getInt("C_Invoice_ID");
+
 					bPartner = rs.getString("Name");
+					phone = rs.getString("phone");
 
 					Timestamp ts = rs.getTimestamp("DateInvoiced");
 					docDate = new SimpleDateFormat("dd-MM-yyyy HH:mm").format(ts);
 
 					grandTotal = safe(rs.getBigDecimal("GrandTotal"));
-					subTotal = rs.getBigDecimal("TotalLines"); // ✅ Taxable Base
 				}
 
 				Map<String, String> line = new HashMap<>();
@@ -264,66 +275,98 @@ public class PrintPurchaseReportServlet extends HttpServlet {
 				line.put("HSN", rs.getString("HSNCode"));
 				line.put("Qty", safe(rs.getBigDecimal("QtyInvoiced")));
 				line.put("Price", safe(rs.getBigDecimal("PriceActual")));
-				line.put("Total", safe(rs.getBigDecimal("LineNetAmt"))); // taxable per item
+				line.put("Total", safe(rs.getBigDecimal("LineNetAmt")));
+
 				lines.add(line);
 			}
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			resp.sendError(500);
+			resp.sendError(500, "Error loading Invoice Lines");
 			return;
 		}
 
-			// ---------------- TAX BREAKUP ----------------
-		String taxSql = "SELECT t.Name, it.TaxAmt, it.TaxBaseAmt " + "FROM C_InvoiceTax it "
-				+ "JOIN C_Tax t ON it.C_Tax_ID = t.C_Tax_ID " + "JOIN C_Invoice i ON it.C_Invoice_ID = i.C_Invoice_ID "
-				+ "WHERE i.DocumentNo=?";
+		/*
+		 * ========================================================== ✅ GST TAX BREAKUP
+		 * (Exact iDempiere Invoice Tax Tab)
+		 * ==========================================================
+		 */
+
+		String taxSql = "SELECT t.Name AS TaxName, it.TaxAmt, it.TaxBaseAmt " + "FROM C_InvoiceTax it "
+				+ "JOIN C_Tax t ON it.C_Tax_ID = t.C_Tax_ID " + "WHERE it.C_Invoice_ID=?";
 
 		try (Connection conn = DB.getConnectionRW(); PreparedStatement ps = conn.prepareStatement(taxSql)) {
 
-			ps.setString(1, docNo);
+			ps.setInt(1, invoiceId);
 			ResultSet rs = ps.executeQuery();
 
 			while (rs.next()) {
 
-				Map<String, String> tax = new HashMap<>();
+			    String name = rs.getString("TaxName");
 
-				String name = rs.getString("Name");
-				if (name.contains("CGST"))
-					name = "CGST";
-				else if (name.contains("SGST"))
-					name = "SGST";
-				else if (name.contains("IGST"))
-					name = "IGST";
+			    BigDecimal taxAmt  = rs.getBigDecimal("TaxAmt");
+			    BigDecimal baseAmt = rs.getBigDecimal("TaxBaseAmt");
 
-				BigDecimal taxAmt = rs.getBigDecimal("TaxAmt");
-				BigDecimal baseAmt = rs.getBigDecimal("TaxBaseAmt");
+			    // ✅ GST Total always sum
+			    gstTotal = gstTotal.add(taxAmt);
 
-// ✅ Calculate Rate %
-				BigDecimal rate = BigDecimal.ZERO;
-				if (baseAmt.compareTo(BigDecimal.ZERO) > 0) {
-					rate = taxAmt.multiply(new BigDecimal(100)).divide(baseAmt, 2, BigDecimal.ROUND_HALF_UP);
-				}
+			    // ✅ Taxable Base should be taken once (not summed twice)
+			    if (baseAmt.compareTo(taxableTotal) > 0) {
+			        taxableTotal = baseAmt;
+			    }
 
-				tax.put("Name", name + " @" + rate + "%");
-				tax.put("Amt", safe(taxAmt));
-				taxes.add(tax);
+			    // ✅ Rate calculation
+			    BigDecimal rate = BigDecimal.ZERO;
+			    if (baseAmt.compareTo(BigDecimal.ZERO) > 0) {
+			        rate = taxAmt.multiply(new BigDecimal("100"))
+			                .divide(baseAmt, 2, BigDecimal.ROUND_HALF_UP);
+			    }
+
+			    // ✅ Normalize Name
+			    if (name.contains("CGST")) name = "CGST";
+			    else if (name.contains("SGST")) name = "SGST";
+			    else if (name.contains("IGST")) name = "IGST";
+
+			    Map<String, String> tax = new HashMap<>();
+			    tax.put("Name", name + " @" + rate + "%");
+			    tax.put("Amt", safe(taxAmt));
+
+			    taxes.add(tax);
 			}
+
 
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
-// ---------------- OUTPUT ----------------
-		if ("thermal".equals(format)) {
-			generateThermalHtml(resp, docNo, bPartner, docDate, grandTotal, subTotal, lines, taxes);
+
+		BigDecimal calcGrand = taxableTotal.add(gstTotal);
+
+
+// ✅ Keep invoice grandtotal if rounding mismatch
+		if (calcGrand.subtract(new BigDecimal(grandTotal)).abs().doubleValue() > 1) {
+			calcGrand = new BigDecimal(grandTotal);
+		}
+
+		/*
+		 * ========================================================== ✅ OUTPUT SAME
+		 * DESIGN (No Change) ==========================================================
+		 */
+		if ("thermal".equalsIgnoreCase(format)) {
+
+			generateThermalHtml(resp, docNo, bPartner, docDate, safe(calcGrand), taxableTotal, // ✅ Correct Subtotal
+																								// Base
+					lines, taxes, phone);
+
 		} else {
-			generateA4Pdf(resp, docNo, bPartner, docDate, grandTotal, subTotal, lines, taxes);
+
+			generateA4Pdf(resp, docNo, bPartner, docDate, safe(calcGrand), taxableTotal, // ✅ Correct Subtotal Base
+					lines, taxes, phone);
 		}
 	}
 
     private void generateThermalHtml(HttpServletResponse resp, String docNo, String bp, String date,
-                                     String total, BigDecimal subTotal, List<Map<String, String>> lines, List<Map<String, String>> taxes) throws IOException {
+                                     String total, BigDecimal subTotal, List<Map<String, String>> lines, List<Map<String, String>> taxes,String phone) throws IOException {
 
         resp.setContentType("text/html");
         PrintWriter out = resp.getWriter();
@@ -348,6 +391,7 @@ public class PrintPurchaseReportServlet extends HttpServlet {
         out.println(".col-hsn { flex: 1; text-align: center; font-size: 10px; }");
         out.println(".col-qty { flex: 0.8; text-align: right; }");
         out.println(".col-amt { flex: 1.2; text-align: right; }");
+        out.println(".col-rate { flex: 1; text-align: right; font-size: 10px; }");
         out.println(".totals-section { margin-top: 5px; border-top: 1px solid #000; padding-top: 2px; }");
         out.println(".total-row { display: flex; justify-content: space-between; margin: 1px 0; }");
         // UPDATED CSS: Added display: flex and justify-content: space-between to .grand-total
@@ -375,57 +419,55 @@ public class PrintPurchaseReportServlet extends HttpServlet {
         out.println("<div class='table-head'>");
         out.println("<div class='col-item'>ITEM</div>");
         out.println("<div class='col-hsn'>HSN</div>");
+        out.println("<div class='col-rate'>RATE</div>");
         out.println("<div class='col-qty'>QTY</div>");
         out.println("<div class='col-amt'>AMT</div>");
         out.println("</div>");
 
+
         // LINES
         for (Map<String, String> line : lines) {
-            out.println("<div class='table-row'>");
-            out.println("<div class='col-item' title='" + line.get("Product") + "'>" + line.get("Product").substring(0, Math.min(line.get("Product").length(), 18)) + "</div>");
-            out.println("<div class='col-hsn'>" + line.get("HSN") + "</div>");
-            out.println("<div class='col-qty'>" + line.get("Qty") + "</div>");
-            out.println("<div class='col-amt'>" + line.get("Total") + "</div>");
-            out.println("</div>");
+        	out.println("<div class='table-row'>");
+        	out.println("<div class='col-item' title='" + line.get("Product") + "'>"
+        	        + line.get("Product").substring(0, Math.min(line.get("Product").length(), 18))
+        	        + "</div>");
+        	out.println("<div class='col-hsn'>" + line.get("HSN") + "</div>");
+        	out.println("<div class='col-rate'>" + line.get("Price") + "</div>");
+        	out.println("<div class='col-qty'>" + line.get("Qty") + "</div>");
+        	out.println("<div class='col-amt'>" + line.get("Total") + "</div>");
+        	out.println("</div>");
+
         }
 
         out.println("<div class='totals-section'>");
 
-     // Taxable
+     // ✅ Taxable Amount (Base Total from InvoiceTax)
      out.println("<div class='total-row'><span>Taxable Amount:</span><span>"
              + safe(subTotal) + "</span></div>");
 
-     // GST breakup safely
+     // ✅ GST Breakup (CGST / SGST / IGST)
      for (Map<String, String> tax : taxes) {
 
          String taxName = tax.get("Name");
-
-         String taxAmtStr = tax.get("Amt");
-         if (taxAmtStr == null) taxAmtStr = "0.00";
-
-         String baseAmtStr = tax.get("taxableAmt");
-         if (baseAmtStr == null) baseAmtStr = safe(subTotal);
-
-         BigDecimal taxAmount = new BigDecimal(taxAmtStr);
-         BigDecimal taxableBase = new BigDecimal(baseAmtStr);
-
-         BigDecimal rate = BigDecimal.ZERO;
-         if (taxableBase.compareTo(BigDecimal.ZERO) > 0) {
-             rate = taxAmount.multiply(new BigDecimal("100"))
-                             .divide(taxableBase, 2, BigDecimal.ROUND_HALF_UP);
-         }
+         String taxAmt  = tax.get("Amt");
 
          out.println("<div class='total-row'><span>"
-                 + taxName + " @" + rate + "%:</span><span>"
-                 + safe(taxAmount) + "</span></div>");
+                 + taxName + ":</span><span>"
+                 + taxAmt + "</span></div>");
      }
 
-     // Grand Total
+     // ✅ Grand Total
      out.println("<div class='grand-total'>");
      out.println("<span style='font-size:12px'>TOTAL</span><span>" + total + "</span>");
      out.println("</div>");
 
+     // ✅ GST Inclusive Note
+     out.println("<div class='total-row' style='font-size:10px;'>");
+     out.println("<span>(All Prices Inclusive of GST)</span><span></span>");
      out.println("</div>");
+
+     out.println("</div>");
+
 
 
 
@@ -440,7 +482,7 @@ public class PrintPurchaseReportServlet extends HttpServlet {
     }
 
     private void generateA4Pdf(HttpServletResponse resp, String docNo, String bp, String date,
-                               String total, BigDecimal subTotal, List<Map<String, String>> lines, List<Map<String, String>> taxes) throws IOException {
+                               String total, BigDecimal subTotal, List<Map<String, String>> lines, List<Map<String, String>> taxes,String phone) throws IOException {
 
         Document document = new Document(PageSize.A4, 20, 20, 30, 30);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -514,6 +556,14 @@ public class PrintPurchaseReportServlet extends HttpServlet {
             billToCell.addElement(billToTitle);
 
             billToCell.addElement(new Phrase(bp, fontNormal));
+            
+            Paragraph billTophone = new Paragraph("phone :", fontHeader);
+            billTophone.setSpacingBefore(0);
+            billTophone.setSpacingAfter(5);
+            billToCell.addElement(billTophone);
+
+            billToCell.addElement(new Phrase(phone, fontNormal));
+
 			/*
 			 * billToCell.addElement(new Phrase("", fontNormal));
 			 */            billToCell.addElement(Chunk.NEWLINE);
@@ -614,28 +664,50 @@ public class PrintPurchaseReportServlet extends HttpServlet {
             wordsCell.addElement(new Phrase(NumberToWord.convertNumberToWord(Double.parseDouble(total)) + " Rupees Only", fontNormal));
             summaryTable.addCell(wordsCell);
 
-            // Right: Calculations
+         // Right: Calculations
             PdfPCell calcCell = new PdfPCell();
             calcCell.setBorder(Rectangle.NO_BORDER);
             calcCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
 
-            Paragraph pSubTotal = new Paragraph("Sub Total: " + safe(subTotal), fontNormal);
-            pSubTotal.setAlignment(Element.ALIGN_RIGHT);
-            calcCell.addElement(pSubTotal);
+            /* ✅ Taxable Amount */
+            Paragraph pTaxable = new Paragraph(
+                    "Taxable Amount: " + safe(subTotal),
+                    fontNormal
+            );
+            pTaxable.setAlignment(Element.ALIGN_RIGHT);
+            calcCell.addElement(pTaxable);
 
+            /* ✅ GST Breakup (CGST/SGST/IGST from InvoiceTax) */
             for (Map<String, String> tax : taxes) {
-                Paragraph pTax = new Paragraph(tax.get("Name") + ": " + tax.get("Amt"), fontNormal);
+
+                Paragraph pTax = new Paragraph(
+                        tax.get("Name") + " : " + tax.get("Amt"),
+                        fontNormal
+                );
                 pTax.setAlignment(Element.ALIGN_RIGHT);
                 calcCell.addElement(pTax);
             }
 
-            Paragraph grandTotalP = new Paragraph("Grand Total: " + total + " INR", fontHeader);
-            grandTotalP.setSpacingBefore(5);
+            /* ✅ Grand Total */
+            Paragraph grandTotalP = new Paragraph(
+                    "Grand Total: " + total + " INR",
+                    fontHeader
+            );
+            grandTotalP.setSpacingBefore(6);
             grandTotalP.setAlignment(Element.ALIGN_RIGHT);
             calcCell.addElement(grandTotalP);
 
+            /* ✅ Inclusive GST Note */
+            Paragraph gstNote = new Paragraph(
+                    "(All Prices are Inclusive of GST)",
+                    FontFactory.getFont(FontFactory.HELVETICA_OBLIQUE, 9, Color.GRAY)
+            );
+            gstNote.setAlignment(Element.ALIGN_RIGHT);
+            calcCell.addElement(gstNote);
+
             summaryTable.addCell(calcCell);
             document.add(summaryTable);
+
 
             // --- 5. SIGNATORY & TERMS ---
             PdfPTable footerTable = new PdfPTable(1);

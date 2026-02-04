@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -65,118 +66,177 @@ public class StockReport extends HttpServlet{
             if (Env.getContextAsInt(ctx, "#AD_Role_ID") == 0) Env.setContext(ctx, "#AD_Role_ID", 102);
 
             try {
-                // Load Dropdown Data using STANDARD ADempiere Models
+
+                /* ✅ Load Category Dropdown */
+                List<Map<String, Object>> categoryList = new ArrayList<>();
+
+                List<MProductCategory> cats =
+                        new Query(ctx, MProductCategory.Table_Name, "IsActive='Y'", null)
+                                .setClient_ID()
+                                .setOrderBy("Name")
+                                .list();
+
+                for (MProductCategory c : cats) {
+                    Map<String, Object> m = new HashMap<>();
+                    m.put("id", c.get_ID());
+                    m.put("name", c.getName());
+                    categoryList.add(m);
+                }
+
+                req.setAttribute("categoryList", categoryList);
+
+                /* ✅ Optional Product Dropdown also */
                 List<Map<String, Object>> productList = new ArrayList<>();
 
-                // Using MProductCategory (Standard)
-              
-                // Using MProduct (Standard)
-                List<MProduct> prods = new Query(ctx, MProduct.Table_Name, "IsActive='Y'", null)
-                        .setClient_ID()
-                        .list();
+                List<MProduct> prods =
+                        new Query(ctx, MProduct.Table_Name, "IsActive='Y'", null)
+                                .setClient_ID()
+                                .setOrderBy("Name")
+                                .list();
+
                 for (MProduct p : prods) {
                     Map<String, Object> m = new HashMap<>();
                     m.put("id", p.get_ID());
                     m.put("name", p.getName());
                     productList.add(m);
                 }
+
                 req.setAttribute("productList", productList);
 
-                RequestDispatcher rd = req.getRequestDispatcher("/pages/StockReport.jsp");
+                /* ✅ Forward JSP */
+                RequestDispatcher rd =
+                        req.getRequestDispatcher("/pages/StockReport.jsp");
                 rd.forward(req, resp);
 
             } catch (Exception e) {
                 e.printStackTrace();
                 throw new ServletException("Error loading Report", e);
             }
+
         }
         
         @Override
         protected void doPost(HttpServletRequest req, HttpServletResponse resp)
                 throws ServletException, IOException {
 
-            String productIdStr = req.getParameter("productId");
-            String fromDateStr  = req.getParameter("fromDate");
-            String toDateStr    = req.getParameter("toDate");
+        	String productCatIdStr = req.getParameter("productcatId");
+        	String fromDateStr  = req.getParameter("fromDate");
+        	String toDateStr    = req.getParameter("toDate");
 
-            JSONArray result = new JSONArray();
+        	resp.setContentType("application/json");
 
-            // ✅ Dates are mandatory
-            if (fromDateStr == null || fromDateStr.isEmpty() ||
-                toDateStr == null || toDateStr.isEmpty()) {
+        	JSONArray result = new JSONArray();
 
-                resp.setContentType("application/json");
-                resp.getWriter().write("{\"error\":\"From Date and To Date are required\"}");
-                return;
-            }
+        	/* ✅ Validate Dates */
+        	if (fromDateStr == null || fromDateStr.isEmpty() ||
+        	    toDateStr == null || toDateStr.isEmpty()) {
 
-            // ✅ Base Query
-            // Added PARTITION BY p.M_Product_ID to ensure Balance calculation is correct for multiple products
-            String sql =
-                    "SELECT p.Value AS ProductCode, p.Name AS ProductName, " +
-                    "MAX(t.MovementDate) AS MovementDate, " + 
-                    "u.Name AS UOM, " +
-                    "SUM(CASE WHEN t.MovementQty > 0 THEN t.MovementQty ELSE 0 END) AS InQty, " +
-                    "SUM(CASE WHEN t.MovementQty < 0 THEN ABS(t.MovementQty) ELSE 0 END) AS OutQty, " +
-                    "SUM(t.MovementQty) AS BalanceQty " + 
-                    "FROM M_Transaction t " +
-                    "JOIN M_Product p ON t.M_Product_ID = p.M_Product_ID " +
-                    "JOIN C_UOM u ON p.C_UOM_ID = u.C_UOM_ID " +
-                    "WHERE t.MovementDate BETWEEN ? AND ? ";
+        	    resp.getWriter().write("{\"error\":\"From Date and To Date required\"}");
+        	    return;
+        	}
 
-                // ✅ Product filter only if provided
-                boolean hasProduct = (productIdStr != null && !productIdStr.trim().isEmpty());
+        	/* ✅ SQL Category + Product */
+        	String sql =
+        	    "SELECT " +
+        	    " pc.Name AS CategoryName, " +
+        	    " p.Value AS ProductCode, " +
+        	    " p.Name AS ProductName, " +
+        	    " u.Name AS UOM, " +
 
-                if (hasProduct) {
-                    sql += " AND p.M_Product_ID = ? ";
-                }
+        	    " SUM(CASE WHEN t.MovementQty > 0 THEN t.MovementQty ELSE 0 END) AS InQty, " +
+        	    " SUM(CASE WHEN t.MovementQty < 0 THEN ABS(t.MovementQty) ELSE 0 END) AS OutQty, " +
+        	    " SUM(t.MovementQty) AS BalanceQty " +
 
-                sql += " GROUP BY p.M_Product_ID, p.Value, p.Name, u.Name ORDER BY p.Name";
+        	    "FROM M_Transaction t " +
+        	    "JOIN M_Product p ON t.M_Product_ID = p.M_Product_ID " +
+        	    "JOIN M_Product_Category pc ON p.M_Product_Category_ID = pc.M_Product_Category_ID " +
+        	    "JOIN C_UOM u ON p.C_UOM_ID = u.C_UOM_ID " +
 
-                
-                try (Connection con = DB.getConnectionRW();
-                     PreparedStatement ps = con.prepareStatement(sql)) {
+        	    "WHERE t.MovementDate BETWEEN ? AND ? ";
 
-                    // ✅ Convert dates properly
-                    Timestamp fromTs = Timestamp.valueOf(fromDateStr + " 00:00:00");
-                    Timestamp toTs   = Timestamp.valueOf(toDateStr + " 23:59:59");
+        	boolean hasCategory =
+        	        (productCatIdStr != null && !productCatIdStr.trim().isEmpty());
 
-                    // ✅ Bind mandatory params
-                    ps.setTimestamp(1, fromTs);
-                    ps.setTimestamp(2, toTs);
+        	if (hasCategory) {
+        	    sql += " AND pc.M_Product_Category_ID = ? ";
+        	}
 
-                    // ✅ Bind optional product
-                    if (hasProduct) {
-                        ps.setInt(3, Integer.parseInt(productIdStr));
-                    }
+        	sql +=
+        	    "GROUP BY pc.Name, p.Value, p.Name, u.Name " +
+        	    "ORDER BY pc.Name, p.Name";
 
-                    // ✅ Execute query
-                    try (ResultSet rs = ps.executeQuery()) {
+        	/* ✅ Nested JSON Map */
+        	Map<String, JSONObject> categoryMap = new LinkedHashMap<>();
 
-                        while (rs.next()) {
-                            JSONObject row = new JSONObject();
+        	try (Connection con = DB.getConnectionRW();
+        	     PreparedStatement ps = con.prepareStatement(sql)) {
 
-                            // This will now read the MAX(MovementDate) successfully
-                            row.put("date", rs.getTimestamp("MovementDate").toString());
-                            row.put("productCode", rs.getString("ProductCode"));
-                            row.put("productName", rs.getString("ProductName"));
-                            row.put("uom", rs.getString("UOM"));
+        	    Timestamp fromTs = Timestamp.valueOf(fromDateStr + " 00:00:00");
+        	    Timestamp toTs   = Timestamp.valueOf(toDateStr + " 23:59:59");
 
-                            row.put("inQty", rs.getBigDecimal("InQty"));
-                            row.put("outQty", rs.getBigDecimal("OutQty"));
-                            row.put("balanceQty", rs.getBigDecimal("BalanceQty"));
+        	    ps.setTimestamp(1, fromTs);
+        	    ps.setTimestamp(2, toTs);
 
-                            result.put(row);
-                        }
-                        System.out.println("row of data "+result.length());
-                    }
+        	    if (hasCategory) {
+        	        ps.setInt(3, Integer.parseInt(productCatIdStr));
+        	    }
 
-            } catch (Exception e) {
-                e.printStackTrace();
-                resp.setContentType("application/json");
-                resp.getWriter().write("{\"error\":\"" + e.getMessage() + "\"}");
-                return;
-            }
+        	    ResultSet rs = ps.executeQuery();
+
+        	    while (rs.next()) {
+
+        	        String categoryName = rs.getString("CategoryName");
+
+        	        /* ✅ Create Category if not exists */
+        	        JSONObject categoryObj = categoryMap.get(categoryName);
+
+        	        if (categoryObj == null) {
+
+        	            categoryObj = new JSONObject();
+        	            categoryObj.put("categoryName", categoryName);
+        	            categoryObj.put("totalIn", 0);
+        	            categoryObj.put("totalOut", 0);
+        	            categoryObj.put("totalBalance", 0);
+
+        	            categoryObj.put("products", new JSONArray());
+
+        	            categoryMap.put(categoryName, categoryObj);
+        	        }
+
+        	        /* ✅ Product Object */
+        	        JSONObject prod = new JSONObject();
+        	        prod.put("productCode", rs.getString("ProductCode"));
+        	        prod.put("productName", rs.getString("ProductName"));
+        	        prod.put("uom", rs.getString("UOM"));
+
+        	        double inQty  = rs.getDouble("InQty");
+        	        double outQty = rs.getDouble("OutQty");
+        	        double balQty = rs.getDouble("BalanceQty");
+
+        	        prod.put("inQty", inQty);
+        	        prod.put("outQty", outQty);
+        	        prod.put("balanceQty", balQty);
+
+        	        categoryObj.getJSONArray("products").put(prod);
+
+        	        /* ✅ Update Category Totals */
+        	        categoryObj.put("totalIn",
+        	                categoryObj.getDouble("totalIn") + inQty);
+
+        	        categoryObj.put("totalOut",
+        	                categoryObj.getDouble("totalOut") + outQty);
+
+        	        categoryObj.put("totalBalance",
+        	                categoryObj.getDouble("totalBalance") + balQty);
+        	    }
+
+        	    result = new JSONArray(categoryMap.values());
+
+        	} catch (Exception e) {
+        	    e.printStackTrace();
+        	    resp.getWriter().write("{\"error\":\"" + e.getMessage() + "\"}");
+        	    return;
+        	}
 
             // ✅ Response
             resp.setContentType("application/json");

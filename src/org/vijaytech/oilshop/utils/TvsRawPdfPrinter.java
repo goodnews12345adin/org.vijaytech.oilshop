@@ -25,7 +25,10 @@ public class TvsRawPdfPrinter {
             String billNo,
             String billDate,
             List<Item> items,
-            double gstRate   // e.g. 5 or 12 or 18
+            double baseTotal,
+            double cgstAmt,
+            double sgstAmt,
+            double grossTotal
     ) throws Exception {
 
         PrintService printer = PrintServiceLookup.lookupDefaultPrintService();
@@ -38,73 +41,63 @@ public class TvsRawPdfPrinter {
         sb.append(ALIGN_CENTER).append(BOLD_ON);
         sb.append(shopName).append("\n");
         sb.append(BOLD_OFF);
+
         sb.append("GSTIN: ").append(gstNo).append("\n");
         sb.append("FSSAI: ").append(fssai).append("\n");
         sb.append("--------------------------------\n");
 
-        sb.append(ALIGN_CENTER);
         sb.append("Bill No : ").append(billNo).append("\n");
         sb.append("Date    : ").append(billDate).append("\n");
         sb.append("--------------------------------\n");
 
-        /* ===== HEADER ===== */
         sb.append(
-            padRight("ITEM", 12) +
-            padLeft("HSN", 4) +
-            padLeft("QTY", 4) +
-            padLeft("RATE", 6) +
-            padLeft("AMT", 6) + "\n"
+                padRight("ITEM", 10) +
+                padLeft("HSN", 5) +
+                padLeft("GST%", 5) +
+                padLeft("QTY", 4) +
+                padLeft("AMT", 8) + "\n"
         );
+
         sb.append("--------------------------------\n");
 
-        double subTotal = 0;
-
         for (Item i : items) {
-            sb.append(formatItem(i));
-            subTotal += i.amount;
+            sb.append(padRight(i.name, 12))
+              .append(padLeft((int) i.qty + "", 4))
+              .append(padLeft(String.format("%.2f", i.amount), 10))
+              .append("\n");
         }
 
         sb.append("--------------------------------\n");
 
-        /* ===== GST CALCULATION ===== */
-        double gstAmount = subTotal * gstRate / 100;
-        double cgst = gstAmount / 2;
-        double sgst = gstAmount / 2;
-        double grandTotal = subTotal + gstAmount;
+        // ✅ Exact iDempiere Totals
+        sb.append(formatLine("TAX BASE AMT", baseTotal));
+        sb.append(formatLine("CGST", cgstAmt));
+        sb.append(formatLine("SGST", sgstAmt));
 
-        sb.append(formatLine("SUB TOTAL", subTotal));
-        sb.append(formatLine("CGST " + (gstRate / 2) + "%", cgst));
-        sb.append(formatLine("SGST " + (gstRate / 2) + "%", sgst));
         sb.append("--------------------------------\n");
 
-        /* ===== BIG FONT TOTAL ===== */
         sb.append(ALIGN_CENTER).append(BOLD_ON).append(BIG_FONT);
-        sb.append("TOTAL AMT ").append((int) grandTotal).append("\n");
+        sb.append("TOTAL AMT ").append(String.format("%.2f", grossTotal)).append("\n");
         sb.append(NORMAL_FONT).append(BOLD_OFF);
 
-        sb.append("\nTHANK YOU  VISAIN\n\n");
-        
-        // Final Stream Construction
+        sb.append("\nTHANK YOU\n\n");
+
+        // Print
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        baos.write(sb.toString().getBytes(StandardCharsets.UTF_8));
-        
-        // Add QR Code (Content: Bill No and Total)
-        String qrContent = "Bill:" + billNo + "|Total:" + (int)grandTotal;
-        baos.write(getQRCodeBytes(qrContent));
+        baos.write(sb.toString().getBytes());
 
-        // Feed and Cut
-        baos.write("\n\n\n\n".getBytes());
-        baos.write(new byte[]{0x1D, 0x56, 0x00}); // Full Cut
-
-        byte[] data = baos.toByteArray();
+        baos.write("\n\n\n".getBytes());
+        baos.write(new byte[]{0x1D, 0x56, 0x00}); // Cut
 
         Doc doc = new SimpleDoc(
-                data,
+                baos.toByteArray(),
                 DocFlavor.BYTE_ARRAY.AUTOSENSE,
                 null
         );
+
         printer.createPrintJob().print(doc, null);
     }
+
 
     /* ============ QR CODE GENERATION (ESC/POS) ============ */
     private static byte[] getQRCodeBytes(String content) throws Exception {
@@ -202,17 +195,17 @@ public class TvsRawPdfPrinter {
         public double qty;
         public double rate;
         public double amount;
-        public double discount;
         public boolean highlight;
 
-        public Item(String name, String hsn, double qty, double rate, boolean highlight, double discount) {
+        public Item(String name, String hsn, double qty, double rate, boolean highlight) {
             this.name = name;
             this.hsn = hsn;
             this.qty = qty;
             this.rate = rate;
-            this.amount = qty * rate;
             this.highlight = highlight;
-            this.discount = discount;
+
+            this.amount = 0; // ✅ Set externally from LineNetAmt
         }
     }
+
 }

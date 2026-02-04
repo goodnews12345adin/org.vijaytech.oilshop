@@ -191,27 +191,23 @@ thead th {
         <input type="date" id="toDate" class="form-control" required>
       </div>
 
-      <div class="col-md-4">
-        <label class="form-label fw-bold">Product</label>
-        <select id="product" class="form-select">
-          <option value="">-- All Products --</option>
-
-          <%
-            List<Map<String,Object>> prodList =
-                (List<Map<String,Object>>) request.getAttribute("productList");
-
-            if (prodList != null) {
-              for (Map<String,Object> p : prodList) {
-          %>
-              <option value="<%=p.get("id")%>">
-                <%=p.get("name")%>
-              </option>
-          <%
-              }
-            }
-          %>
-        </select>
-      </div>
+       <div class="col-lg-3 col-md-6 col-12">
+                    <label class="form-label">Category</label>
+                    <select id="category" class="form-select form-select-sm">
+                        <option value="">-- All Categories --</option>
+                        <%
+                            List<Map<String,Object>> catList =
+                                    (List<Map<String,Object>>) request.getAttribute("categoryList");
+                            if (catList != null) {
+                                for (Map<String,Object> c : catList) {
+                        %>
+                        <option value="<%=c.get("id")%>"><%=c.get("name")%></option>
+                        <%
+                                }
+                            }
+                        %>
+                    </select>
+                </div>
                 <div class="invalid-feedback">Product selection is required.</div>
                 <div class="col-md-2 d-flex align-items-end gap-2">
         <button type="submit" class="btn btn-primary w-100">Generate</button>
@@ -290,7 +286,7 @@ function loadReport(e){
     data: {
       fromDate: $("#fromDate").val(),
       toDate: $("#toDate").val(),
-      productId: $("#product").val()
+      productcatId: $("#category").val()
     },
     success: function(res){
 
@@ -309,9 +305,9 @@ function loadReport(e){
 }
 
 /* ✅ Render Table */
-function renderTable(){
+function renderTable() {
 
-  if(tableData.length === 0){
+  if (!tableData || tableData.length === 0) {
     $("#stockTable tbody").html(
       "<tr><td colspan='7' class='text-center text-muted'>No Records Found</td></tr>"
     );
@@ -320,62 +316,91 @@ function renderTable(){
 
   let html = "";
 
-  tableData.forEach(row => {
+  /* ✅ Loop Each Category */
+  tableData.forEach(category => {
 
-    html += "<tr>";
-    html += "<td>" + row.date.substring(0,10) + "</td>";
-    html += "<td>" + row.productCode + "</td>";
-    html += "<td>" + row.productName + "</td>";
-    html += "<td>" + row.uom + "</td>";
-    html += "<td class='text-end'>" + row.inQty + "</td>";
-    html += "<td class='text-end'>" + row.outQty + "</td>";
-    html += "<td class='text-end fw-bold'>" + row.balanceQty + "</td>";
-    html += "</tr>";
+    /* ✅ Category Header Row */
+   html += "<tr class='table-primary fw-bold'>";
+html += "<td colspan='4'>📂 " + category.categoryName + "</td>";
+html += "<td class='text-end'>" + Number(category.totalIn).toFixed(2) + "</td>";
+html += "<td class='text-end'>" + Number(category.totalOut).toFixed(2) + "</td>";
+html += "<td class='text-end'>" + Number(category.totalBalance).toFixed(2) + "</td>";
+html += "</tr>";
+
+
+    /* ✅ Products Under Category */
+    category.products.forEach(row => {
+
+      html += "<tr>";
+      html += "<td>-</td>";   // Date not needed for grouped report
+      html += "<td>" + row.productCode + "</td>";
+      html += "<td>" + row.productName + "</td>";
+      html += "<td>" + row.uom + "</td>";
+      html += "<td class='text-end'>" + Number(row.inQty).toFixed(2) + "</td>";
+      html += "<td class='text-end'>" + Number(row.outQty).toFixed(2) + "</td>";
+      html += "<td class='text-end fw-bold'>" + Number(row.balanceQty).toFixed(2) + "</td>";
+      html += "</tr>";
+
+    });
+
   });
 
   $("#stockTable tbody").html(html);
 }
 
+
 /* ✅ Totals */
-function calculateTotals(){
+function calculateTotals() {
 
   let totalIn = 0;
   let totalOut = 0;
-  let closingBalance = 0;
+  let totalBalance = 0;
+  let productCount = 0;
 
-  tableData.forEach(row => {
-    totalIn += Number(row.inQty);
-    totalOut += Number(row.outQty);
-    closingBalance = Number(row.balanceQty);
+  tableData.forEach(category => {
+
+    totalIn += Number(category.totalIn);
+    totalOut += Number(category.totalOut);
+    totalBalance += Number(category.totalBalance);
+
+    productCount += category.products.length;
   });
 
   $("#totalIn").text(totalIn.toFixed(2));
   $("#totalOut").text(totalOut.toFixed(2));
-  $("#totalBalance").text(closingBalance.toFixed(2));
+  $("#totalBalance").text(totalBalance.toFixed(2));
+
+  /* ✅ Optional Product Count Card */
+  if ($("#totalProducts").length) {
+    $("#totalProducts").text(productCount);
+  }
 }
 
-/* ✅ Chart */
-function drawChart(){
 
-  if(chartInstance){
+/* ✅ Chart */
+function drawChart() {
+
+  if (chartInstance) {
     chartInstance.destroy();
   }
 
-  let labels = tableData.map(r => r.date.substring(0,10));
-  let inValues = tableData.map(r => r.inQty);
-  let outValues = tableData.map(r => r.outQty);
+  let labels = tableData.map(c => c.categoryName);
+  let balances = tableData.map(c => c.totalBalance);
 
   chartInstance = new Chart(document.getElementById("stockChart"), {
-    type: "line",
+    type: "bar",
     data: {
       labels: labels,
       datasets: [
-        { label: "In Qty", data: inValues },
-        { label: "Out Qty", data: outValues }
+        {
+          label: "Category Closing Balance",
+          data: balances
+        }
       ]
     }
   });
 }
+
 
 /* ✅ Reset */
 function resetAll(){

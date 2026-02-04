@@ -15,18 +15,23 @@ public class ThermalPrintServer {
     public static void printGstBill(int orderId) {
 
         PreparedStatement ps = null;
-        PreparedStatement ps2 = null;
         ResultSet rs = null;
-        ResultSet rs2 = null;
+
+        PreparedStatement psLine = null;
+        ResultSet rsLine = null;
+
+        PreparedStatement psTax = null;
+        ResultSet rsTax = null;
 
         try {
             /* ================= HEADER ================= */
-            String sql =
-                    "SELECT o.documentno, o.dateordered " +
-                    "FROM c_order o " +
-                    "WHERE o.c_order_id = ?";
 
-            ps = DB.prepareStatement(sql, null);
+            String sqlHeader =
+                    "SELECT o.DocumentNo, o.DateOrdered " +
+                    "FROM C_Order o " +
+                    "WHERE o.C_Order_ID = ?";
+
+            ps = DB.prepareStatement(sqlHeader, null);
             ps.setInt(1, orderId);
             rs = ps.executeQuery();
 
@@ -34,51 +39,95 @@ public class ThermalPrintServer {
             Timestamp billDate = null;
 
             if (rs.next()) {
-                billNo = rs.getString("documentno");
-                billDate = rs.getTimestamp("dateordered");
+                billNo = rs.getString("DocumentNo");
+                billDate = rs.getTimestamp("DateOrdered");
             }
 
             DB.close(rs, ps);
 
-            /* ================= ITEMS ================= */
-            String sql2 =
-                    "SELECT p.name, p.hsncode, ol.qtyordered, ol.priceactual, p.GSTRate, ol.discount " +
-                    "FROM c_orderline ol " +
-                    "LEFT JOIN m_product p ON p.m_product_id = ol.m_product_id " +
-                    "WHERE ol.c_order_id = ?";
+            /* ================= ITEMS (Line Amount = Gross) ================= */
 
-            ps2 = DB.prepareStatement(sql2, null);
-            ps2.setInt(1, orderId);
-            rs2 = ps2.executeQuery();
+            String sqlLines =
+                    "SELECT p.Name, p.HSNCode, " +
+                    "       ol.QtyOrdered, " +
+                    "       ol.PriceActual, " +
+                    "       ol.LineNetAmt AS LineAmtInclTax " +
+                    "FROM C_OrderLine ol " +
+                    "JOIN M_Product p ON p.M_Product_ID = ol.M_Product_ID " +
+                    "WHERE ol.C_Order_ID = ?";
+
+            psLine = DB.prepareStatement(sqlLines, null);
+            psLine.setInt(1, orderId);
+            rsLine = psLine.executeQuery();
 
             List<Item> items = new ArrayList<>();
-            double gstRate = 0;   // single slab
-            double subTotal = 0;
-            double discount = 0;
-            while (rs2.next()) {
-                String pname = rs2.getString("name");
-                String hsn   = rs2.getString("hsncode");
+
+            double grossTotal = 0;
+
+            while (rsLine.next()) {
+
+                String pname = rsLine.getString("Name");
+                String hsn   = rsLine.getString("HSNCode");
                 if (hsn == null) hsn = "";
 
-                double qty  = rs2.getDouble("qtyordered");
-                double rate = rs2.getDouble("priceactual");
+                double qty  = rsLine.getDouble("QtyOrdered");
+                double rate = rsLine.getDouble("PriceActual");
 
-                if (gstRate == 0) {
-                    gstRate = rs2.getDouble("GSTRate");
-                }
-                if (discount == 0) {
-                    discount = rs2.getDouble("discount");
-                }
+                // ✅ Line Amount already includes GST
+                double lineAmtInclTax = rsLine.getDouble("LineAmtInclTax");
 
-                Item it = new Item(pname, hsn, qty, rate, false, discount);
+                // ✅ Create item
+                Item it = new Item(pname, hsn, qty, rate, false);
+
+                // ✅ Override amount with iDempiere LineNetAmt
+                it.amount = lineAmtInclTax;
+
                 items.add(it);
 
-                subTotal += it.amount;
+                grossTotal += lineAmtInclTax;
             }
 
-            DB.close(rs2, ps2);
+            DB.close(rsLine, psLine);
+
+            /* ================= GST BREAKUP (Exact Order Tax Tab) ================= */
+
+            String sqlTax =
+                    "SELECT t.Name AS TaxName, " +
+                    "       ot.TaxBaseAmt, " +
+                    "       ot.TaxAmt " +
+                    "FROM C_OrderTax ot " +
+                    "JOIN C_Tax t ON t.C_Tax_ID = ot.C_Tax_ID " +
+                    "WHERE ot.C_Order_ID = ?";
+
+            psTax = DB.prepareStatement(sqlTax, null);
+            psTax.setInt(1, orderId);
+            rsTax = psTax.executeQuery();
+
+            double baseTotal = 0;
+            double cgstAmt = 0;
+            double sgstAmt = 0;
+
+            while (rsTax.next()) {
+
+                String taxName = rsTax.getString("TaxName");
+
+                double baseAmt = rsTax.getDouble("TaxBaseAmt");
+                double taxAmt  = rsTax.getDouble("TaxAmt");
+
+                baseTotal += baseAmt;
+
+                if (taxName.contains("CGST")) {
+                    cgstAmt += taxAmt;
+                }
+                if (taxName.contains("SGST")) {
+                    sgstAmt += taxAmt;
+                }
+            }
+
+            DB.close(rsTax, psTax);
 
             /* ================= PRINT ================= */
+
             SimpleDateFormat df = new SimpleDateFormat("dd-MM-yyyy HH:mm");
 
             TvsRawPdfPrinter.printBill(
@@ -88,14 +137,18 @@ public class ThermalPrintServer {
                     billNo,
                     df.format(billDate),
                     items,
-                    gstRate
+                    baseTotal,
+                    cgstAmt,
+                    sgstAmt,
+                    grossTotal
             );
 
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
             DB.close(rs, ps);
-            DB.close(rs2, ps2);
+            DB.close(rsLine, psLine);
+            DB.close(rsTax, psTax);
         }
     }
 }
