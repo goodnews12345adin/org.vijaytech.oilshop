@@ -63,15 +63,14 @@ public class ThermalPrintServer {
                 double qty  = rs2.getDouble("qtyordered");
                 double rate = rs2.getDouble("priceactual");
 
-                // take GST rate only once (single slab assumption)
                 if (gstRate == 0) {
                     gstRate = rs2.getDouble("GSTRate");
                 }
                 if (discount == 0) {
-                	discount = rs2.getDouble("discount");
+                    discount = rs2.getDouble("discount");
                 }
 
-                Item it = new Item(pname, hsn, qty, rate, false,discount);
+                Item it = new Item(pname, hsn, qty, rate, false, discount);
                 items.add(it);
 
                 subTotal += it.amount;
@@ -85,7 +84,7 @@ public class ThermalPrintServer {
             TvsRawPdfPrinter.printBill(
                     "THIRU SENTHILATHIPATHI OIL STORE",
                     "33AFFPR4639J1Z6",
-                    "22422574000176",// GSTIN
+                    "22422574000176",
                     billNo,
                     df.format(billDate),
                     items,

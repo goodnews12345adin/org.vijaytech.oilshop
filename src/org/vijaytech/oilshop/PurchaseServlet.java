@@ -159,7 +159,7 @@ public class PurchaseServlet extends HttpServlet {
 
             order.setM_PriceList_ID(1000059);     // purchase price list (IsSOPriceList = 'N')
             order.setC_DocTypeTarget_ID(1000050); // purchase doc type
-            order.setM_Warehouse_ID(1000113);
+            order.setM_Warehouse_ID(1000001);
             order.setDateOrdered(now);
             order.setPaymentRule("B");
             order.setC_BankAccount_ID(1000094);

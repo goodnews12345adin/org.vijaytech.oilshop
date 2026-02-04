@@ -91,7 +91,7 @@ public class SalesSaveServlet extends HttpServlet {
             // 4. FIX: Validate Warehouse ID
             // The log shows "NO Data found for M_Warehouse_ID=1000113".
             // We check if the hardcoded ID exists, if not, we find a valid one.
-            int warehouseId = 1000113;
+            int warehouseId = 1000001;
             MWarehouse wh = MWarehouse.get(ctx, warehouseId);
             
             if (wh == null || wh.get_ID() == 0) {

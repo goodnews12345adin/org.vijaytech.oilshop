@@ -514,8 +514,9 @@ public class PrintPurchaseReportServlet extends HttpServlet {
             billToCell.addElement(billToTitle);
 
             billToCell.addElement(new Phrase(bp, fontNormal));
-            billToCell.addElement(new Phrase("Bangalore, Karnataka", fontNormal));
-            billToCell.addElement(Chunk.NEWLINE);
+			/*
+			 * billToCell.addElement(new Phrase("", fontNormal));
+			 */            billToCell.addElement(Chunk.NEWLINE);
             billToCell.addElement(new Phrase("Date: " + date.split(" ")[0], fontBold));
 
             infoTable.addCell(billToCell);

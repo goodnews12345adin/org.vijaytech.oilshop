@@ -1,16 +1,13 @@
 package org.vijaytech.oilshop.utils;
 
-import javax.imageio.ImageIO;
 import javax.print.*;
-import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
 public class TvsRawPdfPrinter {
-	 /* ============ ESC/POS COMMANDS ============ */
+    /* ============ ESC/POS COMMANDS ============ */
     private static final String ESC_INIT     = "\u001B\u0040";
     private static final String ALIGN_LEFT   = "\u001B\u0061\u0000";
     private static final String ALIGN_CENTER = "\u001B\u0061\u0001";
@@ -73,7 +70,7 @@ public class TvsRawPdfPrinter {
         double gstAmount = subTotal * gstRate / 100;
         double cgst = gstAmount / 2;
         double sgst = gstAmount / 2;
-        double grandTotal = subTotal;
+        double grandTotal = subTotal + gstAmount;
 
         sb.append(formatLine("SUB TOTAL", subTotal));
         sb.append(formatLine("CGST " + (gstRate / 2) + "%", cgst));
@@ -85,17 +82,21 @@ public class TvsRawPdfPrinter {
         sb.append("TOTAL AMT ").append((int) grandTotal).append("\n");
         sb.append(NORMAL_FONT).append(BOLD_OFF);
 
-        sb.append("\nTHANK YOU  VISIT AGAIN\n\n\n");
+        sb.append("\nTHANK YOU  VISAIN\n\n");
         
+        // Final Stream Construction
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        baos.write(sb.toString().getBytes(StandardCharsets.UTF_8));
+        
+        // Add QR Code (Content: Bill No and Total)
+        String qrContent = "Bill:" + billNo + "|Total:" + (int)grandTotal;
+        baos.write(getQRCodeBytes(qrContent));
 
-        /* FEED PAPER BEFORE CUT */
-        sb.append("\n\n\n");   // 4 line feeds (adjust if needed)
+        // Feed and Cut
+        baos.write("\n\n\n\n".getBytes());
+        baos.write(new byte[]{0x1D, 0x56, 0x00}); // Full Cut
 
-        /* FULL CUT */
-        sb.append("\u001D\u0056\u0000");  // GS V 0 = full cut
-
-
-        byte[] data = sb.toString().getBytes(StandardCharsets.UTF_8);
+        byte[] data = baos.toByteArray();
 
         Doc doc = new SimpleDoc(
                 data,
@@ -103,6 +104,33 @@ public class TvsRawPdfPrinter {
                 null
         );
         printer.createPrintJob().print(doc, null);
+    }
+
+    /* ============ QR CODE GENERATION (ESC/POS) ============ */
+    private static byte[] getQRCodeBytes(String content) throws Exception {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        
+        // 1. Set QR Model (Model 2)
+        baos.write(new byte[]{0x1D, 0x28, 0x6B, 0x04, 0x00, 0x31, 0x41, 0x32, 0x00});
+        
+        // 2. Set QR Size (Size 6-8 is usually good for 3-inch printers)
+        baos.write(new byte[]{0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x43, 0x06});
+        
+        // 3. Set Error Correction Level (L)
+        baos.write(new byte[]{0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x45, 0x30});
+        
+        // 4. Store Data in Symbol Storage Area
+        byte[] contentBytes = content.getBytes(StandardCharsets.UTF_8);
+        int len = contentBytes.length + 3;
+        byte pL = (byte) (len % 256);
+        byte pH = (byte) (len / 256);
+        baos.write(new byte[]{0x1D, 0x28, 0x6B, pL, pH, 0x31, 0x50, 0x30});
+        baos.write(contentBytes);
+        
+        // 5. Print the QR Code
+        baos.write(new byte[]{0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x51, 0x30});
+        
+        return baos.toByteArray();
     }
 
     /* ============ ITEM FORMAT WITH WRAP ============ */
@@ -177,7 +205,7 @@ public class TvsRawPdfPrinter {
         public double discount;
         public boolean highlight;
 
-        public Item(String name, String hsn, double qty, double rate, boolean highlight,double discount) {
+        public Item(String name, String hsn, double qty, double rate, boolean highlight, double discount) {
             this.name = name;
             this.hsn = hsn;
             this.qty = qty;

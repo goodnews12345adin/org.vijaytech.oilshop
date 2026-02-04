@@ -193,7 +193,7 @@ thead th {
 
       <div class="col-md-4">
         <label class="form-label fw-bold">Product</label>
-        <select id="product" class="form-select" required>
+        <select id="product" class="form-select">
           <option value="">-- All Products --</option>
 
           <%
@@ -212,8 +212,8 @@ thead th {
           %>
         </select>
       </div>
-				<div class="invalid-feedback">Product selection is required.</div>
-				<div class="col-md-2 d-flex align-items-end gap-2">
+                <div class="invalid-feedback">Product selection is required.</div>
+                <div class="col-md-2 d-flex align-items-end gap-2">
         <button type="submit" class="btn btn-primary w-100">Generate</button>
         <button type="button" class="btn btn-danger w-100" onclick="resetAll()">Reset</button>
       </div>
@@ -275,11 +275,13 @@ function loadReport(e){
   e.preventDefault();
   let productID = $("#product").val();
 
-  if(productID === ""){
-      alert("Please select a Product!");
-      $("#product").focus();
-      return;
-  }
+  // Validation removed to allow "All Products" (empty productID) selection
+  // if(productID === ""){
+  //     alert("Please select a Product!");
+  //     $("#product").focus();
+  //     return;
+  // }
+
   $("#global-loader").css("display","flex");
 
   $.ajax({
