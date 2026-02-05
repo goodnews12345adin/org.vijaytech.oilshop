@@ -252,7 +252,7 @@ public class SalesSaveServlet extends HttpServlet {
             JSONArray items = salesData.getJSONArray("items");
 
             for (int i = 0; i < items.length(); i++) {
-                JSONObject item = items.getJSONObject(i);
+                JSONObject item = items.getJSONObject(i); 
 
                 int prodId = item.getInt("prodId");
                 BigDecimal qty = new BigDecimal(item.get("qty").toString());
@@ -308,11 +308,11 @@ public class SalesSaveServlet extends HttpServlet {
                 pdfUrl = GenerateTextileBillPDF.generate80mm(pdfFile, ordH.get_ID(), ctx);
                 
                 // Send WhatsApp
-                if (phone != null && !phone.isEmpty()) {
-                    String phoneToSend = phone.replaceAll("[\\s\\+\\-\\(\\)]", "");
-                    String caption = "Invoice #" + docNo;
-                    WhatsAppSender.sendDocument(phoneToSend, pdfUrl, caption);
-                }
+//                if (phone != null && !phone.isEmpty()) {
+//                    String phoneToSend = phone.replaceAll("[\\s\\+\\-\\(\\)]", "");
+//                    String caption = "Invoice #" + docNo;
+//                    WhatsAppSender.sendDocument(phoneToSend, pdfUrl, caption);
+//                }
             } catch (Exception pdfEx) {
                 System.err.println("PDF Generation Error (Non-blocking): " + pdfEx.getMessage());
             }
