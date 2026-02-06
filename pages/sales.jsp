@@ -1378,6 +1378,8 @@ function saveInvoice(printAfterSave) {
       discount: parseFloat($("#discount").val()) || 0,
       subtotal: parseFloat($("#subtotal").text()) || 0,
       total: parseFloat($("#grand-total").text()) || 0,
+       cash = parseFloat($("#cash").val()) || 0,
+       upi  = parseFloat($("#upi").val()) || 0,
 
       // ✅ Boolean Value Sent to Servlet
       printRequired: printAfterSave,

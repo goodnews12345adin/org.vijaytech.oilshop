@@ -129,6 +129,8 @@ public class SalesSaveServlet extends HttpServlet {
 
             // 6. Discount Parsing
             BigDecimal discount = BigDecimal.ZERO;
+            BigDecimal cash = BigDecimal.ZERO;
+            BigDecimal upi = BigDecimal.ZERO;
             try {
                 String dStr = salesData.optString("discount", "0").trim();
                 if (!dStr.isEmpty()) {
@@ -136,6 +138,22 @@ public class SalesSaveServlet extends HttpServlet {
                 }
             } catch (Exception e) {
                 discount = BigDecimal.ZERO;
+            }
+            try {
+                String cStr = salesData.optString("cash", "0").trim();
+                if (!cStr.isEmpty()) {
+                    cash = new BigDecimal(cStr);
+                }
+            } catch (Exception e) {
+                cash = BigDecimal.ZERO;
+            }
+            try {
+                String uStr = salesData.optString("upi", "0").trim();
+                if (!uStr.isEmpty()) {
+                    upi = new BigDecimal(uStr);
+                }
+            } catch (Exception e) {
+                upi = BigDecimal.ZERO;
             }
             boolean printRequired =
             		salesData.getBoolean("printRequired");
