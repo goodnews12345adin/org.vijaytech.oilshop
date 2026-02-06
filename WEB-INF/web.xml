@@ -1,33 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app version="2.5" xmlns="http://java.sun.com/xml/ns/javaee"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
 
-	<filter>
-		<filter-name>MD5Filter</filter-name>
-		<filter-class>org.compiere.web.MD5Filter</filter-class>
-	</filter>
-	<filter-mapping>
-		<filter-name>MD5Filter</filter-name>
-		<url-pattern>/*</url-pattern>
-	</filter-mapping>
-	<servlet>
-		<servlet-name>GetMD5File</servlet-name>
-		<servlet-class>org.compiere.web.GetMD5FileServlet</servlet-class>
-	</servlet>
-	<!-- <servlet>
-		<servlet-name>ICIUPICallback</servlet-name>
-		<servlet-class>org.syvasoft.iciciupi.CallBack</servlet-class>
-	</servlet> -->
+    <filter>
+        <filter-name>MD5Filter</filter-name>
+        <filter-class>org.compiere.web.MD5Filter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>MD5Filter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+    <servlet>
+        <servlet-name>GetMD5File</servlet-name>
+        <servlet-class>org.compiere.web.GetMD5FileServlet</servlet-class>
+    </servlet>
 
-
-
-	<servlet-mapping>
-		<servlet-name>GetMD5File</servlet-name>
-		<url-pattern>/GetMD5File</url-pattern>
-	</servlet-mapping>
-
-
+    <servlet-mapping>
+        <servlet-name>GetMD5File</servlet-name>
+        <url-pattern>/GetMD5File</url-pattern>
+    </servlet-mapping>
 
   <!-- User Login Servlet -->
  <servlet>
@@ -182,4 +174,16 @@
     <servlet-name>SingleInvoicePDF</servlet-name>
     <url-pattern>/SingleInvoicePDF</url-pattern>
 </servlet-mapping>
+
+<!-- NEW PARTNER MANAGEMENT SERVLET -->
+<servlet>
+    <servlet-name>BPManageServlet</servlet-name>
+    <servlet-class>org.vijaytech.oilshop.BPManageServlet</servlet-class>
+</servlet>
+
+<servlet-mapping>
+    <servlet-name>BPManageServlet</servlet-name>
+    <url-pattern>/BPManageServlet</url-pattern>
+</servlet-mapping>
+
 </web-app>

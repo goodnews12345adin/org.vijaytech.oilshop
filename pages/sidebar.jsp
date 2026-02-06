@@ -20,7 +20,6 @@ if (username == null || username.trim().isEmpty()) {
    ROLE CONSTANTS
    =========================== */
  Integer ROLE_ADMIN1  = (Integer) session.getAttribute("ROLE_ADMIN");
-//final int ROLE_MANAGER = (Integer) session.getAttribute("ROLE_MANAGER");
  Integer ROLE_CASHIERObj = (Integer) session.getAttribute("ROLE_CASHIER");
 
 final int ROLE_ADMIN  = ROLE_ADMIN1.intValue();
@@ -419,9 +418,6 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
 <!-- Mobile Overlay -->
 <div class="mobile-overlay" id="mobileOverlay"></div>
 
-<!-- Toast Notification Container (Fixed Position) -->
-<!-- <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 2000" id="toastPlacement"></div>
- -->
 <!-- Floating Action Button -->
 <% if (roleId == ROLE_ADMIN || roleId == ROLE_CASHIER) { %>
 <div class="fab" onclick="showToast('Creating new sale invoice...', 'success')" title="New Sale">
@@ -489,6 +485,10 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
                 </a></li>
                 <li><a href="<%=request.getContextPath()%>/PurchaseServlet" class="sidebar-link submenu-link">
                     <i class="bi bi-bag-check"></i> Purchase
+                </a></li>
+                <!-- NEW LINK ADDED HERE -->
+                <li><a href="<%=request.getContextPath()%>/BPManageServlet" class="sidebar-link submenu-link">
+                    <i class="bi bi-people"></i> Partners (Cust/Vend)
                 </a></li>
                 <% } %>
             </ul>
@@ -566,26 +566,7 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
             </div>
         </div>
         
-        <!-- Center Search -->
-        <!-- <div class="d-none d-md-flex flex-grow-1 justify-content-center">
-            <div class="position-relative" style="max-width: 400px; width: 100%;">
-                <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"></i>
-                <input type="text" class="form-control search-bar ps-5" placeholder="Search (Ctrl+K)...">
-            </div>
-        </div> -->
-        
         <div class="d-flex align-items-center gap-2 gap-md-3 ms-md-3">
-            
-            <!-- Theme Toggle -->
-         <!--   <a href="#" class="icon-btn d-none d-sm-flex" onclick="toggleTheme()" title="Toggle Theme (Alt+D)">
-                <i class="bi bi-moon-stars-fill" id="themeIcon"></i>
-            </a> 
-             -->
-            <!-- Shortcuts Help -->
-          <!--   <a href="#" class="icon-btn d-none d-sm-flex" data-bs-toggle="modal" data-bs-target="#shortcutsModal" title="Keyboard Shortcuts">
-                <i class="bi bi-keyboard"></i>
-            </a>
- -->
             <!-- User Profile Dropdown -->
             <div class="dropdown">
                 <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" data-bs-toggle="dropdown">
@@ -628,10 +609,10 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
             </div>
         </div>
         <div class="col-12 col-sm-6 col-lg-3">
-            <div class="quick-action-card" onclick="window.location.href='<%=request.getContextPath()%>/pages/productCategory.jsp'">
-                <div class="quick-icon"><i class="bi bi-box-seam"></i></div>
-                <h6 class="fw-bold mb-0">Add Product</h6>
-                <small class="text-muted">Update Inventory</small>
+            <div class="quick-action-card" onclick="window.location.href='<%=request.getContextPath()%>/BPManageServlet'">
+                <div class="quick-icon"><i class="bi bi-person-plus"></i></div>
+                <h6 class="fw-bold mb-0">New Partner</h6>
+                <small class="text-muted">Add Customer/Vendor</small>
             </div>
         </div>
         <div class="col-12 col-sm-6 col-lg-3">
@@ -847,13 +828,6 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
     setInterval(updateUI, 1000);
     updateUI();
     setActiveLink();
-    
-    // Welcome Toast on Load
-    window.onload = function() {
-        setTimeout(() => {
-<%--             showToast("Welcome back, " + "<%= username %>!");
- --%>        }, 800);
-    };
 </script>
 
 </body>
