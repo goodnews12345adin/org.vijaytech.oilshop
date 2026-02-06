@@ -81,7 +81,6 @@
       margin: 0;
       padding-top: 90px;
       min-height: 100vh;
-      /* Modern Background Gradient */
       background-image: 
         radial-gradient(at 0% 0%, rgba(21, 160, 198, 0.05) 0px, transparent 50%),
         radial-gradient(at 100% 100%, rgba(10, 18, 32, 0.02) 0px, transparent 50%);
@@ -144,7 +143,6 @@
       overflow: hidden;
     }
 
-    /* Top Decorative Bar */
     .invoice-box::before {
         content: '';
         position: absolute;
@@ -200,7 +198,6 @@
       background-color: #fff;
     }
 
-    /* Focus States for Accessibility */
     .form-control:focus, .form-select:focus {
       border-color: var(--accent);
       box-shadow: 0 0 0 4px rgba(21, 160, 198, 0.1);
@@ -214,7 +211,6 @@
         font-size: 14px;
     }
 
-    /* Select2 Customization */
     .select2-container--default .select2-selection--single {
       height: 50px !important;
       border-radius: 12px !important;
@@ -283,7 +279,7 @@
         box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
     }
 
-    /* === TOTALS SECTION (Fixed Visibility) === */
+    /* === TOTALS SECTION === */
    .total-box {
     display: flex;
     flex-wrap: wrap;
@@ -313,7 +309,6 @@
         letter-spacing: 0.5px;
     }
 
-    /* FIX: Darker background for white text */
     .total-item-group input {
         height: 45px;
         background: rgba(15, 23, 42, 0.5) !important; 
@@ -400,23 +395,23 @@
     }
     #loader.active .box { transform: scale(1); }
 
-    /* === THERMAL RECEIPT (Fixed Alignment) === */
+    /* === THERMAL RECEIPT === */
     #thermal-print-area {
         display: none; 
-        width: 80mm; /* Standard width */
+        width: 80mm; 
         background-color: #ffffff;
         color: #000000;
         font-family: 'Courier New', Courier, monospace;
         font-size: 12px;
         padding: 2mm;
-        line-height: 1.3; /* Better spacing */
+        line-height: 1.3; 
         text-align: left;
     }
     
     .receipt-header { text-align: center; margin-bottom: 10px; border-bottom: 1px dashed #000; padding-bottom: 5px; }
     .receipt-row { 
         display: flex; 
-        justify-content: space-between; /* Aligns left and right perfectly */
+        justify-content: space-between; 
         margin-bottom: 4px; 
         width: 100%;
     }
@@ -424,9 +419,7 @@
     .receipt-footer { text-align: center; margin-top: 10px; font-size: 11px; }
 
     /* === WONDERFUL BOX (Custom Modal) === */
-    #wonderful-alert-box {
-        z-index: 100000; /* Above loader */
-    }
+    #wonderful-alert-box { z-index: 100000; }
     
     .modal-content.wonderful-box {
         border: none;
@@ -450,10 +443,7 @@
         margin-bottom: 10px;
     }
     
-    .wonderful-icon-area i {
-        font-size: 3.5rem;
-        display: block;
-    }
+    .wonderful-icon-area i { font-size: 3.5rem; display: block; }
 
     .wb-icon-success { color: var(--success); text-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
     .wb-icon-error { color: var(--danger); text-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); }
@@ -498,17 +488,14 @@
     }
     .wb-btn-cancel:hover { background: #e2e8f0; color: #334155; }
 
-    /* Backdrop */
     .modal-backdrop.show {
         opacity: 0.6;
         background: #0f172a;
         backdrop-filter: blur(5px);
     }
 
-    /* === ERROR / SUCCESS TOAST (Kept for compatibility but unused in logic) === */
-    .toast-container {
-        z-index: 99999;
-    }
+    /* === TOAST === */
+    .toast-container { z-index: 99999; }
     .custom-toast {
         background: rgba(255,255,255,0.9);
         backdrop-filter: blur(12px);
@@ -523,20 +510,11 @@
     }
     .custom-toast.show { transform: translateX(0); }
     
-    .custom-toast.text-bg-success {
-        background: rgba(16, 185, 129, 0.95);
-        color: white;
-    }
-    .custom-toast.text-bg-danger {
-        background: rgba(239, 68, 68, 0.95);
-        color: white;
-    }
     .custom-toast .toast-body {
         font-weight: 600;
         font-size: 0.95rem;
     }
 
-    /* MEDIA QUERIES (Previous) */
     @media (max-width: 575.98px) {
         .app-header { padding: 0 20px; height: 65px; }
         .header-title { font-size: 1.1rem; }
@@ -555,7 +533,6 @@
         #grand-total { font-size: 32px; }
         #Bal-amt { font-size: 26px; }
     }
-    /* Other media queries omitted for brevity but assumed present */
 </style>
 </head>
 <body>
@@ -615,7 +592,6 @@
                             <input type="text" class="form-control" id="cust-address" placeholder="Address">
                             <label for="cust-address" class="text-muted">Address</label>
                         </div>
-                        <!-- PHONE IS NO LONGER REQUIRED -->
                         <div class="form-floating">
                             <input type="text" class="form-control" id="cust-phone" placeholder="Phone">
                             <label for="cust-phone" class="text-muted">Phone Number (Optional)</label>
@@ -749,15 +725,15 @@
                 <button id="recalculate" class="btn btn-light border shadow-sm">
                     <i class="bi bi-arrow-clockwise me-2"></i>Recalc
                 </button>
-					<button id="save-btn" class="btn btn-success px-5 shadow">
-						<i class="bi bi-save me-2"></i>Save
-					</button>
+                    <button id="save-btn" class="btn btn-success px-5 shadow">
+                        <i class="bi bi-save me-2"></i>Save
+                    </button>
 
-					<button id="save-print-btn" class="btn btn-primary px-5 shadow">
-						<i class="bi bi-printer-fill me-2"></i>Save & Print
-					</button>
+                    <button id="save-print-btn" class="btn btn-primary px-5 shadow">
+                        <i class="bi bi-printer-fill me-2"></i>Save & Print
+                    </button>
 
-				</div>
+                </div>
         </div>
     </main>
 </div>
@@ -870,8 +846,6 @@
 
     /**
      * SHOW WONDERFUL BOX
-     * Unified function for Success, Error, Warning, and Confirm messages.
-     * Centers beautifully on all devices.
      */
     function showWonderfulBox(type, title, message, onConfirm, onCancel) {
         const $iconArea = $('#wb-icon-area');
@@ -879,14 +853,13 @@
         const $msg = $('#wb-message');
         const $actions = $('#wb-actions');
 
-        $actions.empty(); // Clear previous buttons
+        $actions.empty();
         $title.text(title);
-        $msg.html(message); // Allow HTML for line breaks
+        $msg.html(message);
 
         let iconClass = '';
         let iconTag = '';
 
-        // Determine Icon
         if (type === 'success') {
             iconClass = 'wb-icon-success';
             iconTag = '<i class="bi bi-check-circle-fill"></i>';
@@ -900,16 +873,13 @@
             iconClass = 'wb-icon-confirm';
             iconTag = '<i class="bi bi-question-circle-fill"></i>';
         } else {
-            // Default Info
             iconClass = 'wb-icon-confirm';
             iconTag = '<i class="bi bi-info-circle-fill"></i>';
         }
 
         $iconArea.removeClass().addClass('wonderful-icon-area ' + iconClass).html(iconTag);
 
-        // Determine Buttons
         if (type === 'confirm') {
-            // Two buttons: Confirm and Cancel
             const btnYes = $('<button class="btn wonderful-btn wb-btn-confirm">Yes, Proceed</button>');
             const btnNo = $('<button class="btn wonderful-btn wb-btn-cancel">Cancel</button>');
 
@@ -925,7 +895,6 @@
 
             $actions.append(btnYes, btnNo);
         } else {
-            // One button: OK
             const btnOk = $('<button class="btn wonderful-btn wb-btn-confirm">OK</button>');
             
             btnOk.on('click', function() {
@@ -936,7 +905,6 @@
             $actions.append(btnOk);
         }
 
-        // Show Modal
         wonderfulModal.show();
     }
 
@@ -944,7 +912,7 @@
        QZ TRAY SETUP
        =========================== */
     qz.security.setCertificatePromise(function(resolve, reject) {
-        resolve("-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJAKg0HhUxzBrdMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV\nBAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBX\naWRnaXRzIFB0eSBMdGQwHhcNMTcwOTA0MDQzOTI5WhcNMTgwOTA0MDQzOTI5WjBF\nMQswCQYDVQQGEwJBVTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50\nZXJuZXQgV2lkZ2l0cyBQdHkgTHRkMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB\nCgKCAQEAuPwsKsV0g2EgLQLUjdInXx3gXVwJnCiC4K1/H6VNF2nzQ3VLDmKQAu7Jf\nwGpQ6KZZF+j2N7sUHnJyCkg+0R3bA3JX5V8kxvK7dOq4DlBjkURUqS3LY3U6K3jXJ\n5f0L6H8f8nKbJZJNYJVjmZJ8p2Wj8bZ6K5W1WfWZ9Wv7Jq0pY0UqY6F8R3bA3JX5V\n8kxvK7dOq4DlBjkURUqS3LY3U6K3jXJ5f0L6H8f8nKbJZJNYJVjmZJ8p2Wj8bZ6K\n5W1WfWZ9Wv7Jq0pY0UqY6F8R3bA3JX5V8kxvK7dOq4DlBjkURUqS3LY3U6K3jXJ5\nf0L6H8f8nKbJZJNYJVjmZJ8wIDAQABo1AwTjAdBgNVHQ4EFgQUhP7V5k4V8JF1dJK9JK9JK9JK9JK9JK9J\nK9JK9HwYDVR0lBBgwFAYKKwYBBAGCNwoDDAYKKwYBBAGCNwoDBDAKBggrBgEFBQcD\nATANBgkqhkiG9w0BAQsFAAOCAQEAXPQ3X3X3X3X3X3X3X3X3X3X3X\nX3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3\nX3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3\nX3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3\nX3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3Q==\n-----END CERTIFICATE-----");
+        resolve("-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJAKg0HhUxzBrdMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV\nBAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBX\naWRnaXRzIFB0eSBMdGQwHhcNMTcwOTA0MDQzOTI5WhcNMTgwOTA0MDQzOTI5WjBF\nMQswCQYDVQQGEwJBVTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50\nZXJuZXQgV2lkZ2l0cyBQdHkgTHRkMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB\nCgKCAQEAuPwsKsV0g2EgLQLUjdInXx3gXVwJnCiC4K1/H6VNF2nzQ3VLDmKQAu7Jf\nwGpQ6KZZF+j2N7sUHnJyCkg+0R3bA3JX5V8kxvK7dOq4DlBjkURUqS3LY3U6K3jXJ\n5f0L6H8f8nKbJZJNYJVjmZJ8p2Wj8bZ6K5W1WfWZ9Wv7Jq0pY0UqY6F8R3bA3JX5V\n8kxvK7dOq4DlBjkURUqS3LY3U6K3jXJ5f0L6H8f8nKbJZJNYJVjmZJ8p2Wj8bZ6K\n5W1WfWZ9Wv7Jq0pY0UqY6F8R3bA3JX5V8kxvK7dOq4DlBjkURUqS3LY3U6K3jXJ5\nf0L6H8f8nKbJZJNYJVjmZJ8wIDAQABo1AwTjAdBgNVHQ4EFgQUhP7V5k4V8JF1dJK9JK9JK9JK9JK9JK9J\nK9JK9HwYDVR0lBBgwFAYKKwYBBAGCNwoDDAYKKwYBBAGCNwoDBDAKBggrBgEFBQcD\nATANBgkqhkiG9w0BAQsFAAOCAQEAXPQ3X3X3X3X3X3X3X3X3X3X3X\nX3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3\nX3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3\nX3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3\n3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3Q==\n-----END CERTIFICATE-----");
     });
 
     qz.security.setSignaturePromise(function(toSign) {
@@ -1114,7 +1082,7 @@
     });
 
     $("#manual-product").on("change", function () {
-        const val = this.value;
+        const val = $(this).val();
         if (!val) return;
         const parts = val.split("|");
         const prodId = $(this).find(":selected").data("prodid") || "0";
@@ -1205,7 +1173,6 @@
         const held = JSON.parse(localStorage.getItem('vijay_held_order'));
         if(!held) return;
         
-        // Show Wonderful Confirmation Box
         showWonderfulBox('confirm', 'Resume Order?', 'Resume previous held order? The current cart will be cleared.', 
             function() { // On Confirm
                 $("#cust-name").val(held.customer.name);
@@ -1268,7 +1235,6 @@
     THERMAL PRINTER LOGIC
  =========================== */
  function printThermalReceipt(docNo) {
-     // 1. Populate Data
      $('#print-date').text(new Date().toLocaleString());
      $('#print-inv-no').text(docNo || "PENDING");
      
@@ -1299,7 +1265,6 @@
      $('#print-upi').text($('#upi').val() || "0.00");
      $('#print-balance').text($('#Bal-amt').text() || "0.00");
 
-     // 2. QZ Tray Printing
      var connectPromise = Promise.resolve();
      if (!qz.websocket.isActive()) {
          connectPromise = qz.websocket.connect();
@@ -1336,16 +1301,14 @@
  ✅ SAVE + SAVE PRINT LOGIC
 =========================== */
 
-//✅ Save Only Button
-$("#save-btn").on("click", function (e) {
+ $("#save-btn").on("click", function (e) {
   e.preventDefault();
-  saveInvoice(false); // send boolean FALSE
+  saveInvoice(false); 
 });
 
-//✅ Save + Print Button
-$("#save-print-btn").on("click", function (e) {
+ $("#save-print-btn").on("click", function (e) {
   e.preventDefault();
-  saveInvoice(true); // send boolean TRUE
+  saveInvoice(true); 
 });
 
 
@@ -1369,34 +1332,27 @@ function saveInvoice(printAfterSave) {
       return;
   }
 
-  // ✅ Show Loader
   $("#loader").css("display", "flex").addClass("active");
 
-  // ✅ Prepare JSON Data
+  // ✅ CRITICAL FIX: Corrected JSON Syntax (colon instead of equals)
   const data = {
       discountType: $("#disc-type-toggle").is(":checked") ? "PERCENT" : "FIXED",
       discount: parseFloat($("#discount").val()) || 0,
       subtotal: parseFloat($("#subtotal").text()) || 0,
       total: parseFloat($("#grand-total").text()) || 0,
-       cash = parseFloat($("#cash").val()) || 0,
-       upi  = parseFloat($("#upi").val()) || 0,
-
-      // ✅ Boolean Value Sent to Servlet
+      cash: parseFloat($("#cash").val()) || 0,  // FIXED
+      upi: parseFloat($("#upi").val()) || 0,     // FIXED
       printRequired: printAfterSave,
-
       customer: {
           name: $("#cust-name").val(),
           address: $("#cust-address").val(),
           phone: $("#cust-phone").val()
       },
-
       items: []
   };
 
-  // ✅ Collect Items
   $("#items-body tr").each(function () {
       const row = $(this);
-
       data.items.push({
           prodId: row.find(".ProdId").val(),
           product: row.find(".desc").val(),
@@ -1409,7 +1365,6 @@ function saveInvoice(printAfterSave) {
 
   console.log("Sending Data:", data);
 
-  // ✅ AJAX Call
   $.ajax({
       type: "POST",
       url: "<%= request.getContextPath() %>/SalesSaveServlet",
@@ -1437,26 +1392,26 @@ function saveInvoice(printAfterSave) {
                   printThermalReceipt(docNo);
               }
 
+              // ✅ Show Cancel Button
+              $("#cancelId").val(docNo);
+              toggleCancelButton();
+
               resetInvoiceForm();
 
           } else {
-
               const err = response ? response.message : "Unknown Error";
               showWonderfulBox('error', 'Save Failed', err);
           }
       },
 
       error: function (xhr, status, error) {
-
           $("#loader").removeClass("active");
           setTimeout(() => { $("#loader").hide(); }, 300);
-
           showWonderfulBox(
               'error',
               'Server Error',
               "Connection Failed: " + error
           );
-
           console.error(xhr.responseText);
       }
   });
@@ -1472,7 +1427,6 @@ function saveInvoice(printAfterSave) {
             return; 
         }
         
-        // Wonderful Confirmation Box
         showWonderfulBox('confirm', 'Cancel Invoice?', 'Are you sure you want to CANCEL this invoice? This action cannot be undone.',
             function() { // On Confirm
                 $("#loader").css("display", "flex").addClass("active");
@@ -1487,7 +1441,10 @@ function saveInvoice(printAfterSave) {
                             $("#cancelId").val("0");
                             $("#cancel").addClass("d-none");
                             showWonderfulBox('success', 'Canceled', 'The invoice has been canceled successfully.');
-                            resetInvoiceForm();
+                            // We do NOT resetInvoiceForm here because the user might want to re-enter the sale manually 
+                            // or the form is already blank from the previous save. 
+                            // Depending on workflow, you might want to clear everything:
+                            // resetInvoiceForm(); 
                         } else {
                             const err = response ? (response.error || response.message) : "Unknown error";
                             showWonderfulBox('error', 'Failed', err);
