@@ -1,6 +1,6 @@
 package org.vijaytech.oilshop;
 
-import java.io.BufferedReader;
+import java.io.BufferedReader; 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -258,6 +258,8 @@ public class SalesSaveServlet extends HttpServlet {
             ordH.setM_PriceList_ID(1000058);
             ordH.setSalesDiscountAmt(discount);
             ordH.setIsTaxIncluded(true);
+            ordH.set_ValueOfColumn("cash",cash);
+            ordH.set_ValueOfColumn("upi",upi);
             ordH.setC_BankAccount_ID(1000094);
             ordH.setDateAcct(new Timestamp(System.currentTimeMillis()));
             ordH.setDateOrdered(new Timestamp(System.currentTimeMillis()));

@@ -723,6 +723,8 @@
         html += "<th class='text-end'>Qty</th>";
         html += "<th class='text-end'>Price</th>";
         html += "<th class='text-end'>Amount</th>";
+        html += "<th class='text-end'>Cash</th>";
+        html += "<th class='text-end'>Upi</th>";
         html += "<th class='text-center'>Action</th>";
         html += "</tr></thead><tbody>";
 
@@ -737,6 +739,8 @@
             html += "<td class='text-end'>" + row.Qty + "</td>";
             html += "<td class='text-end'>" + row.Price + "</td>";
             html += "<td class='text-end'>" + row.Amount + "</td>";
+            html += "<td class='text-end'>" + row.cash + "</td>";
+            html += "<td class='text-end'>" + row.upi + "</td>";
 
             // Actions: Print (Thermal) vs PDF (A4)
             html += "<td class='text-center'>";

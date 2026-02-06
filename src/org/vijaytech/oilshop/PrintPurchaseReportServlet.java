@@ -157,27 +157,35 @@ public class PrintPurchaseReportServlet extends HttpServlet {
                .append(" ORDER BY i.DateInvoiced");
 
         } else {
-        	sql.append("SELECT i.DateInvoiced, i.DocumentNo, bp.Name AS BPartner, ")
-        	   .append("p.Name AS Product, u.Name AS UOM, ")
-        	   .append("il.QtyInvoiced AS Qty, ")
-        	   .append("il.PriceActual AS Price, ")
-        	   .append("il.LineNetAmt AS Amount ")
-        	   .append("FROM C_Invoice i ")
-        	   .append("JOIN C_InvoiceLine il ON i.C_Invoice_ID = il.C_Invoice_ID ")
-        	   .append("LEFT JOIN C_BPartner bp ON i.C_BPartner_ID = bp.C_BPartner_ID ")
-        	   .append("LEFT JOIN M_Product p ON il.M_Product_ID = p.M_Product_ID ")
-        	   .append("LEFT JOIN C_UOM u ON il.C_UOM_ID = u.C_UOM_ID ")
-        	   .append("WHERE i.IsSOTrx=? AND i.DocStatus IN ('CO','CL') ")
-        	   .append("AND i.DateInvoiced BETWEEN ? AND ? ");
+            sql.append("SELECT i.DateInvoiced, i.DocumentNo, ")
+            .append("bp.Name AS BPartner, ")
+            .append("p.Name AS Product, ")
+            .append("u.Name AS UOM, ")
+            .append("il.QtyInvoiced AS Qty, ")
+            .append("il.PriceActual AS Price, ")
+            .append("il.LineNetAmt AS Amount, ")
+            .append("COALESCE(o.Cash, 0) AS CashAmt, ")
+            .append("COALESCE(o.UPI, 0) AS UpiAmt ")
+            .append("FROM C_Invoice i ")
+            .append("JOIN C_InvoiceLine il ON i.C_Invoice_ID = il.C_Invoice_ID ")
+            .append("LEFT JOIN C_BPartner bp ON i.C_BPartner_ID = bp.C_BPartner_ID ")
+            .append("LEFT JOIN M_Product p ON il.M_Product_ID = p.M_Product_ID ")
+            .append("LEFT JOIN C_UOM u ON il.C_UOM_ID = u.C_UOM_ID ")
+            .append("LEFT JOIN C_Order o ON i.C_Order_ID = o.C_Order_ID ")
+            .append("WHERE i.IsSOTrx=? ")
+            .append("AND i.DocStatus IN ('CO','CL') ")
+            .append("AND i.DateInvoiced BETWEEN ? AND ? ");
 
-            if (org != null && !org.isEmpty())
-                sql.append("AND i.AD_Org_ID=").append(org);
-            if (bp != null && !bp.isEmpty())
-                sql.append("AND i.C_BPartner_ID=").append(bp);
+         if (org != null && !org.isEmpty())
+             sql.append("AND i.AD_Org_ID=").append(org);
 
-            sql.append(" ORDER BY i.DateInvoiced ")
-               .append(" OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
-        }
+         if (bp != null && !bp.isEmpty())
+             sql.append("AND i.C_BPartner_ID=").append(bp);
+
+         sql.append(" ORDER BY i.DateInvoiced ")
+            .append(" OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+     }
+
 
         try (Connection conn = DB.getConnectionRW();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
@@ -207,6 +215,8 @@ public class PrintPurchaseReportServlet extends HttpServlet {
                 row.put("Qty", safe(rs.getBigDecimal("Qty")));
                 row.put("Price", safe(rs.getBigDecimal("Price")));
                 row.put("Amount", safe(rs.getBigDecimal("Amount")));
+                row.put("upi", safe(rs.getBigDecimal("UpiAmt")));
+                row.put("cash", safe(rs.getBigDecimal("CashAmt")));
 
                 result.put(row);
             }
@@ -233,6 +243,8 @@ public class PrintPurchaseReportServlet extends HttpServlet {
 		String phone = "";
 		String docDate = "";
 		String grandTotal = "0.00";
+		String upi = "0.00";
+		String cash = "0.00";
 
 		int invoiceId = 0;
 
@@ -244,12 +256,13 @@ public class PrintPurchaseReportServlet extends HttpServlet {
 		 * LINES (No Design Change)
 		 * ==========================================================
 		 */
-		String sql = "SELECT i.C_Invoice_ID, i.DateInvoiced, i.GrandTotal, " + "       bp.Name,bp.phone, "
-				+ "       il.LineNetAmt, il.PriceActual, il.QtyInvoiced, "
-				+ "       p.Name AS ProductName, COALESCE(p.HSNCode,'') AS HSNCode " + "FROM C_Invoice i "
+		String sql = "SELECT i.C_Invoice_ID, i.DateInvoiced, i.GrandTotal, " + " bp.Name,bp.phone, "
+				+ " il.LineNetAmt, il.PriceActual, il.QtyInvoiced, "
+				+ " p.Name AS ProductName, COALESCE(p.HSNCode,'') AS HSNCode " + "FROM C_Invoice i "
 				+ "JOIN C_BPartner bp ON i.C_BPartner_ID = bp.C_BPartner_ID "
 				+ "JOIN C_InvoiceLine il ON i.C_Invoice_ID = il.C_Invoice_ID "
 				+ "LEFT JOIN M_Product p ON il.M_Product_ID = p.M_Product_ID " + "WHERE i.DocumentNo=?";
+
 
 		try (Connection conn = DB.getConnectionRW(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -354,13 +367,13 @@ public class PrintPurchaseReportServlet extends HttpServlet {
 		 */
 		if ("thermal".equalsIgnoreCase(format)) {
 
-			generateThermalHtml(resp, docNo, bPartner, docDate, safe(calcGrand), taxableTotal, // ✅ Correct Subtotal
+			generateThermalHtml(resp, docNo, bPartner, docDate, grandTotal, taxableTotal, // ✅ Correct Subtotal
 																								// Base
 					lines, taxes, phone);
 
 		} else {
 
-			generateA4Pdf(resp, docNo, bPartner, docDate, safe(calcGrand), taxableTotal, // ✅ Correct Subtotal Base
+			generateA4Pdf(resp, docNo, bPartner, docDate, grandTotal, taxableTotal, // ✅ Correct Subtotal Base
 					lines, taxes, phone);
 		}
 	}
