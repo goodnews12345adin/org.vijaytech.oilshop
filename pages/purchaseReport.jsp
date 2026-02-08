@@ -890,66 +890,162 @@
     // ==============================
     //  DOWNLOAD TABLE AS PDF (List PDF)
     // ==============================
-    function downloadTablePdf(){
-        var table = document.getElementById("reportTable");
-        if (!table) {
-            showToast("Error", "No report data to download");
-            return;
-        }
+	function downloadTablePdf() {
 
-        $("#global-loader").css("display","flex").hide().fadeIn(200);
-
-        setTimeout(() => {
-             const jsPDFObj = window.jspdf;
-            var doc = new jsPDFObj.jsPDF();
-            
-            // Add Corporate Headers
-            doc.setFontSize(18);
-            doc.setTextColor(21, 160, 198); // Brand Color
-            doc.text("<%=sessionOrgName%>", 14, 20);
-            
-            doc.setFontSize(10);
-            doc.setTextColor(100);
-            doc.text("<%=sessionOrgAddress%>", 14, 26);
-            doc.text("GSTIN: <%=sessionOrgGST%>", 14, 32);
-            
-            // Report Meta Info
-            doc.setFontSize(12);
-            doc.setTextColor(0);
-            doc.text("Purchase / Sales Report", 14, 42);
-            
-            doc.setFontSize(10);
-            doc.setTextColor(60);
-            var supplier = $("#supplier option:selected").text();
-            var type = $("#type option:selected").text();
-            var range = $("#fromDate").val() + " to " + $("#toDate").val();
-            
-            if(supplier && supplier !== "--Select Supplier--") doc.text("Supplier: " + supplier, 14, 50);
-            doc.text("Type: " + type, 14, 56);
-            doc.text("Date Range: " + range, 14, 62);
-
-            // Draw Line
-            doc.setLineWidth(0.5);
-            doc.setDrawColor(200);
-            doc.line(14, 65, 196, 65);
-
-            // Table
-            doc.autoTable({ html: '#reportTable', startY: 70, styles: { fontSize: 8 }, theme: 'grid' });
-            
-            // Footer
-            var pageCount = doc.internal.getNumberOfPages();
-            doc.setFontSize(8);
-            for(let i = 1; i <= pageCount; i++) {
-                 doc.setPage(i);
-                 doc.text('Page ' + String(i) + ' of ' + String(pageCount), 196-20, 285, {align: 'right'});
-            }
-            
-            doc.save("Report_List.pdf");
-            
-            $("#global-loader").fadeOut(200);
-        }, 500);
+    const table = document.getElementById("reportTable");
+    if (!table) {
+        alert("No report data");
+        return;
     }
 
+    $("#global-loader").css("display","flex").hide().fadeIn(200);
+
+    setTimeout(() => {
+
+        const { jsPDF } = window.jspdf;
+
+        const doc = new jsPDF({
+            orientation: "landscape",
+            unit: "mm",
+            format: "a4"
+        });
+
+        const pageWidth  = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+
+        /* ================= HEADER ================= */
+
+        doc.setFontSize(18);
+        doc.setTextColor(21,160,198);
+        doc.text("<%=sessionOrgName%>", pageWidth / 2, 18, { align: "center" });
+
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text("<%=sessionOrgAddress%>", pageWidth / 2, 24, { align: "center" });
+        doc.text("GSTIN: <%=sessionOrgGST%>", pageWidth / 2, 30, { align: "center" });
+
+        const typeText = $("#type option:selected").text();
+
+        doc.setFontSize(13);
+        doc.setTextColor(0);
+        doc.text(typeText + " Report", pageWidth / 2, 40, { align: "center" });
+
+        doc.setFontSize(10);
+        doc.text(
+            "Date Range: " + $("#fromDate").val() + " to " + $("#toDate").val(),
+            pageWidth / 2,
+            48,
+            { align: "center" }
+        );
+
+        doc.line(14, 52, pageWidth - 14, 52);
+
+        /* ================= BUILD DATA ================= */
+
+        const body = [];
+        let totalAmount = 0;
+        let totalCash   = 0;
+        let totalUpi    = 0;
+
+        const clean = v =>
+            parseFloat(String(v).replace(/[^\d.]/g, "")) || 0;
+
+        table.querySelectorAll("tbody tr").forEach(row => {
+            const c = row.querySelectorAll("td");
+
+            const amount = clean(c[7].innerText);
+            const cash   = clean(c[8].innerText);
+            const upi    = clean(c[9].innerText);
+
+            totalAmount += amount;
+            totalCash   += cash;
+            totalUpi    += upi;
+
+            body.push([
+                c[0].innerText,
+                c[1].innerText,
+                c[2].innerText,
+                c[3].innerText,
+                c[4].innerText,
+                c[5].innerText,
+                c[6].innerText,
+                "Rs. " + amount.toFixed(2),
+                "Rs. " + cash.toFixed(2),
+                "Rs. " + upi.toFixed(2)
+            ]);
+        });
+
+        /* ================= TABLE ================= */
+
+        doc.autoTable({
+            startY: 56,
+            theme: "grid",
+
+            head: [[
+                "Date", "DocumentNo", "BPartner", "Product",
+                "UOM", "Qty", "Price", "Amount", "Cash", "UPI"
+            ]],
+
+            body: body,
+
+            foot: [[
+                "GRAND TOTAL", "", "", "", "", "", "",
+                "Rs. " + totalAmount.toFixed(2),
+                "Rs. " + totalCash.toFixed(2),
+                "Rs. " + totalUpi.toFixed(2)
+            ]],
+
+            // 🔑 THIS IS THE KEY FIX
+            showFoot: "lastPage",
+
+            styles: {
+                fontSize: 8,
+                halign: "right"
+            },
+
+            headStyles: {
+                fillColor: [32, 201, 151],
+                textColor: 255,
+                fontStyle: "bold",
+                halign: "center"
+            },
+
+            footStyles: {
+                fillColor: [32, 201, 151],
+                textColor: 255,
+                fontStyle: "bold",
+                halign: "right"
+            },
+
+            columnStyles: {
+                0:{ halign:"left" },
+                1:{ halign:"left" },
+                2:{ halign:"left" },
+                3:{ halign:"left" },
+                4:{ halign:"center" }
+            }
+        });
+
+        /* ================= PAGE FOOTER ================= */
+
+        const pages = doc.internal.getNumberOfPages();
+        doc.setFontSize(8);
+
+        for (let i = 1; i <= pages; i++) {
+            doc.setPage(i);
+            doc.text(
+                "Page " + i + " of " + pages,
+                pageWidth - 14,
+                pageHeight - 8,
+                { align: "right" }
+            );
+        }
+
+        doc.save(typeText + "_Report.pdf");
+        $("#global-loader").fadeOut(200);
+
+    }, 300);
+}
     // ==============================
     //  QUICK DATE LOGIC
     // ==============================

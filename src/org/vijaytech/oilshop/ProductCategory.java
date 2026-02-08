@@ -10,6 +10,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.compiere.model.MProductCategory;
+import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.json.JSONObject;
 import org.syvasoft.tallyfrontcrusher.model.TF_MProductCategory;
@@ -75,6 +77,26 @@ public class ProductCategory extends HttpServlet{
 	            Env.setContext(ctx, "#AD_User_ID", 100);
 	        if (Env.getContextAsInt(ctx, "#M_Warehouse_ID") == 0)
 	            Env.setContext(ctx, "#M_Warehouse_ID", 1000113);
+	        
+	        MProductCategory exist= new Query(
+	                ctx,
+	                MProductCategory.Table_Name,
+	                "Value = ?",
+	                null
+	        )
+	        .setClient_ID()
+	        .setParameters(value)
+	        .firstOnly();
+	         
+	        if(exist != null) {
+	        	 JSONObject error = new JSONObject();
+		            error.put("error", true);
+		            error.put("details","category value already Exist");
+		            resp.setStatus(HttpServletResponse.SC_CONFLICT); // 409
+		            resp.setContentType("application/json");
+		            resp.setCharacterEncoding("UTF-8");
+		            resp.getWriter().write(error.toString());
+	        }else {
 
 	        // ============================
 	        // 3ï¸�âƒ£ SAVE PRODUCT CATEGORY
@@ -90,20 +112,25 @@ public class ProductCategory extends HttpServlet{
 
 	            JSONObject success = new JSONObject();
 	            success.put("success", true);
+	            success.put("error", false);
 	            success.put("message", "Category Saved Successfully");
 	            success.put("M_Product_Category_ID", category.get_ID());
 
 	            resp.getWriter().write(success.toString());
-	            System.out.println("âœ… Category saved successfully");
+	            System.out.println(" Category saved successfully");
 
 	        } catch (Exception e) {
 	            e.printStackTrace();
 	            JSONObject error = new JSONObject();
-	            error.put("error", "Failed to save category");
+	            error.put("error", true);
 	            error.put("details", e.getMessage());
+	            resp.setStatus(HttpServletResponse.SC_CONFLICT); // 409
+	            resp.setContentType("application/json");
+	            resp.setCharacterEncoding("UTF-8");
 
 	            resp.getWriter().write(error.toString());
 	        }
+	    }
 	    }
 
 

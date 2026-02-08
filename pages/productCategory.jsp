@@ -560,22 +560,36 @@
       };
 
       $.ajax({
-          type: "POST",
-          url: "<%= request.getContextPath() %>/ProductCategory",
-          data: JSON.stringify(data),
-          contentType: "application/json",
-          success: function (response) {
-              $("#global-loader").fadeOut(200);
-              showWonderfulBox('success', 'Saved Successfully', 'Product category has been created.', function(){
-                  $("#catForm")[0].reset();
-              });
-          },
-          error: function(xhr) {
-              $("#global-loader").fadeOut(200);
-              const errorMsg = xhr.responseText || "Could not save category. Please try again.";
-              showWonderfulBox('error', 'Error', errorMsg);
-          }
-      });
+    	    type: "POST",
+    	    url: "<%= request.getContextPath() %>/ProductCategory",
+    	    data: JSON.stringify(data),
+    	    contentType: "application/json",
+    	    success: function (response) {
+    	        $("#global-loader").fadeOut(200);
+				if(response)
+    	        showWonderfulBox(
+    	            'success',
+    	            'Saved Successfully',
+    	            response.message || 'Product category has been created.',
+    	            function () {
+    	                $("#catForm")[0].reset();
+    	            }
+    	        );
+    	    },
+    	    error: function (xhr) {
+    	        $("#global-loader").fadeOut(200);
+
+    	        let msg = "Could not save category. Please try again.";
+
+    	        try {
+    	            const res = JSON.parse(xhr.responseText);
+    	            msg = res.message || msg;
+    	        } catch (e) {}
+
+    	        showWonderfulBox('error', 'Error', msg);
+    	    }
+    	});
+
     });
 
     $("#resetBtn").click(function() {
