@@ -173,6 +173,7 @@
     <div class="d-flex align-items-center">
         <span class="version-tag" style="background:rgba(25, 182, 176, 0.15); color:#19b6b0; padding:3px 10px; border-radius:20px; font-size:10px; font-weight:800;">v44.1</span>
     </div>
+    <!-- FIX APPLIED HERE: Removed extra closing parenthesis before %> -->
     <div class="user-info ms-3"><%= (session.getAttribute("username") != null) ? session.getAttribute("username") : "Admin" %></div>
   </header>
 
@@ -190,6 +191,21 @@
                 <label class="form-label">Search Key</label>
                 <input type="text" class="form-control" id="bpValue" placeholder="e.g. CUST-001 (Optional)">
             </div>
+            
+            <!-- ✅ ADDED: Location, Tax ID, Phone Fields -->
+            <div class="col-md-4">
+                <label class="form-label">Location</label>
+                <input type="text" class="form-control" id="bpLocation" placeholder="City, State">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Tax ID (GSTIN)</label>
+                <input type="text" class="form-control" id="bpTaxId" placeholder="29ABCDE...">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Phone Number</label>
+                <input type="text" class="form-control" id="bpPhone" placeholder="+91 98765 43210">
+            </div>
+
             <div class="col-12">
                 <label class="form-label">Partner Type <span class="text-danger">*</span></label>
                 <div class="partner-type-box">
@@ -231,6 +247,9 @@
                           <th width="80">ID</th>
                           <th>Name</th>
                           <th>Search Key</th>
+                          <th>Location</th> <!-- ✅ Added Column -->
+                          <th>Tax ID</th>    <!-- ✅ Added Column -->
+                          <th>Phone</th>    <!-- ✅ Added Column -->
                           <th>Type</th>
                       </tr>
                   </thead>
@@ -361,11 +380,14 @@
                         rowClass += ' is-vendor';
                     }
 
-                    // NO BALANCE COLUMN
+                    // ✅ Added new columns to table row rendering
                     const row = "<tr class='" + rowClass + "'>" +
                         "<td>" + bp.id + "</td>" +
                         "<td class='fw-bold'>" + bp.name + "</td>" +
                         "<td>" + (bp.value || '') + "</td>" +
+                        "<td>" + (bp.location || '-') + "</td>" +
+                        "<td>" + (bp.taxId || '-') + "</td>" +
+                        "<td>" + (bp.phone || '-') + "</td>" +
                         "<td>" + badges + "</td>" +
                         "</tr>";
                     $tbody.append(row);
@@ -373,7 +395,8 @@
                 // Re-apply filters after load
                 filterTable(); 
             } else {
-                $tbody.append("<tr><td colspan='4' class='text-center text-muted'>No partners found.</td></tr>");
+                // Adjusted colspan to match new column count (7 columns)
+                $tbody.append("<tr><td colspan='7' class='text-center text-muted'>No partners found.</td></tr>");
             }
         });
     }
@@ -400,9 +423,13 @@
 
       $("#global-loader").css("display","flex");
 
+      // ✅ Added new fields to payload
       const payload = {
         name: name,
         value: $("#bpValue").val(),
+        location: $("#bpLocation").val(),
+        taxId: $("#bpTaxId").val(),
+        phone: $("#bpPhone").val(),
         isCustomer: isCustomer,
         isVendor: isVendor
       };

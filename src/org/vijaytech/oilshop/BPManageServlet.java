@@ -64,7 +64,11 @@ public class BPManageServlet extends HttpServlet {
                     obj.put("isCustomer", bp.isCustomer());
                     obj.put("isVendor", bp.isVendor());
                     
-                    // We ignore balance for the JSP as requested
+                    // ✅ Added new fields to JSON response
+                    obj.put("location", bp.getDesignation());
+                    obj.put("taxId", bp.getTaxID());
+                    obj.put("phone", bp.getPhone());
+                    
                     arr.put(obj);
                 }
                 response.getWriter().write(arr.toString());
@@ -116,6 +120,12 @@ public class BPManageServlet extends HttpServlet {
             JSONObject root = new JSONObject(sb.toString());
             String name = root.optString("name").trim();
             String value = root.optString("value").trim();
+            
+            // ✅ Extract new fields
+            String location = root.optString("location").trim();
+            String taxId = root.optString("taxId").trim();
+            String phone = root.optString("phone").trim();
+            
             boolean isCustomer = root.optBoolean("isCustomer");
             boolean isVendor = root.optBoolean("isVendor");
 
@@ -124,6 +134,31 @@ public class BPManageServlet extends HttpServlet {
                 response.getWriter().write("{\"error\":\"Name is mandatory.\"}");
                 return;
             }
+
+            // ✅ ✅ VALIDATION BLOCK START ✅ ✅
+            
+            // 1. Validate Phone Number
+            // Logic: Optional '+', followed by 10-15 digits, spaces, or hyphens allowed.
+            if (!phone.isEmpty()) {
+                if (!phone.matches("^[+]?[0-9\\-\\s]{10,15}$")) {
+                    response.setStatus(400);
+                    response.getWriter().write("{\"error\":\"Invalid Phone Number. Please enter a valid number (10-15 digits).\"}");
+                    return;
+                }
+            }
+
+            // 2. Validate Tax ID
+            // Logic: Alphanumeric characters and hyphens allowed. Length 5-30.
+            // This accommodates GSTIN (15 chars) and other generic formats.
+            if (!taxId.isEmpty()) {
+                if (!taxId.matches("^[0-9A-Za-z\\-]{5,30}$")) {
+                    response.setStatus(400);
+                    response.getWriter().write("{\"error\":\"Invalid Tax ID. Must be 5-30 alphanumeric characters.\"}");
+                    return;
+                }
+            }
+            
+            // ✅ ✅ VALIDATION BLOCK END ✅ ✅
 
             trx = Trx.get(trxName, true);
 
@@ -143,6 +178,11 @@ public class BPManageServlet extends HttpServlet {
             bp.setIsCustomer(isCustomer); 
             bp.setIsVendor(isVendor);
             bp.setIsActive(true);
+            
+            // ✅ Set new fields
+            if (!location.isEmpty()) bp.setDesignation(location);
+            if (!taxId.isEmpty()) bp.setTaxID(taxId);
+            if (!phone.isEmpty()) bp.setPhone(phone);
             
             // Set BP Group
             int bpGroupID = new Query(ctx, "C_BP_Group", "IsDefault='Y'", trxName)
