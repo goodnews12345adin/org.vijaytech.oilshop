@@ -1,12 +1,17 @@
 package org.vijaytech.oilshop;
 
-import java.io.IOException; 
-import java.sql.*;
+import java.io.IOException;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import javax.servlet.ServletException;
-import javax.servlet.http.*;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.compiere.model.MSysConfig;
 import org.compiere.util.DB;
@@ -24,20 +29,20 @@ public class UserLoginServlet extends HttpServlet {
 
         int clientID = MSysConfig.getIntValue("CLIENT_ID", 1000000);
         int userID   = 0;   // Hardcoded fallback
-        int roleID   = 1000015;   // Hardcoded fallback
-        int orgList    = 0;   // Hardcoded fallback
+        int roleID   = 0;   // Hardcoded fallback
+        int orgList  = 0;   // Hardcoded fallback
 
         Env.setContext(ctx, Env.AD_CLIENT_ID, clientID);
         Env.setContext(ctx, Env.AD_USER_ID, userID);
         Env.setContext(ctx, Env.AD_ROLE_ID, roleID);
-//        Env.setContext(ctx, Env.AD_ORG_ID, orgList);
+        // Env.setContext(ctx, Env.AD_ORG_ID, orgList);
 
         return ctx;
     }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
+            throws ServletException, IOException {
 
         response.setContentType("text/html;charset=UTF-8");
         String username = request.getParameter("username");
@@ -45,8 +50,12 @@ public class UserLoginServlet extends HttpServlet {
 
         // Invalidate old session
         HttpSession oldSession = request.getSession(false);
-        if (oldSession != null) oldSession.invalidate();
+        if (oldSession != null) {
+            oldSession.invalidate();
+        }
+        
         System.out.println("Start");
+        
         // Create new session and set timeout
         HttpSession session = request.getSession(true);
         session.setMaxInactiveInterval(60 * 60 * 24); // 24 hours in seconds
@@ -59,12 +68,12 @@ public class UserLoginServlet extends HttpServlet {
 
         try {
             // Validate user credentials
-//            String sql = "SELECT AD_User_ID FROM AD_User WHERE Name = ? AND Password = ? AND IsActive = 'Y'";
-        	String sql =
-        		    "SELECT u.AD_User_ID, ur.AD_Role_ID " +
-        		    "FROM AD_User u " +
-        		    "JOIN AD_User_Roles ur ON u.AD_User_ID = ur.AD_User_ID " +
-        		    "WHERE u.Name = ? AND u.Password = ? AND u.IsActive='Y' AND ur.IsActive='Y'";
+            // String sql = "SELECT AD_User_ID FROM AD_User WHERE Name = ? AND Password = ? AND IsActive = 'Y'";
+            String sql =
+                "SELECT u.AD_User_ID, ur.AD_Role_ID " +
+                "FROM AD_User u " +
+                "JOIN AD_User_Roles ur ON u.AD_User_ID = ur.AD_User_ID " +
+                "WHERE u.Name = ? AND u.Password = ? AND u.IsActive='Y' AND ur.IsActive='Y'";
 
             pstmt = DB.prepareStatement(sql, null);
             pstmt.setString(1, username);
@@ -79,8 +88,9 @@ public class UserLoginServlet extends HttpServlet {
                 int roleID = MSysConfig.getIntValue("MOBWEB_ROLE_ID", 1000015, clientID);
                 int ROLE_ADMIN = MSysConfig.getIntValue("ROLE_ADMIN", 1000050, clientID);
                 int ROLE_CASHIER = MSysConfig.getIntValue("ROLE_CASHIER", 1000065, clientID);
-                int orgID =0;
-                // ✅ Load active organizations
+                int orgID = 0;
+                
+                // Load active organizations
                 List<Organization> orgList = new ArrayList<>();
                 String sqlOrg = "SELECT AD_Org_ID, Name FROM AD_Org WHERE AD_Client_ID = ? AND IsActive = 'Y'";
                 PreparedStatement pstmt1 = DB.prepareStatement(sqlOrg, null);
@@ -88,8 +98,8 @@ public class UserLoginServlet extends HttpServlet {
                 ResultSet rs1 = pstmt1.executeQuery();
 
                 while (rs1.next()) {
-                     orgID = 1000000;
-//                    System.out.println("orgID"+orgID);
+                    orgID = 1000000; // Ensure this is the intended logic
+                    // System.out.println("orgID"+orgID);
                     String orgName = rs1.getString("Name");
                     orgList.add(new Organization(orgID, orgName));
                 }
@@ -97,12 +107,11 @@ public class UserLoginServlet extends HttpServlet {
                 rs1.close();
                 pstmt1.close();
 
-
                 // Set context values
                 Env.setContext(ctx, Env.AD_CLIENT_ID, clientID);
                 Env.setContext(ctx, Env.AD_USER_ID, userID);
                 Env.setContext(ctx, Env.AD_ROLE_ID, roleID);
-//                Env.setContext(ctx, Env.AD_ORG_ID, orgList);
+                // Env.setContext(ctx, Env.AD_ORG_ID, orgList);
 
                 // Save context to session
                 session.setAttribute("ctx", ctx);
@@ -114,9 +123,17 @@ public class UserLoginServlet extends HttpServlet {
                 session.setAttribute("ROLE_CASHIER", ROLE_CASHIER);
                 session.setAttribute("ROLE_ADMIN", ROLE_ADMIN);
                 session.setAttribute("username", username);
+                
                 System.out.println(AD_Role_ID);
 
+                // Redirection Logic
+                if (ROLE_CASHIER == AD_Role_ID) {
+                    response.sendRedirect("pages/sales.jsp");
+                    return; // Important: Stop execution after redirect
+                }
+                
                 response.sendRedirect("pages/dashboard.jsp");
+                
             } else {
                 setiDempiereContext(request);
                 response.sendRedirect("pages/loginpage.jsp?error=1");
@@ -133,7 +150,7 @@ public class UserLoginServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
+            throws ServletException, IOException {
         setiDempiereContext(request);
         response.sendRedirect("pages/loginpage.jsp");
     }

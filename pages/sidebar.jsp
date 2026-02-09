@@ -19,8 +19,8 @@ if (username == null || username.trim().isEmpty()) {
 /* ===========================
    ROLE CONSTANTS
    =========================== */
- Integer ROLE_ADMIN1  = (Integer) session.getAttribute("ROLE_ADMIN");
- Integer ROLE_CASHIERObj = (Integer) session.getAttribute("ROLE_CASHIER");
+Integer ROLE_ADMIN1  = (Integer) session.getAttribute("ROLE_ADMIN");
+Integer ROLE_CASHIERObj = (Integer) session.getAttribute("ROLE_CASHIER");
 
 final int ROLE_ADMIN  = ROLE_ADMIN1.intValue();
 final int ROLE_CASHIER = ROLE_CASHIERObj.intValue();
@@ -37,11 +37,13 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= orgNamee %> ERP - Dashboard</title>
     
+    <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
     <style>
+        /* === CSS VARIABLES & THEMES === */
         :root {
             --panel-bg: #08143a;
             --panel-bg-glass: rgba(8, 20, 58, 0.98);
@@ -79,7 +81,7 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
             min-height: 100vh;
         }
 
-        /* === SIDEBAR === */
+        /* === SIDEBAR STYLING === */
         .sidebar-wrapper {
             width: var(--sidebar-width);
             height: 100vh;
@@ -154,7 +156,7 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
             box-shadow: 0 4px 15px rgba(25, 182, 176, 0.3);
         }
 
-        /* === SUBMENU === */
+        /* === SUBMENU STYLING === */
         .submenu-container {
             list-style: none;
             padding: 5px 0;
@@ -167,7 +169,7 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
         .submenu-container.show { display: block; animation: fadeIn 0.3s ease; }
 
         .submenu-link {
-            padding: 8px 15px 8px 20px !important;
+            padding: 8px 15px 8px 45px !important;
             font-size: 0.82rem !important;
             margin: 2px 0 !important;
             display: flex !important;
@@ -195,7 +197,7 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
             border-top: 1px solid rgba(255,255,255,0.1);
         }
 
-        /* === HEADER === */
+        /* === HEADER STYLING === */
         .app-header {
             height: var(--header-height);
             background: var(--panel-bg-glass);
@@ -240,7 +242,7 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
         }
         .icon-btn:hover { background: rgba(255,255,255,0.15); color: var(--accent-primary); }
         
-        /* Correct Logout Button Styling (Visible on md-lg screens) */
+        /* Logout Button Styling */
         .btn-logout-header {
             background: rgba(220, 53, 69, 0.15);
             border: 1px solid rgba(220, 53, 69, 0.4);
@@ -259,7 +261,7 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
             box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
         }
 
-        /* === USER AVATAR ASPECT === */
+        /* === USER AVATAR === */
         .user-avatar-circle {
             width: 40px; height: 40px;
             border-radius: 50%;
@@ -271,7 +273,7 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
             cursor: pointer;
         }
 
-        /* === FOOTER === */
+        /* === FOOTER STYLING === */
         .app-footer {
             height: var(--footer-height);
             background: var(--panel-bg-glass);
@@ -351,7 +353,7 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
         }
         .fab:hover { transform: rotate(90deg) scale(1.1); }
 
-        /* === TOAST NOTIFICATIONS (Correct Way) === */
+        /* === TOAST NOTIFICATIONS === */
         .toast-custom {
             backdrop-filter: blur(10px);
             background: rgba(30, 41, 59, 0.9) !important;
@@ -372,7 +374,7 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
         /* Main Content */
         .main-content { padding: 25px; transition: var(--transition); }
 
-        /* === MEDIA QUERIES === */
+        /* === RESPONSIVE MEDIA QUERIES === */
         @media (min-width: 992px) {
             body { padding-left: var(--sidebar-width); }
             body.collapsed-sidebar { padding-left: var(--sidebar-collapsed); }
@@ -427,30 +429,30 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
 
 <!-- Keyboard Shortcuts Modal -->
 <div class="modal fade" id="shortcutsModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" style="background: var(--card-bg); color: var(--text-main); border:none;">
-      <div class="modal-header border-bottom-0">
-        <h5 class="modal-title fw-bold"><i class="bi bi-keyboard me-2 text-info"></i>Keyboard Shortcuts</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <ul class="list-group list-group-flush">
-          <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
-            <span><i class="bi bi-search me-2"></i>Global Search</span>
-            <kbd class="bg-dark text-white rounded px-2 py-1 small">Ctrl + K</kbd>
-          </li>
-          <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
-            <span><i class="bi bi-cart3 me-2"></i>New Sale</span>
-            <kbd class="bg-dark text-white rounded px-2 py-1 small">Alt + S</kbd>
-          </li>
-          <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
-            <span><i class="bi bi-lightbulb me-2"></i>Toggle Theme</span>
-            <kbd class="bg-dark text-white rounded px-2 py-1 small">Alt + D</kbd>
-          </li>
-        </ul>
-      </div>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background: var(--card-bg); color: var(--text-main); border:none;">
+            <div class="modal-header border-bottom-0">
+                <h5 class="modal-title fw-bold"><i class="bi bi-keyboard me-2 text-info"></i>Keyboard Shortcuts</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
+                        <span><i class="bi bi-search me-2"></i>Global Search</span>
+                        <kbd class="bg-dark text-white rounded px-2 py-1 small">Ctrl + K</kbd>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
+                        <span><i class="bi bi-cart3 me-2"></i>New Sale</span>
+                        <kbd class="bg-dark text-white rounded px-2 py-1 small">Alt + S</kbd>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
+                        <span><i class="bi bi-lightbulb me-2"></i>Toggle Theme</span>
+                        <kbd class="bg-dark text-white rounded px-2 py-1 small">Alt + D</kbd>
+                    </li>
+                </ul>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 
 <!-- Sidebar -->
@@ -486,7 +488,7 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
                 <li><a href="<%=request.getContextPath()%>/PurchaseServlet" class="sidebar-link submenu-link">
                     <i class="bi bi-bag-check"></i> Purchase
                 </a></li>
-                  <% } %>
+                <% } %>
                 <!-- NEW LINK ADDED HERE -->
                 <% if (roleId == ROLE_ADMIN) { %>
                 <li><a href="<%=request.getContextPath()%>/BPManageServlet" class="sidebar-link submenu-link">
@@ -520,7 +522,8 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
         <a href="<%=request.getContextPath()%>/ExpenseEntryServlet" class="sidebar-link mt-2">
             <i class="bi bi-wallet2 me-2"></i> <span>Expenses</span>
         </a>
-          <% } %>
+        <% } %>
+        
         <hr class="text-secondary mx-3 my-2">
         
         <div class="nav-item mt-2">
@@ -542,8 +545,8 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
                 <li><a href="<%=request.getContextPath()%>/StockReport" class="sidebar-link submenu-link">
                     <i class="bi bi-box-seam"></i> Stock Report
                 </a></li>
-                  <% } %>
-                  <% if (roleId == ROLE_ADMIN) { %>
+                <% } %>
+                <% if (roleId == ROLE_ADMIN) { %>
                 <li><a href="<%=request.getContextPath()%>/CashBookReport" class="sidebar-link submenu-link">
                     <i class="bi bi-journal-check"></i> Expense Summary
                 </a></li>
@@ -663,6 +666,9 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
     </div>
 </footer>
 
+<!-- Container for Toasts -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastPlacement"></div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     // === UI REFERENCES ===
@@ -675,10 +681,13 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
     sidebarToggle.addEventListener('click', function(e) {
         e.preventDefault();
         if (window.innerWidth < 992) {
+            // Mobile: Slide in/out
             body.classList.toggle('mobile-open');
         } else {
+            // Desktop: Collapse to icons
             body.classList.toggle('collapsed-sidebar');
             
+            // Close submenus when collapsing
             document.querySelectorAll('.submenu-container').forEach(menu => {
                 menu.classList.remove('show');
             });
@@ -688,12 +697,14 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
         }
     });
 
+    // Close mobile sidebar via overlay or 'X' button
     [mobileClose, mobileOverlay].forEach(el => {
         el.addEventListener('click', () => {
             body.classList.remove('mobile-open');
         });
     });
 
+    // Reset mobile state on resize
     window.addEventListener('resize', () => {
         if (window.innerWidth >= 992) {
             body.classList.remove('mobile-open');
@@ -719,39 +730,36 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
         html.setAttribute('data-bs-theme', newTheme);
         localStorage.setItem('theme', newTheme);
         
-        // Update Icon
+        // Update Icon (if theme button exists)
         const icon = document.getElementById('themeIcon');
-        if(newTheme === 'dark') {
+        if(newTheme === 'dark' && icon) {
             icon.classList.remove('bi-moon-stars-fill');
             icon.classList.add('bi-sun-fill');
-        } else {
+        } else if (icon) {
             icon.classList.remove('bi-sun-fill');
             icon.classList.add('bi-moon-stars-fill');
         }
     }
 
-    // Initialize Theme
+    // Initialize Theme from LocalStorage
     const savedTheme = localStorage.getItem('theme');
     if(savedTheme) {
         document.documentElement.setAttribute('data-bs-theme', savedTheme);
-        if(savedTheme === 'dark') {
-            const icon = document.getElementById('themeIcon');
-            if(icon) {
-                icon.classList.remove('bi-moon-stars-fill');
-                icon.classList.add('bi-sun-fill');
-            }
+        const icon = document.getElementById('themeIcon');
+        if(savedTheme === 'dark' && icon) {
+            icon.classList.remove('bi-moon-stars-fill');
+            icon.classList.add('bi-sun-fill');
         }
     }
 
-    // === CORRECT TOAST NOTIFICATION LOGIC (Bootstrap 5 Native) ===
+    // === TOAST NOTIFICATION LOGIC ===
     function showToast(message, type = 'success') {
         const toastContainer = document.getElementById('toastPlacement');
         
         // Select Icon and Color based on type
         let iconClass = 'bi-check-circle-fill';
-        let bgClass = 'bg-success';
-        if(type === 'danger') { iconClass = 'bi-exclamation-triangle-fill'; bgClass = 'bg-danger'; }
-        if(type === 'info') { iconClass = 'bi-info-circle-fill'; bgClass = 'bg-info'; }
+        if(type === 'danger') { iconClass = 'bi-exclamation-triangle-fill'; }
+        if(type === 'info') { iconClass = 'bi-info-circle-fill'; }
 
         // Create Toast HTML
         const toastEl = document.createElement('div');
@@ -815,6 +823,7 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
         }
     }
 
+    // Highlight Active Link
     function setActiveLink() {
         const currentPath = window.location.pathname;
         const links = document.querySelectorAll('.sidebar-link');
@@ -832,6 +841,7 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
         });
     }
 
+    // Start Intervals
     setInterval(updateUI, 1000);
     updateUI();
     setActiveLink();
