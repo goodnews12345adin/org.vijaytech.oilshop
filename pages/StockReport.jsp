@@ -23,6 +23,10 @@
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<!-- PDF Libraries (jsPDF & AutoTable) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+
 <style>
 /* ✅ SAME UI AS PROFIT & LOSS */
 :root {
@@ -84,6 +88,9 @@ body {
   font-size: 24px;
   font-weight: 800;
   margin-bottom: 25px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 /* FORM */
@@ -97,7 +104,7 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 20px;
-  margin: 25px 0;
+  margin-bottom: 25px;
 }
 
 .stat-card {
@@ -132,6 +139,13 @@ thead th {
   font-weight: 800;
   text-transform: uppercase;
   font-size: 13px;
+  border-bottom: 2px solid var(--border-light);
+}
+
+tfoot td {
+  background: #f8fafc;
+  font-weight: 800;
+  border-top: 2px solid var(--border-light);
 }
 
 /* LOADER */
@@ -174,9 +188,12 @@ thead th {
 <div class="page-wrap">
   <div class="main-content-card">
 
-    <h5 class="card-title">
-      <i class="bi bi-box-seam"></i> Stock Ledger Report
-    </h5>
+    <div class="card-title">
+      <span><i class="bi bi-box-seam"></i> Stock Ledger Report</span>
+      <button class="btn btn-success btn-sm" onclick="downloadPDF()" id="btnPdf" style="display:none;">
+        <i class="bi bi-file-earmark-pdf"></i> Download PDF
+      </button>
+    </div>
 
     <!-- FORM -->
     <form id="reportForm" class="row g-3" onsubmit="loadReport(event)">
@@ -191,33 +208,40 @@ thead th {
         <input type="date" id="toDate" class="form-control" required>
       </div>
 
-       <div class="col-lg-3 col-md-6 col-12">
-                    <label class="form-label">Category</label>
-                    <select id="category" class="form-select form-select-sm">
-                        <option value="">-- All Categories --</option>
-                        <%
-                            List<Map<String,Object>> catList =
-                                    (List<Map<String,Object>>) request.getAttribute("categoryList");
-                            if (catList != null) {
-                                for (Map<String,Object> c : catList) {
-                        %>
-                        <option value="<%=c.get("id")%>"><%=c.get("name")%></option>
-                        <%
-                                }
-                            }
-                        %>
-                    </select>
-                </div>
-                <div class="invalid-feedback">Product selection is required.</div>
-                <div class="col-md-2 d-flex align-items-end gap-2">
+      <div class="col-lg-3 col-md-6 col-12">
+        <label class="form-label fw-bold">Category</label>
+        <select id="category" class="form-select">
+            <option value="">-- All Categories --</option>
+            <%
+                List<Map<String,Object>> catList =
+                        (List<Map<String,Object>>) request.getAttribute("categoryList");
+                if (catList != null) {
+                    for (Map<String,Object> c : catList) {
+            %>
+            <option value="<%=c.get("id")%>"><%=c.get("name")%></option>
+            <%
+                    }
+                }
+            %>
+        </select>
+      </div>
+
+      <div class="col-lg-2 col-md-6 col-12">
+        <label class="form-label fw-bold">Product</label>
+        <select id="product" class="form-select">
+            <option value="">-- All Products --</option>
+        </select>
+      </div>
+
+      <div class="col-md-2 d-flex align-items-end gap-2">
         <button type="submit" class="btn btn-primary w-100">Generate</button>
         <button type="button" class="btn btn-danger w-100" onclick="resetAll()">Reset</button>
       </div>
 
     </form>
 
-    <!-- SUMMARY -->
-    <div class="dashboard-stats">
+    <!-- SUMMARY HEADER -->
+    <div class="dashboard-stats" id="dashboardStats" style="display:none;">
       <div class="stat-card">
         <h6>Total In Qty</h6>
         <h3 id="totalIn">0.00</h3>
@@ -229,14 +253,14 @@ thead th {
       </div>
 
       <div class="stat-card">
-        <h6>Closing Balance</h6>
+        <h6>Net Balance</h6>
         <h3 id="totalBalance">0.00</h3>
       </div>
     </div>
 
     <!-- CHART -->
-    <div class="chart-wrapper mb-4">
-      <canvas id="stockChart" height="120"></canvas>
+    <div class="chart-wrapper mb-4" style="height: 300px; display:none;" id="chartContainer">
+      <canvas id="stockChart"></canvas>
     </div>
 
     <!-- TABLE -->
@@ -246,14 +270,29 @@ thead th {
           <tr>
             <th>Date</th>
             <th>Code</th>
-            <th>Product</th>
+            <th>Product Name</th>
             <th>UOM</th>
             <th class="text-end">In Qty</th>
             <th class="text-end">Out Qty</th>
-            <th class="text-end">Balance Qty</th>
+            <th class="text-end">Balance</th>
           </tr>
         </thead>
-        <tbody></tbody>
+        <tbody>
+          <tr>
+            <td colspan="7" class="text-center text-muted py-4">
+              Please select dates and click Generate
+            </td>
+          </tr>
+        </tbody>
+        <!-- FOOTER TOTALS -->
+        <tfoot id="tableFooter" style="display:none;">
+          <tr>
+             <td colspan="4" class="text-end fw-bold">Totals:</td>
+             <td class="text-end fw-bold" id="footIn">0.00</td>
+             <td class="text-end fw-bold" id="footOut">0.00</td>
+             <td class="text-end fw-bold" id="footBal">0.00</td>
+          </tr>
+        </tfoot>
       </table>
     </div>
 
@@ -269,16 +308,15 @@ let chartInstance = null;
 /* ✅ Load Report */
 function loadReport(e){
   e.preventDefault();
-  let productID = $("#product").val();
-
-  // Validation removed to allow "All Products" (empty productID) selection
-  // if(productID === ""){
-  //     alert("Please select a Product!");
-  //     $("#product").focus();
-  //     return;
-  // }
+  
+  // Basic Validation
+  if($("#fromDate").val() === "" || $("#toDate").val() === ""){
+      alert("Please select both From and To dates.");
+      return;
+  }
 
   $("#global-loader").css("display","flex");
+  $("#dashboardStats, #chartContainer, #tableFooter, #btnPdf").hide();
 
   $.ajax({
     url: servletUrl,
@@ -286,16 +324,23 @@ function loadReport(e){
     data: {
       fromDate: $("#fromDate").val(),
       toDate: $("#toDate").val(),
-      productcatId: $("#category").val()
+      productcatId: $("#category").val(),
+      productId: $("#product").val()
     },
     success: function(res){
-
       $("#global-loader").fadeOut(200);
 
+      // Expecting FLAT array: [{date:..., code:..., inQty:..., outQty:...}, ...]
       tableData = res || [];
-      renderTable();
-      calculateTotals();
-      drawChart();
+      
+      if(tableData.length > 0){
+          renderTable();
+          calculateTotals();
+          drawChart();
+          $("#dashboardStats, #chartContainer, #tableFooter, #btnPdf").fadeIn();
+      } else {
+          $("#stockTable tbody").html("<tr><td colspan='7' class='text-center text-muted'>No Records Found</td></tr>");
+      }
     },
     error: function(){
       $("#global-loader").fadeOut(200);
@@ -304,45 +349,25 @@ function loadReport(e){
   });
 }
 
-/* ✅ Render Table */
+/* ✅ Render Table (Date Based Ledger View) */
 function renderTable() {
-
-  if (!tableData || tableData.length === 0) {
-    $("#stockTable tbody").html(
-      "<tr><td colspan='7' class='text-center text-muted'>No Records Found</td></tr>"
-    );
-    return;
-  }
-
   let html = "";
 
-  /* ✅ Loop Each Category */
-  tableData.forEach(category => {
-
-    /* ✅ Category Header Row */
-   html += "<tr class='table-primary fw-bold'>";
-html += "<td colspan='4'>📂 " + category.categoryName + "</td>";
-html += "<td class='text-end'>" + Number(category.totalIn).toFixed(2) + "</td>";
-html += "<td class='text-end'>" + Number(category.totalOut).toFixed(2) + "</td>";
-html += "<td class='text-end'>" + Number(category.totalBalance).toFixed(2) + "</td>";
-html += "</tr>";
-
-
-    /* ✅ Products Under Category */
-    category.products.forEach(row => {
-
+  tableData.forEach(row => {
+      // Using standard concatenation to avoid JSP EL errors
+      let displayDate = row.date || row.transDate || "-";
+      
       html += "<tr>";
-      html += "<td>-</td>";   // Date not needed for grouped report
-      html += "<td>" + row.productCode + "</td>";
-      html += "<td>" + row.productName + "</td>";
-      html += "<td>" + row.uom + "</td>";
-      html += "<td class='text-end'>" + Number(row.inQty).toFixed(2) + "</td>";
-      html += "<td class='text-end'>" + Number(row.outQty).toFixed(2) + "</td>";
-      html += "<td class='text-end fw-bold'>" + Number(row.balanceQty).toFixed(2) + "</td>";
+      html += "<td>" + displayDate + "</td>";
+      html += "<td>" + (row.productCode || row.code || "") + "</td>";
+      html += "<td>" + (row.productName || row.name || "") + "</td>";
+      html += "<td>" + (row.uom || "") + "</td>";
+      html += "<td class='text-end'>" + Number(row.inQty || 0).toFixed(2) + "</td>";
+      html += "<td class='text-end'>" + Number(row.outQty || 0).toFixed(2) + "</td>";
+      // For individual transactions, Balance usually reflects the running balance. 
+      // Here we show the net delta for simplicity, or 0 if complex.
+      html += "<td class='text-end fw-bold'>" + Number((row.inQty || 0) - (row.outQty || 0)).toFixed(2) + "</td>";
       html += "</tr>";
-
-    });
-
   });
 
   $("#stockTable tbody").html(html);
@@ -351,65 +376,192 @@ html += "</tr>";
 
 /* ✅ Totals */
 function calculateTotals() {
-
   let totalIn = 0;
   let totalOut = 0;
   let totalBalance = 0;
-  let productCount = 0;
 
-  tableData.forEach(category => {
-
-    totalIn += Number(category.totalIn);
-    totalOut += Number(category.totalOut);
-    totalBalance += Number(category.totalBalance);
-
-    productCount += category.products.length;
+  tableData.forEach(row => {
+    totalIn += Number(row.inQty || 0);
+    totalOut += Number(row.outQty || 0);
   });
+  
+  totalBalance = totalIn - totalOut;
 
+  // Update Dashboard Cards
   $("#totalIn").text(totalIn.toFixed(2));
   $("#totalOut").text(totalOut.toFixed(2));
   $("#totalBalance").text(totalBalance.toFixed(2));
 
-  /* ✅ Optional Product Count Card */
-  if ($("#totalProducts").length) {
-    $("#totalProducts").text(productCount);
-  }
+  // Update Table Footer Totals
+  $("#footIn").text(totalIn.toFixed(2));
+  $("#footOut").text(totalOut.toFixed(2));
+  $("#footBal").text(totalBalance.toFixed(2));
 }
 
 
-/* ✅ Chart */
+/* ✅ Chart (Daily In/Out) */
 function drawChart() {
 
   if (chartInstance) {
     chartInstance.destroy();
   }
 
-  let labels = tableData.map(c => c.categoryName);
-  let balances = tableData.map(c => c.totalBalance);
+  // Group data by Date for the chart
+  let dateGroups = {};
+  
+  tableData.forEach(row => {
+      let d = row.date || row.transDate;
+      if(!dateGroups[d]){
+          dateGroups[d] = { in: 0, out: 0 };
+      }
+      dateGroups[d].in += Number(row.inQty || 0);
+      dateGroups[d].out += Number(row.outQty || 0);
+  });
+
+  // Sort dates
+  let sortedDates = Object.keys(dateGroups).sort();
+  let inData = sortedDates.map(function(d) { return dateGroups[d].in; });
+  let outData = sortedDates.map(function(d) { return dateGroups[d].out; });
 
   chartInstance = new Chart(document.getElementById("stockChart"), {
     type: "bar",
     data: {
-      labels: labels,
+      labels: sortedDates,
       datasets: [
         {
-          label: "Category Closing Balance",
-          data: balances
+          label: "Stock In",
+          data: inData,
+          backgroundColor: '#15a0c6'
+        },
+        {
+          label: "Stock Out",
+          data: outData,
+          backgroundColor: '#ef4444'
         }
       ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: { beginAtZero: true }
+        }
     }
   });
 }
 
+/* ✅ ATTRACTIVE & TRENDING PDF FORMAT */
+function downloadPDF() {
+    var jsPDF = window.jspdf.jsPDF;
+    var doc = new jsPDF('l', 'mm', 'a4');
+
+    // ----------------------------------------------------
+    // 1. MODERN HEADER SECTION
+    // ----------------------------------------------------
+    
+    // Store Name (Brand Color Accent)
+    doc.setFontSize(20);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(21, 160, 198); // --accent color
+    doc.text("THIRU SENTHILATHIPATHI OIL STORE", 14, 20);
+
+    // Address (Professional Gray)
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(80, 80, 80); 
+    doc.text("No.42, Krishna Moorthi Bavanam, Madakulam Main Road,", 14, 27);
+    doc.text("Palanganatham, Madurai – 625003", 14, 32);
+    
+    // GST (Smaller, lighter)
+    doc.setFontSize(9);
+    doc.setTextColor(120, 120, 120);
+    doc.text("GST: 29ABCDE1234F1Z5", 14, 37);
+
+    // Decorative Line Separator
+    doc.setDrawColor(21, 160, 198); // Accent Color Line
+    doc.setLineWidth(0.5);
+    doc.line(14, 42, 287, 42); // Line across the width
+
+    // Report Title (High Contrast)
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(0, 0, 0);
+    doc.text("Stock Ledger Report", 14, 52);
+
+    // Date Range Info
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "italic");
+    doc.setTextColor(100, 100, 100);
+    var dateRangeText = "Period: " + $("#fromDate").val() + "  to  " + $("#toDate").val();
+    doc.text(dateRangeText, 14, 58);
+
+    // ----------------------------------------------------
+    // 2. MODERN TABLE DESIGN
+    // ----------------------------------------------------
+    
+    doc.autoTable({
+        html: '#stockTable',
+        startY: 65,
+        
+        // Modern Striped Theme
+        theme: 'striped', 
+        
+        // Header Styling (Dark Premium Blue)
+        headStyles: { 
+            fillColor: [10, 18, 32], // Dark Navy (--bg-dark)
+            textColor: 255,
+            fontStyle: 'bold',
+            halign: 'center',
+            fontSize: 10
+        },
+        
+        // Body Styling
+        styles: { 
+            fontSize: 9, 
+            cellPadding: 3,
+            lineColor: [230, 230, 230], // Very light borders
+            lineWidth: 0.1
+        },
+        
+        // Alternating Row Colors (Subtle Tint)
+        alternateRowStyles: {
+            fillColor: [248, 250, 252] // Very light tint
+        },
+
+        // Column Specific Styles
+        columnStyles: {
+            0: { cellWidth: 32 }, // Date
+            1: { cellWidth: 25 }, // Code
+            2: { cellWidth: 'auto' }, // Product
+            3: { cellWidth: 20 }, // UOM
+            4: { cellWidth: 35, halign: 'right' }, // In
+            5: { cellWidth: 35, halign: 'right' }, // Out
+            6: { cellWidth: 35, halign: 'right', fontStyle: 'bold' }  // Bal
+        },
+        
+        // Footer Styling (Highlight Totals)
+        footStyles: { 
+            fillColor: [21, 160, 198], // Brand Color
+            textColor: 255, 
+            fontStyle: 'bold',
+            halign: 'right'
+        }
+    });
+
+    // ----------------------------------------------------
+    
+    doc.save('Stock_Ledger_' + $("#toDate").val() + '.pdf');
+}
 
 /* ✅ Reset */
 function resetAll(){
-
   document.getElementById("reportForm").reset();
-  $("#stockTable tbody").html("");
-  $("#totalIn").text("0.00");
-  $("#totalOut").text("0.00");
-  $("#totalBalance").text("0.00");
+  $("#stockTable tbody").html("<tr><td colspan='7' class='text-center text-muted py-4'>Please select dates and click Generate</td></tr>");
+  
+  $("#dashboardStats, #chartContainer, #tableFooter, #btnPdf").hide();
+  
+  $("#totalIn, #totalOut, #totalBalance").text("0.00");
+  $("#footIn, #footOut, #footBal").text("0.00");
 
   if(chartInstance){
     chartInstance.destroy();
