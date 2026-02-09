@@ -34,7 +34,7 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
 <html lang="en" data-bs-theme="light">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title><%= orgNamee %> ERP - Dashboard</title>
     
     <!-- Fonts & Icons -->
@@ -374,7 +374,9 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
         /* Main Content */
         .main-content { padding: 25px; transition: var(--transition); }
 
-        /* === RESPONSIVE MEDIA QUERIES === */
+        /* === RESPONSIVE MEDIA QUERIES (ALL DEVICES) === */
+        
+        /* Desktop Large (Collapsed Sidebar Logic) */
         @media (min-width: 992px) {
             body { padding-left: var(--sidebar-width); }
             body.collapsed-sidebar { padding-left: var(--sidebar-collapsed); }
@@ -391,6 +393,7 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
             }
         }
 
+        /* Tablet & Mobile Landscape (< 992px) */
         @media (max-width: 991px) {
             .app-header, .app-footer { left: 0 !important; }
             .sidebar-wrapper { transform: translateX(-100%); width: 280px; }
@@ -405,6 +408,26 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
             .search-bar { width: 150px; }
             .fab { bottom: 20px; right: 20px; }
             .sidebar-footer-logout { display: block; } /* Ensure logout visible on mobile sidebar */
+            
+            /* Hide Desktop Logout in Header on Tablet/Mobile */
+            .btn-logout-header { display: none !important; }
+        }
+
+        /* Small Mobile (< 576px) */
+        @media (max-width: 576px) {
+            /* Hide detailed user text in header to save space */
+            .text-end.d-none.d-sm-block { display: none !important; }
+            /* Show avatar only */
+            .user-avatar-circle { margin: 0; }
+            
+            .header-greeting-text { display: none; } /* Hide "Welcome User" text */
+            
+            .fab { width: 50px; height: 50px; font-size: 1.2rem; bottom: 15px; right: 15px; }
+            .main-content { padding: 15px; }
+            
+            /* Adjust Quick Actions to stack nicely */
+            .quick-action-card { padding: 15px; }
+            .quick-icon { font-size: 1.5rem; }
         }
 
         .brand-text {
@@ -417,7 +440,7 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
 </head>
 <body>
 
-<!-- Mobile Overlay -->
+<!-- Mobile Overlay (Backdrop) -->
 <div class="mobile-overlay" id="mobileOverlay"></div>
 
 <!-- Floating Action Button -->
@@ -489,7 +512,7 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
                     <i class="bi bi-bag-check"></i> Purchase
                 </a></li>
                 <% } %>
-                <!-- NEW LINK ADDED HERE -->
+                <!-- BPManageServlet PART -->
                 <% if (roleId == ROLE_ADMIN) { %>
                 <li><a href="<%=request.getContextPath()%>/BPManageServlet" class="sidebar-link submenu-link">
                     <i class="bi bi-people"></i> Partners (Cust/Vend)
@@ -570,13 +593,19 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
             <button class="btn text-white fs-2 p-0 me-3" id="sidebarToggle" type="button">
                 <i class="bi bi-list"></i>
             </button>
-            <div class="d-none d-sm-block">
+            <div class="d-none d-sm-block header-greeting-text">
                 <h5 class="m-0 text-white fw-bold" id="greeting">Welcome, <%= username %></h5>
                 <small class="text-info" id="liveClock" style="font-size: 0.75rem;"></small>
             </div>
         </div>
         
         <div class="d-flex align-items-center gap-2 gap-md-3 ms-md-3">
+            
+            <!-- THEME TOGGLE BUTTON (Added as it was missing) -->
+            <a href="#" class="icon-btn" id="themeIcon" onclick="toggleTheme()" title="Toggle Theme">
+                <i class="bi bi-moon-stars-fill"></i>
+            </a>
+
             <!-- User Profile Dropdown -->
             <div class="dropdown">
                 <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" data-bs-toggle="dropdown">
@@ -730,14 +759,17 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
         html.setAttribute('data-bs-theme', newTheme);
         localStorage.setItem('theme', newTheme);
         
-        // Update Icon (if theme button exists)
+        // Update Icon
         const icon = document.getElementById('themeIcon');
-        if(newTheme === 'dark' && icon) {
-            icon.classList.remove('bi-moon-stars-fill');
-            icon.classList.add('bi-sun-fill');
-        } else if (icon) {
-            icon.classList.remove('bi-sun-fill');
-            icon.classList.add('bi-moon-stars-fill');
+        if(icon) {
+            const iconEl = icon.querySelector('i');
+            if(newTheme === 'dark') {
+                iconEl.classList.remove('bi-moon-stars-fill');
+                iconEl.classList.add('bi-sun-fill');
+            } else {
+                iconEl.classList.remove('bi-sun-fill');
+                iconEl.classList.add('bi-moon-stars-fill');
+            }
         }
     }
 
@@ -746,9 +778,10 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
     if(savedTheme) {
         document.documentElement.setAttribute('data-bs-theme', savedTheme);
         const icon = document.getElementById('themeIcon');
-        if(savedTheme === 'dark' && icon) {
-            icon.classList.remove('bi-moon-stars-fill');
-            icon.classList.add('bi-sun-fill');
+        if(icon && savedTheme === 'dark') {
+            const iconEl = icon.querySelector('i');
+            iconEl.classList.remove('bi-moon-stars-fill');
+            iconEl.classList.add('bi-sun-fill');
         }
     }
 
@@ -823,7 +856,7 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
         }
     }
 
-    // Highlight Active Link
+    // Highlight Active Link (Includes BPManageServlet Fix)
     function setActiveLink() {
         const currentPath = window.location.pathname;
         const links = document.querySelectorAll('.sidebar-link');
@@ -834,8 +867,11 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
                 const parentMenu = link.closest('.submenu-container');
                 if(parentMenu) {
                     parentMenu.classList.add('show');
+                    // Find the trigger link (sibling of the ul) and expand it
                     const trigger = parentMenu.previousElementSibling;
-                    if(trigger) trigger.classList.add('expanded');
+                    if(trigger && trigger.classList.contains('sidebar-link')) {
+                        trigger.classList.add('expanded');
+                    }
                 }
             }
         });

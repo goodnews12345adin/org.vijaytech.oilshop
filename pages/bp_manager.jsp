@@ -9,18 +9,21 @@
 
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"/>
+  
   <!-- Fonts & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  
   <!-- jQuery -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
   <style>
-    /* === TRENDING UI VARIABLES === */
+    /* === ROOT VARIABLES === */
     :root {
       --sidebar-width: 260px;
       --header-height: 75px;
       --accent: #15a0c6;
+      --accent-dark: #0e7d9b;
       --accent-glow: rgba(21, 160, 198, 0.3);
       --bg-dark: #0a1220;
       --card-bg: #ffffff;
@@ -30,12 +33,15 @@
       --radius-lg: 20px;
       --radius-sm: 12px;
       --shadow-card: 0 20px 40px -5px rgba(0, 0, 0, 0.1);
+      --shadow-glow: 0 0 20px var(--accent-glow);
       --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
+    /* === GLOBAL RESETS === */
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
       background-color: var(--bg-dark);
+      /* Animated Background */
       background-image: 
         radial-gradient(circle at top right, rgba(21, 160, 198, 0.08), transparent 40%),
         radial-gradient(circle at bottom left, rgba(139, 92, 246, 0.05), transparent 40%);
@@ -45,38 +51,154 @@
       min-height: 100vh;
     }
 
-    /* HEADER & SIDEBAR (Included via file, but styled here if needed) */
+    /* ===========================
+       HEADER UI (Copied from Purchase.jsp)
+       =========================== */
     .app-header {
-      position: fixed; top: 0; right: 0; left: 0; height: var(--header-height);
-      background: rgba(10, 18, 32, 0.9); backdrop-filter: blur(12px);
-      display: flex; align-items: center; justify-content: flex-end;
-      padding: 0 40px; z-index: 4000; border-bottom: 1px solid rgba(255,255,255,0.05);
+      position: fixed;
+      top: 0;
+      right: 0;
+      left: 0;
+      height: var(--header-height);
+      background: rgba(10, 18, 32, 0.9);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 0 40px;
+      z-index: 4000;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
     }
-    .user-info { color: white; font-weight: 700; }
 
-    /* MAIN CARD */
+    .header-user-zone {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+    }
+
+    .version-tag {
+      background: rgba(25, 182, 176, 0.15);
+      color: #19b6b0;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: 20px;
+      border: 1px solid rgba(25, 182, 176, 0.3);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      background: rgba(255,255,255,0.05);
+      padding: 6px 16px 6px 6px;
+      border-radius: 50px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .user-name {
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .btn-logout {
+      background: #ff4d4d;
+      color: white;
+      border: none;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition);
+      font-size: 14px;
+    }
+    .btn-logout:hover {
+      background: #e60000;
+      transform: rotate(90deg);
+      box-shadow: 0 0 10px rgba(255, 77, 77, 0.5);
+    }
+
+    .status-online {
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.4);
+      font-weight: 500;
+    }
+
+    /* ===========================
+       CONTENT LAYOUT
+       =========================== */
+    .page-wrap {
+      padding: 20px 40px 100px 40px;
+      transition: var(--transition);
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
     .bp-card {
       background: var(--card-bg);
       border-radius: var(--radius-lg);
       padding: 40px;
       box-shadow: var(--shadow-card);
       border: 1px solid rgba(255,255,255,0.5);
-      position: relative; overflow: hidden;
+      position: relative;
+      overflow: hidden;
     }
+
+    /* Top Decorative Line */
     .bp-card::before {
-        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 6px;
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 6px;
         background: linear-gradient(90deg, var(--accent), #8b5cf6);
     }
 
-    /* FORM CONTROLS */
-    .form-label { font-weight: 700; color: var(--text-muted); font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
-    .form-control {
-        height: 54px; border-radius: var(--radius-sm); border: 1px solid var(--border-light);
-        background: #f8fafc; font-weight: 600; transition: var(--transition);
+    .bp-card h4 {
+      font-weight: 800;
+      font-size: 26px;
+      color: #0f172a;
+      margin-bottom: 35px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
-    .form-control:focus {
-        background: #fff; border-color: var(--accent);
+    .bp-card h4 i { color: var(--accent); font-size: 28px; }
+
+    /* Form Controls */
+    .form-label { 
+        font-weight: 700; 
+        color: var(--text-muted); 
+        font-size: 13px; 
+        margin-bottom: 8px; 
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .form-control, .form-select {
+        height: 54px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-light);
+        background: #f8fafc;
+        color: var(--text-main);
+        font-weight: 600;
+        transition: var(--transition);
+        padding: 0 18px;
+    }
+
+    .form-control:focus, .form-select:focus {
+        background: #fff;
+        border-color: var(--accent);
         box-shadow: 0 0 0 4px rgba(21, 160, 198, 0.1);
+        transform: translateY(-1px);
     }
 
     /* CHECKBOXES */
@@ -93,7 +215,7 @@
       border-radius: 50px; box-shadow: 0 10px 25px -5px rgba(21, 160, 198, 0.4);
       transition: var(--transition); float: right;
     }
-    .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 15px 30px -5px rgba(21, 160, 198, 0.5); }
+    .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 15px 30px -5px rgba(21, 160, 198, 0.5); filter: brightness(1.1); }
 
     /* SEARCH & FILTER BAR */
     .filter-bar {
@@ -139,47 +261,121 @@
         color: #ffffff; 
     }
 
-    /* WONDERFUL ALERT BOX */
-    #wonderful-alert-box { z-index: 6000; }
-    .modal-content.wonderful-box {
-        border: none; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
-        overflow: hidden; animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    /* === WONDERFUL BOX (Custom Modal) === */
+    #wonderful-alert-box {
+        z-index: 6000;
     }
-    @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-    .wb-icon-area { height: 60px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+    .modal-content.wonderful-box {
+        border: none;
+        border-radius: 24px;
+        box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+        overflow: hidden;
+        animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes popIn {
+        from { transform: scale(0.9); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+    .wb-icon-area {
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 10px;
+    }
     .wb-icon-area i { font-size: 3rem; }
     .wb-icon-success i { color: #10b981; text-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
     .wb-icon-error i { color: #ef4444; text-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); }
     .wb-icon-confirm i { color: var(--accent); text-shadow: 0 4px 15px rgba(21, 160, 198, 0.3); }
+    
     .wb-title { font-weight: 800; font-size: 1.25rem; margin-bottom: 0.5rem; }
     .wb-msg { color: var(--text-muted); margin-bottom: 1.5rem; }
-    .wb-btn-confirm { background: var(--accent); color: white; border: none; padding: 10px 25px; border-radius: 30px; font-weight: 700; }
-
-    /* GLOBAL LOADER */
-    #global-loader {
-        display: none; align-items: center; justify-content: center; position: fixed;
-        inset: 0; z-index: 5500; background: rgba(10, 18, 32, 0.8); backdrop-filter: blur(8px);
+    
+    .wb-btn-confirm {
+        background: var(--accent); color: white; border: none;
+        padding: 10px 25px; border-radius: 30px; font-weight: 700;
     }
-    .loader-content { text-align: center; color: white; }
+    .wb-btn-cancel {
+        background: #f1f5f9; color: var(--text-muted); border: none;
+        padding: 10px 25px; border-radius: 30px; font-weight: 600;
+    }
+
+    /* === GLOBAL LOADER === */
+    #global-loader {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        inset: 0;
+        z-index: 5500;
+        background: rgba(10, 18, 32, 0.8);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
+    .loader-content {
+        text-align: center;
+        color: white;
+    }
+
+    /* ===========================
+       MEDIA QUERIES
+       =========================== */
+    
+    /* Tablet & Mobile Sidebar adjustments */
+    @media (max-width: 992px) {
+      .page-wrap { margin-left: 0; padding: 20px; }
+      .app-header { padding: 0 20px; }
+      .bp-card { padding: 25px; }
+    }
+
+    /* Mobile Landscape */
+    @media (max-width: 768px) {
+        .bp-card h4 { font-size: 20px; }
+        .d-flex.justify-content-between.mt-4 {
+            flex-direction: column-reverse;
+            align-items: center;
+            gap: 20px;
+        }
+        .btn-add, .btn-submit { width: 100%; justify-content: center; }
+        .table-responsive {
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-sm);
+        }
+    }
+
+    /* Small Mobile */
+    @media (max-width: 576px) {
+        .user-info span.user-name { display: none; } /* Hide name on very small screens */
+        .header-user-zone { align-items: center; }
+        .bp-card { border-radius: 15px; padding: 15px; }
+        .btn-add, .btn-submit { padding: 10px 20px; }
+    }
   </style>
 </head>
+
 <body>
+
+  <!-- HEADER (Replaced with Purchase.jsp Style) -->
+  <header class="app-header">
+    <div class="header-user-zone">
+      <span class="version-tag">v44.1</span>
+      <div class="user-info">
+        <span class="user-name"><%= (session.getAttribute("username") != null) ? session.getAttribute("username") : "Guest User" %></span>
+        <div class="btn-logout" onclick="location.href='${pageContext.request.contextPath}/pages/loginpage.jsp'" title="Logout">
+          <i class="bi bi-power"></i>
+        </div>
+      </div>
+      <span class="status-online">Status: Online</span>
+    </div>
+  </header>
 
   <!-- SIDEBAR -->
   <%@ include file="sidebar.jsp" %>
 
-  <!-- HEADER (Copied for standalone context, usually in sidebar) -->
-  <header class="app-header">
-    <div class="d-flex align-items-center">
-        <span class="version-tag" style="background:rgba(25, 182, 176, 0.15); color:#19b6b0; padding:3px 10px; border-radius:20px; font-size:10px; font-weight:800;">v44.1</span>
-    </div>
-    <!-- FIX APPLIED HERE: Removed extra closing parenthesis before %> -->
-    <div class="user-info ms-3"><%= (session.getAttribute("username") != null) ? session.getAttribute("username") : "Admin" %></div>
-  </header>
-
-  <div class="container" style="max-width: 1400px; margin: 0 auto;">
+  <!-- MAIN CONTENT -->
+  <div class="page-wrap">
     <div class="bp-card">
-      <h4 class="mb-4 fw-bold" style="color: #0f172a;"><i class="bi bi-people-fill text-info"></i> Partner Management</h4>
+      <h4><i class="bi bi-people-fill"></i> Partner Management</h4>
 
       <form id="bp-form">
         <div class="row g-3">
@@ -221,7 +417,7 @@
             </div>
         </div>
         <div class="clearfix mt-4">
-            <button type="submit" class="btn btn-submit">
+            <button type="submit" class="btn btn-submit shadow">
                 <i class="bi bi-person-plus-fill me-2"></i> Create Partner
             </button>
         </div>
@@ -265,7 +461,7 @@
   <!-- GLOBAL LOADER -->
   <div id="global-loader">
     <div class="loader-content">
-        <div class="spinner-border text-info mb-3" style="width: 3rem; height: 3rem;"></div>
+        <div class="spinner-border text-info mb-3" role="status" style="width: 3rem; height: 3rem;"></div>
         <h5 class="fw-bold">Processing...</h5>
     </div>
   </div>
@@ -284,6 +480,7 @@
     </div>
   </div>
 
+  <!-- SCRIPTS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
