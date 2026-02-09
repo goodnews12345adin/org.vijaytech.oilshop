@@ -486,7 +486,9 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
                 <li><a href="<%=request.getContextPath()%>/PurchaseServlet" class="sidebar-link submenu-link">
                     <i class="bi bi-bag-check"></i> Purchase
                 </a></li>
+                  <% } %>
                 <!-- NEW LINK ADDED HERE -->
+                <% if (roleId == ROLE_ADMIN) { %>
                 <li><a href="<%=request.getContextPath()%>/BPManageServlet" class="sidebar-link submenu-link">
                     <i class="bi bi-people"></i> Partners (Cust/Vend)
                 </a></li>
@@ -518,7 +520,7 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
         <a href="<%=request.getContextPath()%>/ExpenseEntryServlet" class="sidebar-link mt-2">
             <i class="bi bi-wallet2 me-2"></i> <span>Expenses</span>
         </a>
-        
+          <% } %>
         <hr class="text-secondary mx-3 my-2">
         
         <div class="nav-item mt-2">
@@ -527,6 +529,7 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
                 <span>Reports</span>
                 <i class="bi bi-chevron-down submenu-arrow"></i>
             </a>
+            <% if (roleId == ROLE_ADMIN ) { %>
             <ul class="submenu-container" id="reportMenu">
                 <li><a href="<%=request.getContextPath()%>/PrintPurchaseReportServlet" class="sidebar-link submenu-link">
                     <i class="bi bi-file-earmark-bar-graph"></i> Sales & Purchase
@@ -534,9 +537,13 @@ String userInitials = username.length() >= 2 ? username.substring(0, 2).toUpperC
                 <li><a href="<%=request.getContextPath()%>/ProfitAndLossReport" class="sidebar-link submenu-link">
                     <i class="bi bi-graph-up"></i> Profit & Loss
                 </a></li>
+                <% } %>
+                <% if (roleId == ROLE_ADMIN || roleId == ROLE_CASHIER) { %>
                 <li><a href="<%=request.getContextPath()%>/StockReport" class="sidebar-link submenu-link">
                     <i class="bi bi-box-seam"></i> Stock Report
                 </a></li>
+                  <% } %>
+                  <% if (roleId == ROLE_ADMIN) { %>
                 <li><a href="<%=request.getContextPath()%>/CashBookReport" class="sidebar-link submenu-link">
                     <i class="bi bi-journal-check"></i> Expense Summary
                 </a></li>
