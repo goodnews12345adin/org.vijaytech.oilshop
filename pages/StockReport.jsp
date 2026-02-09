@@ -28,7 +28,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 
 <style>
-/* ✅ SAME UI AS PROFIT & LOSS */
+/* SAME UI AS PROFIT & LOSS */
 :root {
   --header-height: 75px;
   --accent: #15a0c6;
@@ -230,6 +230,17 @@ tfoot td {
         <label class="form-label fw-bold">Product</label>
         <select id="product" class="form-select">
             <option value="">-- All Products --</option>
+            <!-- ✅ INITIAL LOAD OF ALL PRODUCTS -->
+            <%
+                List<Map<String,Object>> pList = (List<Map<String,Object>>) request.getAttribute("productList");
+                if(pList != null){
+                    for(Map<String,Object> p : pList){
+            %>
+                <option value="<%=p.get("id")%>"><%=p.get("name")%></option>
+            <%
+                    }
+                }
+            %>
         </select>
       </div>
 
@@ -305,11 +316,39 @@ const servletUrl = "<%=request.getContextPath()%>/StockReport";
 let tableData = [];
 let chartInstance = null;
 
+/* ✅ Category Change -> Filter Products */
+/* Logic: 
+   1. If User selects a Category: Load products for that category.
+   2. If User selects "All Categories": Load ALL products again.
+*/
+ $("#category").on("change", function() {
+    let catId = $(this).val();
+    
+    let ajaxUrl = servletUrl + "?action=getProducts";
+    
+    // If catId is not empty (User selected a specific category), append it
+    if(catId) {
+        ajaxUrl += "&catId=" + catId;
+    }
+    // If catId is empty (User selected "All Categories"), we DON'T append it, 
+    // so the servlet returns the full list.
+    
+    // Reset Product Dropdown to "All" before loading new ones
+    $("#product").empty().append('<option value="">-- All Products --</option>');
+    
+    $.get(ajaxUrl, function(data){
+        if(data && data.length > 0){
+            data.forEach(p => {
+                $("#product").append('<option value="'+p.id+'">'+p.name+'</option>');
+            });
+        }
+    });
+});
+
 /* ✅ Load Report */
 function loadReport(e){
   e.preventDefault();
   
-  // Basic Validation
   if($("#fromDate").val() === "" || $("#toDate").val() === ""){
       alert("Please select both From and To dates.");
       return;
@@ -324,13 +363,12 @@ function loadReport(e){
     data: {
       fromDate: $("#fromDate").val(),
       toDate: $("#toDate").val(),
-      productcatId: $("#category").val(),
-      productId: $("#product").val()
+      productcatId: $("#category").val(), // Empty string if "All" is selected
+      productId: $("#product").val()      // Empty string if "All" is selected
     },
     success: function(res){
       $("#global-loader").fadeOut(200);
 
-      // Expecting FLAT array: [{date:..., code:..., inQty:..., outQty:...}, ...]
       tableData = res || [];
       
       if(tableData.length > 0){
@@ -349,14 +387,11 @@ function loadReport(e){
   });
 }
 
-/* ✅ Render Table (Date Based Ledger View) */
+/* ✅ Render Table */
 function renderTable() {
   let html = "";
-
   tableData.forEach(row => {
-      // Using standard concatenation to avoid JSP EL errors
       let displayDate = row.date || row.transDate || "-";
-      
       html += "<tr>";
       html += "<td>" + displayDate + "</td>";
       html += "<td>" + (row.productCode || row.code || "") + "</td>";
@@ -364,15 +399,11 @@ function renderTable() {
       html += "<td>" + (row.uom || "") + "</td>";
       html += "<td class='text-end'>" + Number(row.inQty || 0).toFixed(2) + "</td>";
       html += "<td class='text-end'>" + Number(row.outQty || 0).toFixed(2) + "</td>";
-      // For individual transactions, Balance usually reflects the running balance. 
-      // Here we show the net delta for simplicity, or 0 if complex.
       html += "<td class='text-end fw-bold'>" + Number((row.inQty || 0) - (row.outQty || 0)).toFixed(2) + "</td>";
       html += "</tr>";
   });
-
   $("#stockTable tbody").html(html);
 }
-
 
 /* ✅ Totals */
 function calculateTotals() {
@@ -384,31 +415,24 @@ function calculateTotals() {
     totalIn += Number(row.inQty || 0);
     totalOut += Number(row.outQty || 0);
   });
-  
   totalBalance = totalIn - totalOut;
 
-  // Update Dashboard Cards
   $("#totalIn").text(totalIn.toFixed(2));
   $("#totalOut").text(totalOut.toFixed(2));
   $("#totalBalance").text(totalBalance.toFixed(2));
 
-  // Update Table Footer Totals
   $("#footIn").text(totalIn.toFixed(2));
   $("#footOut").text(totalOut.toFixed(2));
   $("#footBal").text(totalBalance.toFixed(2));
 }
 
-
-/* ✅ Chart (Daily In/Out) */
+/* ✅ Chart */
 function drawChart() {
-
   if (chartInstance) {
     chartInstance.destroy();
   }
 
-  // Group data by Date for the chart
   let dateGroups = {};
-  
   tableData.forEach(row => {
       let d = row.date || row.transDate;
       if(!dateGroups[d]){
@@ -418,7 +442,6 @@ function drawChart() {
       dateGroups[d].out += Number(row.outQty || 0);
   });
 
-  // Sort dates
   let sortedDates = Object.keys(dateGroups).sort();
   let inData = sortedDates.map(function(d) { return dateGroups[d].in; });
   let outData = sortedDates.map(function(d) { return dateGroups[d].out; });
@@ -428,146 +451,104 @@ function drawChart() {
     data: {
       labels: sortedDates,
       datasets: [
-        {
-          label: "Stock In",
-          data: inData,
-          backgroundColor: '#15a0c6'
-        },
-        {
-          label: "Stock Out",
-          data: outData,
-          backgroundColor: '#ef4444'
-        }
+        { label: "Stock In", data: inData, backgroundColor: '#15a0c6' },
+        { label: "Stock Out", data: outData, backgroundColor: '#ef4444' }
       ]
     },
     options: {
         responsive: true,
         maintainAspectRatio: false,
-        scales: {
-            y: { beginAtZero: true }
-        }
+        scales: { y: { beginAtZero: true } }
     }
   });
 }
 
-/* ✅ ATTRACTIVE & TRENDING PDF FORMAT */
+/* ✅ PDF Download */
 function downloadPDF() {
     var jsPDF = window.jspdf.jsPDF;
     var doc = new jsPDF('l', 'mm', 'a4');
 
-    // ----------------------------------------------------
-    // 1. MODERN HEADER SECTION
-    // ----------------------------------------------------
-    
-    // Store Name (Brand Color Accent)
+    // Header
     doc.setFontSize(20);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(21, 160, 198); // --accent color
+    doc.setTextColor(21, 160, 198);
     doc.text("THIRU SENTHILATHIPATHI OIL STORE", 14, 20);
 
-    // Address (Professional Gray)
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(80, 80, 80); 
     doc.text("No.42, Krishna Moorthi Bavanam, Madakulam Main Road,", 14, 27);
     doc.text("Palanganatham, Madurai – 625003", 14, 32);
     
-    // GST (Smaller, lighter)
     doc.setFontSize(9);
     doc.setTextColor(120, 120, 120);
     doc.text("GST: 29ABCDE1234F1Z5", 14, 37);
 
-    // Decorative Line Separator
-    doc.setDrawColor(21, 160, 198); // Accent Color Line
+    doc.setDrawColor(21, 160, 198);
     doc.setLineWidth(0.5);
-    doc.line(14, 42, 287, 42); // Line across the width
+    doc.line(14, 42, 287, 42);
 
-    // Report Title (High Contrast)
     doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(0, 0, 0);
     doc.text("Stock Ledger Report", 14, 52);
 
-    // Date Range Info
     doc.setFontSize(10);
     doc.setFont("helvetica", "italic");
     doc.setTextColor(100, 100, 100);
     var dateRangeText = "Period: " + $("#fromDate").val() + "  to  " + $("#toDate").val();
     doc.text(dateRangeText, 14, 58);
-
-    // ----------------------------------------------------
-    // 2. MODERN TABLE DESIGN
-    // ----------------------------------------------------
     
+    // Table
     doc.autoTable({
         html: '#stockTable',
         startY: 65,
-        
-        // Modern Striped Theme
         theme: 'striped', 
-        
-        // Header Styling (Dark Premium Blue)
         headStyles: { 
-            fillColor: [10, 18, 32], // Dark Navy (--bg-dark)
-            textColor: 255,
-            fontStyle: 'bold',
-            halign: 'center',
-            fontSize: 10
+            fillColor: [10, 18, 32], textColor: 255, fontStyle: 'bold', halign: 'center', fontSize: 10
         },
-        
-        // Body Styling
-        styles: { 
-            fontSize: 9, 
-            cellPadding: 3,
-            lineColor: [230, 230, 230], // Very light borders
-            lineWidth: 0.1
-        },
-        
-        // Alternating Row Colors (Subtle Tint)
-        alternateRowStyles: {
-            fillColor: [248, 250, 252] // Very light tint
-        },
-
-        // Column Specific Styles
+        styles: { fontSize: 9, cellPadding: 3, lineColor: [230, 230, 230], lineWidth: 0.1 },
+        alternateRowStyles: { fillColor: [248, 250, 252] },
         columnStyles: {
-            0: { cellWidth: 32 }, // Date
-            1: { cellWidth: 25 }, // Code
-            2: { cellWidth: 'auto' }, // Product
-            3: { cellWidth: 20 }, // UOM
-            4: { cellWidth: 35, halign: 'right' }, // In
-            5: { cellWidth: 35, halign: 'right' }, // Out
-            6: { cellWidth: 35, halign: 'right', fontStyle: 'bold' }  // Bal
+            0: { cellWidth: 32 }, 
+            1: { cellWidth: 25 }, 
+            2: { cellWidth: 'auto' }, 
+            3: { cellWidth: 20 }, 
+            4: { cellWidth: 35, halign: 'right' }, 
+            5: { cellWidth: 35, halign: 'right' }, 
+            6: { cellWidth: 35, halign: 'right', fontStyle: 'bold' } 
         },
-        
-        // Footer Styling (Highlight Totals)
         footStyles: { 
-            fillColor: [21, 160, 198], // Brand Color
-            textColor: 255, 
-            fontStyle: 'bold',
-            halign: 'right'
+            fillColor: [21, 160, 198], textColor: 255, fontStyle: 'bold', halign: 'right'
         }
     });
-
-    // ----------------------------------------------------
     
     doc.save('Stock_Ledger_' + $("#toDate").val() + '.pdf');
 }
 
-/* ✅ Reset */
+/* ✅ Reset Function (Updated to restore Product List) */
 function resetAll(){
   document.getElementById("reportForm").reset();
+  
   $("#stockTable tbody").html("<tr><td colspan='7' class='text-center text-muted py-4'>Please select dates and click Generate</td></tr>");
-  
   $("#dashboardStats, #chartContainer, #tableFooter, #btnPdf").hide();
-  
   $("#totalIn, #totalOut, #totalBalance").text("0.00");
   $("#footIn, #footOut, #footBal").text("0.00");
 
   if(chartInstance){
     chartInstance.destroy();
   }
-
   tableData = [];
+
+  // ✅ CRITICAL: Reload ALL products via AJAX so user can "Select Only Product" again
+  $.get(servletUrl + "?action=getProducts", function(data){
+      $("#product").empty().append('<option value="">-- All Products --</option>');
+      if(data && data.length > 0){
+          data.forEach(p => {
+              $("#product").append('<option value="'+p.id+'">'+p.name+'</option>');
+          });
+      }
+  });
 }
 </script>
 

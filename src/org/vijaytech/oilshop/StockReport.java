@@ -1,6 +1,7 @@
 package org.vijaytech.oilshop;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -52,9 +53,57 @@ public class StockReport extends HttpServlet{
         if (Env.getAD_User_ID(ctx) == 0) Env.setContext(ctx, "#AD_User_ID", 100);
         if (Env.getContextAsInt(ctx, "#AD_Role_ID") == 0) Env.setContext(ctx, "#AD_Role_ID", 102);
 
+        // -------------------------------------------------
+        // ✅ ACTION: GET PRODUCTS (AJAX)
+        // Handles: User chooses Category -> Get Products for that Category
+        // -------------------------------------------------
+        String action = req.getParameter("action");
+        if ("getProducts".equalsIgnoreCase(action)) {
+            String catId = req.getParameter("catId");
+            JSONArray productsJson = new JSONArray();
+            
+            // Base Query
+            String sql = "SELECT M_Product_ID as id, Name as name FROM M_Product WHERE IsActive='Y'";
+            
+            // Scenario 1: If a category is chosen (and not empty string), filter by it
+            if (catId != null && !catId.trim().isEmpty()) {
+                sql += " AND M_Product_Category_ID = ?";
+            }
+            sql += " ORDER BY Name";
+            
+            try (Connection con = DB.getConnectionRW();
+                 PreparedStatement ps = con.prepareStatement(sql)) {
+                
+                // Set parameter only if category is selected
+                if (catId != null && !catId.trim().isEmpty()) {
+                    ps.setInt(1, Integer.parseInt(catId));
+                }
+                
+                ResultSet rs = ps.executeQuery();
+                while(rs.next()){
+                    JSONObject p = new JSONObject();
+                    p.put("id", rs.getInt("id"));
+                    p.put("name", rs.getString("name"));
+                    productsJson.put(p);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            
+            resp.setContentType("application/json");
+            PrintWriter out = resp.getWriter();
+            out.print(productsJson.toString());
+            out.flush();
+            return;
+        }
+
+        // -------------------------------------------------
+        // ✅ ACTION: LOAD PAGE (Default)
+        // Load Categories and ALL Products initially
+        // -------------------------------------------------
         try {
 
-            /* ✅ Load Category Dropdown */
+            /* Load Category Dropdown */
             List<Map<String, Object>> categoryList = new ArrayList<>();
 
             List<MProductCategory> cats =
@@ -72,7 +121,7 @@ public class StockReport extends HttpServlet{
 
             req.setAttribute("categoryList", categoryList);
 
-            /* ✅ Optional Product Dropdown also */
+            /* Load ALL Products (Initial Load) */
             List<Map<String, Object>> productList = new ArrayList<>();
 
             List<MProduct> prods =
@@ -90,7 +139,7 @@ public class StockReport extends HttpServlet{
 
             req.setAttribute("productList", productList);
 
-            /* ✅ Forward JSP */
+            /* Forward JSP */
             RequestDispatcher rd =
                     req.getRequestDispatcher("/pages/StockReport.jsp");
             rd.forward(req, resp);
@@ -107,14 +156,14 @@ public class StockReport extends HttpServlet{
             throws ServletException, IOException {
 
         String productCatIdStr = req.getParameter("productcatId");
-        String productIdStr = req.getParameter("productId"); // Added Product filter
+        String productIdStr = req.getParameter("productId"); 
         String fromDateStr  = req.getParameter("fromDate");
         String toDateStr    = req.getParameter("toDate");
 
         resp.setContentType("application/json");
         JSONArray result = new JSONArray();
 
-        /* ✅ Validate Dates */
+        /* Validate Dates */
         if (fromDateStr == null || fromDateStr.isEmpty() ||
             toDateStr == null || toDateStr.isEmpty()) {
 
@@ -126,8 +175,12 @@ public class StockReport extends HttpServlet{
             return;
         }
 
-        /* ✅ UPDATED SQL: Select Transactions for Date-Based Ledger */
-        // We remove GROUP BY to show individual daily transactions
+        /* UPDATED SQL: Select Transactions for Date-Based Ledger */
+        // Handles:
+        // 1. Product Only (productcatId null, productId set)
+        // 2. Category Only (productcatId set, productId null)
+        // 3. Category & Product (Both set)
+        // 4. All Data (Both null)
         String sql =
             "SELECT " +
             " t.MovementDate AS Date, " +
@@ -177,7 +230,7 @@ public class StockReport extends HttpServlet{
 
             while (rs.next()) {
                 JSONObject row = new JSONObject();
-                row.put("date", rs.getString("Date")); // Key used in JSP
+                row.put("date", rs.getString("Date")); 
                 row.put("productCode", rs.getString("ProductCode"));
                 row.put("productName", rs.getString("ProductName"));
                 row.put("uom", rs.getString("UOM"));
@@ -197,7 +250,7 @@ public class StockReport extends HttpServlet{
             return;
         }
 
-        // ✅ Response
+        // Response
         resp.setContentType("application/json");
         try {
             resp.getWriter().write(result.toString());
