@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
 <title>Vijaytechorbitsolutions — Login (Stylish)</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Playfair+Display:wght@600;700;900&display=swap" rel="stylesheet">
 <style>
   /* --------- DARK-PANELS FORMAT (outer light frame + inner dark navy panels) --------- */
   :root{
@@ -38,7 +38,8 @@
 
   .outer-frame {
     width:100%;
-    max-width:1120px;
+    /* Responsive width for different screens */
+    max-width: 1400px; /* Increased slightly for Large TVs */
     margin:36px auto;
     padding:20px;
     border-radius:var(--outer-radius);
@@ -69,21 +70,24 @@
     position:relative;
     z-index:2;
     width:100%;
-    max-width:980px;
     margin:0 auto;
     display:grid;
-    grid-template-columns: 360px 1fr;
+    grid-template-columns: 360px 1fr; /* Default Desktop layout */
     gap:22px;
     padding:22px;
     border-radius:12px;
     background: transparent;
     overflow:hidden;
+    /* Glassmorphism effect for the card itself */
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   }
 
   .left, .right {
     padding:22px;
     border-radius:12px;
-    min-height:360px;
+    min-height:380px; /* Slightly increased height */
     background: linear-gradient(180deg, var(--panel-dark), var(--panel-dark-2));
     border: 1px solid rgba(255,255,255,0.02);
     color: var(--muted-light);
@@ -95,6 +99,7 @@
     flex-direction:column;
     gap:18px;
     align-items:flex-start;
+    justify-content: center; /* Center content vertically for better look */
   }
 
   .logo-frame {
@@ -125,26 +130,54 @@
     letter-spacing:0.6px;
   }
 
+  /* --- PROFESSIONAL BRANDING TITLE --- */
   .brand-title {
-    font-size:20px;
-    font-weight:800;
+    /* Dynamic font size for responsiveness */
+    font-size: 22px; 
+    font-weight: 900;
     margin:0;
+    line-height: 1.3;
     color:#e6eefc;
     font-family:'Playfair Display', serif;
     cursor:pointer;
     display:inline-block;
-    padding:2px 6px;
+    padding:4px 8px;
     border-radius:6px;
+    transition: all 0.3s ease;
+    
+    /* Gradient Text for "Wonderful" look */
+    background: linear-gradient(90deg, #ffffff 0%, #2dd4bf 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    
+    /* Text Shadow for depth */
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    
+    /* Allow wrapping on very small screens */
+    white-space: normal; 
+    word-break: break-word;
   }
 
-  .brand-sub { color: rgba(230,238,252,0.6); font-size:13px; margin-top:6px }
+  .brand-title:hover { 
+    transform: scale(1.02); 
+    filter: drop-shadow(0 4px 8px rgba(45, 212, 191, 0.5)); 
+    background: linear-gradient(90deg, #ffffff 0%, #19b6b0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
 
-  .feature-chips { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px }
+  .brand-sub { color: rgba(230,238,252,0.9); font-size:13px; margin-top:8px; letter-spacing: 1px; text-transform: uppercase; font-weight: 600;}
+
+  .feature-chips { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px }
   .chip {
     padding:8px 12px;
     border-radius:999px;
-    background:#ffffff;
-    color:#08143a;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255,255,255,0.1);
+    color:#ffffff;
     font-weight:700;
     font-size:12px;
     box-shadow: 0 6px 16px rgba(2,6,23,0.14);
@@ -189,58 +222,71 @@
     display:flex;
     flex-direction:column;
     gap:12px;
+    justify-content: center; /* Center form vertically */
   }
 
-  .form-head { display:flex; justify-content:space-between; align-items:center }
+  .form-head { display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 10px; }
   .form-head h3 { margin:0; font-size:18px; font-weight:800; color:#e6eefc }
   .form-desc { color: rgba(230,238,252,0.6); font-size:13px }
 
-  form { display:flex; flex-direction:column; gap:12px; margin-top:6px }
+  form { display:flex; flex-direction:column; gap:12px; margin-top:6px; width: 100%; }
 
-  label { display:block; color: rgba(230,238,252,0.7); font-size:13px; margin-bottom:6px }
+  label { display:block; color: rgba(230,238,252,0.7); font-size:13px; margin-bottom:6px; font-weight: 600; }
 
   .input {
     display:flex; align-items:center; gap:10px;
     background: #ffffff;
-    border-radius:14px; padding:10px 12px;
+    border-radius:14px; padding:12px 14px; /* Slightly larger for touch */
     box-shadow: 0 8px 22px rgba(2,6,23,0.12), inset 0 -6px 12px rgba(0,0,0,0.06);
     border:1px solid rgba(2,6,23,0.06);
+    transition: box-shadow 0.2s ease;
   }
-  .input input { border:none; outline:none; background:transparent; font-size:14px; color:#08143a; width:100%; font-weight:700; }
+  .input:focus-within {
+    box-shadow: 0 8px 30px rgba(2,6,23,0.2), inset 0 -6px 12px rgba(0,0,0,0.06);
+    border-color: rgba(45, 212, 191, 0.3);
+  }
+  .input input { border:none; outline:none; background:transparent; font-size:15px; color:#08143a; width:100%; font-weight:600; }
   .input .icon { width:40px; height:40px; border-radius:10px; display:grid; place-items:center; background:linear-gradient(90deg, rgba(3,10,35,0.06), rgba(3,10,35,0.02)); color:#08143a; font-weight:800; }
 
   .pw-toggle {
-    cursor:pointer; color:rgba(230,238,252,0.85); font-size:13px; padding:8px 10px; border-radius:10px;
-    background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.04); display:inline-flex; gap:8px; align-items:center;
+    cursor:pointer; color:rgba(230,238,252,0.85); font-size:13px; padding:10px 14px; border-radius:10px;
+    background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.04); display:inline-flex; gap:8px; align-items:center; white-space: nowrap;
   }
 
   .pw-toggle:hover { transform:translateY(-1px) }
 
   .actions { display:flex; gap:12px; margin-top:6px; align-items:center }
 
-  .btn { padding:12px 16px; border-radius:12px; cursor:pointer; font-weight:800; border:none; font-size:14px; }
+  .btn { padding:14px 16px; border-radius:12px; cursor:pointer; font-weight:800; border:none; font-size:15px; transition: transform 0.1s ease; }
+  .btn:active { transform: scale(0.98); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
 
   .btn-primary {
     background: linear-gradient(90deg, #2fa7b2, #18a9d1);
     color:#fff; flex:1; box-shadow: 0 14px 36px rgba(10,20,40,0.22);
   }
-  .btn-primary:hover { filter:brightness(1.02) }
+  .btn-primary:hover { filter:brightness(1.1); transform: translateY(-2px); }
 
   .btn-secondary {
     background:#ffffff; color:#08143a; padding:10px 12px; border-radius:10px; min-width:110px; box-shadow: 0 6px 18px rgba(2,6,23,0.12);
   }
 
-  .small-row { display:flex; justify-content:space-between; align-items:center; margin-top:8px; color: rgba(230,238,252,0.6); font-size:13px; }
+  .small-row { display:flex; justify-content:space-between; align-items:center; margin-top:8px; color: rgba(230,238,252,0.6); font-size:13px; flex-wrap: wrap; gap: 5px; }
 
   .pw-strength { height:8px; border-radius:8px; background: rgba(255,255,255,0.08); overflow:hidden; margin-top:6px; }
   .pw-strength > i { display:block; height:100%; width:0%; transition: width .35s ease; background: linear-gradient(90deg,#18a9d1,#2fa7b2); }
 
   .pw-note { font-size:12px; color: rgba(230,238,252,0.6); margin-top:6px; display:flex; justify-content:space-between; align-items:center }
 
-  .shop-badge { display:flex; gap:12px; align-items:center; color: rgba(230,238,252,0.6); font-size:13px }
-  .shop-logo { width:48px; height:48px; border-radius:10px; overflow:hidden; display:grid; place-items:center; background:#0b1b3e; box-shadow: 0 10px 30px rgba(2,6,23,0.12); flex-shrink:0; }
+  /* --- ENHANCED SHOP BADGE --- */
+  .shop-badge { display:flex; gap:12px; align-items:center; color: rgba(230,238,252,0.6); font-size:13px; cursor: pointer; padding: 8px 12px; border-radius: 12px; transition: background 0.2s; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); }
+  .shop-badge:hover { background: rgba(255,255,255,0.08); }
+  .shop-badge .shop-tooltip { font-size:11px; opacity: 0; transition: opacity 0.2s; margin-left: 8px; color: var(--accent-c); }
+  .shop-badge:hover .shop-tooltip { opacity: 1; }
+
+  .shop-logo { width:48px; height:48px; border-radius:10px; overflow:hidden; display:grid; place-items:center; background:#0b1b3e; box-shadow: 0 10px 30px rgba(2,6,23,0.12); flex-shrink:0; border: 1px solid rgba(255,255,255,0.1); }
   .shop-logo img{ width:92%; height:92%; object-fit:contain; display:block; }
-  .shop-name { font-weight:800; color: rgba(230,238,252,0.95); font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:220px; }
+  .shop-name { font-weight:900; color: #ffffff; font-size: 16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:220px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
 
   .dropzone { flex:1; border-radius:12px; padding:10px; border:1px dashed rgba(255,255,255,0.06); text-align:center; color: rgba(230,238,252,0.6); font-size:13px; background: transparent; }
   .dropzone.dragover { border-color: rgba(60,200,200,0.6); background: rgba(255,255,255,0.02); color:#fff; }
@@ -248,27 +294,142 @@
   .error { color: #ffc1c1; font-size:13px; margin-top:6px }
   .hidden { display:none }
 
-  @media (max-width:900px){
-    .card { grid-template-columns: 1fr; width:95%; padding:14px }
-    .logo-frame { width:80px; height:80px }
-    .actions { flex-direction:column-reverse; gap:10px }
-    .shop-badge { margin-top:8px }
-    .brand-title { font-size:18px }
-  }
-
+  /* Spinner */
   .spinner { width:16px; height:16px; border-radius:50%; border:2px solid rgba(255,255,255,0.28); border-top-color:#fff; animation: spin .9s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg) } }
   .sr-only { position:absolute !important; height:1px; width:1px; overflow:hidden; clip:rect(1px,1px,1px,1px); white-space:nowrap; }
 
-  .modal-backdrop { position:fixed; inset:0; background:rgba(2,6,23,0.6); display:none; z-index:60; align-items:center; justify-content:center; padding:20px; }
-  .modal { background:#ffffff; border-radius:12px; padding:18px; width:720px; max-width:96%; color:#0f172a; box-shadow: 0 30px 120px rgba(2,6,23,0.45); border:1px solid rgba(2,6,23,0.06); }
-  .modal h4 { margin:0 0 8px 0; font-size:18px; color:#0f172a; }
-  .modal-row { display:flex; gap:12px; align-items:center; margin-bottom:12px; }
-  .modal .preview { width:84px; height:84px; border-radius:10px; overflow:hidden; display:grid; place-items:center; background:#f8fafc; border:1px solid rgba(209,213,219,0.9); }
-  .modal .controls { flex:1; }
-  .modal .inline-file { display:flex; gap:8px; align-items:center; }
-  .modal .modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:12px; }
-  .modal .text-input { width:100%; padding:8px 10px; border-radius:8px; border:1px solid rgba(148,163,184,0.9); background:#ffffff; color:#0f172a; }
+  /* Modal Styles */
+  .modal-backdrop { position:fixed; inset:0; background:rgba(2,6,23,0.6); display:none; z-index:60; align-items:center; justify-content:center; padding:20px; backdrop-filter: blur(4px); }
+  .modal { background:#ffffff; border-radius:12px; padding:24px; width:720px; max-width:96%; color:#0f172a; box-shadow: 0 30px 120px rgba(2,6,23,0.45); border:1px solid rgba(2,6,23,0.06); max-height: 90vh; overflow-y: auto; }
+  .modal h4 { margin:0 0 16px 0; font-size:20px; color:#0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; }
+  .modal-row { display:flex; gap:16px; align-items:flex-start; margin-bottom:20px; flex-wrap: wrap; }
+  .modal .preview { width:80px; height:80px; border-radius:10px; overflow:hidden; display:grid; place-items:center; background:#f8fafc; border:1px solid rgba(209,213,219,0.9); flex-shrink: 0; }
+  .modal .controls { flex:1; min-width: 200px; }
+  .modal .inline-file { display:flex; gap:10px; align-items:center; flex-wrap: wrap; }
+  .modal .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; border-top: 1px solid #e2e8f0; padding-top: 16px; }
+  .modal .text-input { width:100%; padding:10px 12px; border-radius:8px; border:1px solid #cbd5e1; background:#ffffff; color:#0f172a; font-size: 15px; transition: border-color 0.2s; }
+  .modal .text-input:focus { border-color: #15a0c6; outline: none; }
+  .modal input[type="file"] { font-size: 13px; color: #475569; }
+  .modal input[type="file"]:disabled { opacity: 0.5; cursor: not-allowed; }
+  .modal-section-title { font-size: 14px; font-weight: 700; color: #334155; margin-bottom: 8px; display: block; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; }
+  
+  /* Lock State Styling */
+  .controls-locked { opacity: 0.6; pointer-events: none; position: relative; }
+  .controls-locked::after { content: "LOCKED"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-weight: bold; font-size: 24px; color: rgba(0,0,0,0.1); border: 2px solid rgba(0,0,0,0.1); padding: 5px 10px; border-radius: 4px; letter-spacing: 2px; pointer-events: none; }
+  .locked-badge { display:inline-block; background:#ef4444; color:#fff; font-size:10px; padding:2px 6px; border-radius:4px; margin-left:8px; text-transform:uppercase; font-weight:700; vertical-align: middle; }
+
+  /* =========================================
+     RESPONSIVE MEDIA QUERIES (ALL DEVICES)
+     ========================================= */
+
+  /* Mobile Devices (Small S, S, L) */
+  @media (max-width: 600px) {
+    html, body { font-size: 14px; }
+    
+    .outer-frame {
+      width: 100%;
+      max-width: 100%;
+      margin: 0;
+      border-radius: 0;
+      padding: 0;
+      background: #f3f4f6;
+      box-shadow: none;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .wrap {
+      flex: 1;
+      border-radius: 0;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      background: transparent;
+    }
+
+    .card {
+      display: flex;
+      flex-direction: column;
+      padding: 20px; /* More breathing room */
+      border-radius: 16px;
+      height: 100%;
+      overflow-y: auto;
+      background: rgba(255,255,255,0.85); /* Slightly more opaque for readability */
+      box-shadow: 0 0 0 100vmax rgba(255,255,255,0.5); 
+    }
+
+    .left, .right {
+      background: var(--panel-dark); 
+      padding: 20px;
+      width: 100%;
+      align-items: center; /* Center horizontally */
+      text-align: center; /* Center text */
+    }
+    
+    /* Ensure Layout works vertically on mobile */
+    .left { order: 2; /* Move branding below form or keep above based on preference. Here keeping above */ order: 1; }
+    .right { order: 2; }
+
+    /* Larger touch targets */
+    .input { padding: 16px; border-radius: 12px; }
+    .input input { font-size: 16px; } /* Prevent iOS zoom */
+    .btn { padding: 16px; font-size: 16px; border-radius: 12px; width: 100%; }
+    .pw-toggle { padding: 14px 16px; justify-content: center; }
+    
+    /* Adjustments for small screens */
+    .logo-frame { width: 80px; height: 80px; margin-bottom: 16px; }
+    .logo-fallback { font-size: 18px; }
+    
+    .brand-title { 
+      font-size: 20px; 
+      line-height: 1.4;
+      /* FIX: Removed margin: -85px */
+      margin-bottom: 4px;
+      margin-left: 0; margin-right: 0;
+    }
+    
+    .company-details { display: none; } 
+    
+    .modal-row { flex-direction: column; }
+    .modal .preview { width: 60px; height: 60px; margin-bottom: 10px; }
+  }
+
+  /* Tablets (Portrait & Small Laptops) */
+  @media (min-width: 601px) and (max-width: 900px) {
+    .card { 
+      grid-template-columns: 1fr; 
+      width:96%; 
+      padding:24px; 
+      gap: 24px; 
+    }
+    .left, .right { min-height: auto; align-items: flex-start; text-align: left; }
+    .logo-frame { width: 90px; height: 90px; }
+    .actions { flex-direction: column-reverse; gap:12px; width: 100%; }
+    .btn { width: 100%; }
+    .shop-badge { margin-top:10px; width: 100%; justify-content: flex-start; }
+    .brand-title { font-size: 22px; }
+    .modal { width: 90%; padding: 16px; }
+  }
+
+  /* Laptops (Standard) */
+  @media (min-width: 901px) and (max-width: 1200px) {
+    .card { max-width: 900px; } /* Slightly tighter on laptops */
+    .brand-title { font-size: 24px; }
+  }
+
+  /* Large Screens (Desktops / Large TVs) */
+  @media (min-width: 1201px) {
+    .card { 
+      max-width: 1100px; /* Keep it focused */
+    }
+    .brand-title { 
+      font-size: 28px; /* Big and bold for TV */
+      letter-spacing: -0.5px; 
+    }
+    .input input, .btn { font-size: 16px; } /* Slightly larger UI elements */
+  }
 
 </style>
 </head>
@@ -281,17 +442,17 @@
       <main class="card" role="main" aria-labelledby="title" aria-describedby="card-desc">
         <!-- LEFT: Branding + Company Details -->
         <section class="left" aria-label="Branding panel">
-          <div style="display:flex;gap:14px;align-items:center;width:100%">
+          <div style="display:flex;gap:16px;align-items:center;flex-direction:column;width:100%; text-align: center;">
             <div class="logo-frame" id="logoFrame" aria-hidden="false" title="Vijaytechorbitsolutions logo">
               <img id="logoImg" src="logo.png" alt="Vijaytechorbitsolutions logo" onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='grid'; document.getElementById('logoMissing').style.display='block'">
               <div id="logoFallback" class="logo-fallback" style="display:none">VT</div>
             </div>
 
-            <div style="flex:1;min-width:0">
-              <div id="title" class="brand-title" role="button" tabindex="0" aria-pressed="false" title="Click to change logos & shop name">Vijaytechorbitsolutions</div>
+            <div style="width:100%">
+              <div id="title" class="brand-title" role="button" tabindex="0" aria-pressed="false" title="Click to manage logos (Company & Customer)">VIJAY TECH ORBIT SOLUTIONS</div>
               <div class="brand-sub">Billing · Inventory · POS</div>
 
-              <div class="feature-chips" role="list" aria-hidden="false" aria-label="quick features">
+              <div class="feature-chips" role="list" aria-hidden="false" aria-label="quick features" style="justify-content:center;">
                 <div class="chip">Secure</div>
                 <div class="chip">2FA Ready</div>
                 <div class="chip">Fast</div>
@@ -302,8 +463,6 @@
 
           <div id="logoMissing" class="logo-missing" role="alert" aria-live="polite" style="display:none">Logo missing — add <code>logo.png</code> or upload via the manager.</div>
 
-<!--           <p class="muted-note" style="margin-top:4px">Click the company name to open the Logo & Shop manager (set logos once, they persist in browser).</p>
- -->
           <!-- SOFTWARE COMPANY DETAILS -->
           <div class="company-details" aria-label="Company details">
             <h4>About Vijaytech Orbit Solutions</h4>
@@ -313,16 +472,6 @@
               development to deployment and support — to help businesses digitize operations and scale efficiently.
             </p>
 
-            <!-- <div style="font-size:13px;color:rgba(230,238,252,0.72);margin-bottom:6px">Core Services</div>
-            <div class="services-list" role="list" aria-label="list of services">
-              <div class="service-item" role="listitem">Custom Software Development</div>
-              <div class="service-item" role="listitem">Web Application Development</div>
-              <div class="service-item" role="listitem">Mobile Apps (iOS & Android)</div>
-              <div class="service-item" role="listitem">ERP & CRM Implementations</div>
-              <div class="service-item" role="listitem">POS & Billing Systems</div>
-              <div class="service-item" role="listitem">Inventory & Warehouse Solutions</div>
-            </div> -->
-
             <p style="margin-top:8px;font-size:14px;color:rgba(230,238,252,0.9)"><strong>Contact:</strong> 9597908804</p>
 
             <p class="muted-note" style="margin-top:8px;font-size:12px">
@@ -330,7 +479,7 @@
             </p>
           </div>
 
-          <!-- Left uploader -->
+          <!-- Left uploader (Company Logo Only) -->
           <div class="logo-uploader" id="logoUploaderContainer" aria-hidden="false">
             <div id="dz" class="dropzone" tabindex="0">Drop logo.png here or <button id="chooseFileBtn" class="btn-secondary" type="button" aria-haspopup="dialog">Choose file</button></div>
             <input id="logoFileInput" type="file" accept="image/*" class="hidden" aria-hidden="true">
@@ -341,17 +490,21 @@
         <!-- RIGHT: Sign-in -->
         <section class="right" aria-label="Sign-in panel">
           <div class="form-head">
-            <div>
-              <h3>Sign in</h3>
-              <div class="form-desc" id="card-desc">Enter your credentials to access dashboard</div>
+            <div style="width: 100%; text-align: center; margin-bottom: 15px;">
+                <h3 style="margin:0; font-size: 24px; color: #e6eefc;">Sign in</h3>
+                <div class="form-desc" id="card-desc">Enter your credentials to access dashboard</div>
             </div>
 
-            <div class="shop-badge" aria-hidden="false">
+            <!-- Shop Badge (Clickable to manage Customer Logo) -->
+            <div class="shop-badge" id="shopBadgeTrigger" aria-hidden="false" title="Click to manage Customer Logo">
               <div class="shop-logo" title="Textile Shop Logo">
                 <img id="shopLogoImg" src="shop-logo.png" alt="Shop logo" onerror="this.style.display='none'; document.getElementById('shopLogoFallback').style.display='grid'">
                 <div id="shopLogoFallback" class="logo-fallback" style="display:none;font-size:12px;padding:6px">Textile</div>
               </div>
-              <div id="shopName" class="shop-name" title="Textile Shop">TSA OilStore</div>
+              <div style="display:flex; flex-direction:column; justify-content:center;">
+                <div id="shopName" class="shop-name" title="Textile Shop">TSA OilStore</div>
+                <span class="shop-tooltip">Edit Logo</span>
+              </div>
             </div>
           </div>
 
@@ -405,7 +558,7 @@
 
             <div class="small-row">
               <div class="muted">Auto-save · Audit logs</div>
-              <div style="color:rgba(230,238,252,0.6);font-size:13px">© 2025 Vijaytechorbitsolutions</div>
+              <div style="color:rgba(230,238,252,0.6);font-size:13px">© 2026 Vijaytechorbitsolutions</div>
             </div>
           </form>
         </section>
@@ -413,49 +566,54 @@
     </div>
   </div>
 
-  <!-- Modal (manage logos & name) -->
+  <!-- Modal (Manage Both Logos & Name) -->
   <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="modal" role="document" aria-labelledby="modalTitle">
       <h4 id="modalTitle">Manage Logos & Shop Name</h4>
 
+      <!-- PART 1: COMPANY LOGO (Vijaytech) - LOCKABLE -->
+      <span class="modal-section-title">1. Software Company Logo (Ours) <span id="compLockBadge" class="locked-badge hidden">LOCKED</span></span>
       <div class="modal-row">
         <div class="preview" id="modalCompanyPreview"><img id="modalCompanyImg" style="width:100%;height:100%;object-fit:contain;display:block" src="" alt="Company preview" /></div>
-        <div class="controls">
-          <div style="font-size:13px;margin-bottom:6px">Company logo (Vijaytechorbitsolutions)</div>
+        <div class="controls" id="modalCompanyControls">
+          <div style="font-size:13px;margin-bottom:6px; color:#64748b;">Upload the Vijaytech Orbit Solutions logo.</div>
           <div class="inline-file">
             <input id="modalCompanyFile" type="file" accept="image/*">
             <button id="modalCompanyClear" class="btn-secondary" type="button">Clear</button>
           </div>
-          <div style="font-size:12px;color:var(--muted);margin-top:6px">Saved in browser (localStorage). Use square images for best fit.</div>
+          <div style="font-size:12px;color:#94a3b8;margin-top:8px">Saved in browser (localStorage). Recommended: Square PNG.</div>
         </div>
       </div>
 
+      <!-- PART 2: CUSTOMER LOGO (TSA OilStore) -->
+      <span class="modal-section-title" style="margin-top: 10px;">2. Customer / Shop Logo (TSA OilStore)</span>
       <div class="modal-row">
         <div class="preview" id="modalShopPreview"><img id="modalShopImg" style="width:100%;height:100%;object-fit:contain;display:block" src="" alt="Shop preview" /></div>
         <div class="controls">
-          <div style="font-size:13px;margin-bottom:6px">Textile shop logo</div>
+          <div style="font-size:13px;margin-bottom:6px; color:#64748b;">Upload the Customer's Shop logo.</div>
           <div class="inline-file">
             <input id="modalShopFile" type="file" accept="image/*">
             <button id="modalShopClear" class="btn-secondary" type="button">Clear</button>
           </div>
-          <div style="font-size:12px;color:var(--muted);margin-top:6px">Will appear on the right-hand badge.</div>
+          <div style="font-size:12px;color:#94a3b8;margin-top:8px">This will appear on the right-hand badge.</div>
         </div>
       </div>
 
+      <!-- PART 3: SHOP NAME -->
       <div style="margin-bottom:6px">
-        <div style="font-size:13px;margin-bottom:6px">Textile shop name</div>
+        <span class="modal-section-title">3. Shop Name</span>
         <input id="modalShopName" class="text-input" type="text" placeholder="e.g. Sree Textiles">
       </div>
 
       <div class="modal-actions">
         <button id="modalCancel" class="btn-secondary" type="button">Cancel</button>
-        <button id="modalSave" class="btn btn-primary" type="button">Save</button>
+        <button id="modalSave" class="btn btn-primary" type="button">Save Changes</button>
       </div>
     </div>
   </div>
 
 <script>
-/* --------- same functionality as before (persistence + modal) --------- */
+/* --------- Full functionality for Two Logos (Company + Shop) --------- */
 
 const LS_COMP_SET = 'vt_logo_set';
 const LS_COMP_SRC = 'vt_logo_src';
@@ -466,7 +624,9 @@ const LS_SHOP_NAME = 'vt_shop_name';
 function trySetLS(key, val){ try { localStorage.setItem(key, val); } catch(e){ console.warn('ls set', e); } }
 function tryRemoveLS(key){ try { localStorage.removeItem(key); } catch(e){ console.warn('ls remove', e); } }
 
+// Initialize Saved State for Both Logos
 (function initSaved(){
+  // 1. Load Company Logo
   const compSet = localStorage.getItem(LS_COMP_SET);
   const logoImg = document.getElementById('logoImg');
   const logoFallback = document.getElementById('logoFallback');
@@ -482,6 +642,7 @@ function tryRemoveLS(key){ try { localStorage.removeItem(key); } catch(e){ conso
     if(uploader) uploader.style.display = '';
   }
 
+  // 2. Load Shop Logo
   const shopSet = localStorage.getItem(LS_SHOP_SET);
   const shopImg = document.getElementById('shopLogoImg');
   const shopFallback = document.getElementById('shopLogoFallback');
@@ -492,10 +653,12 @@ function tryRemoveLS(key){ try { localStorage.removeItem(key); } catch(e){ conso
     else { shopImg.style.display = 'none'; shopFallback.style.display = 'grid'; }
   }
 
+  // 3. Load Shop Name
   const savedName = localStorage.getItem(LS_SHOP_NAME);
   if(savedName && savedName.trim().length) shopNameEl.textContent = savedName;
 })();
 
+// Password Toggle Logic
 (function(){
   const pw = document.getElementById('password');
   const btn = document.getElementById('pwToggle');
@@ -508,6 +671,7 @@ function tryRemoveLS(key){ try { localStorage.removeItem(key); } catch(e){ conso
   });
 })();
 
+// Reset Button Logic
 document.getElementById('resetBtn').addEventListener('click', function(){
   document.getElementById('username').value = '';
   document.getElementById('password').value = '';
@@ -516,6 +680,7 @@ document.getElementById('resetBtn').addEventListener('click', function(){
   document.getElementById('formError').classList.add('hidden');
 });
 
+// Image Error Handling on Load
 window.addEventListener('load', function(){
   const img = document.getElementById('logoImg'), fallback = document.getElementById('logoFallback'), missing = document.getElementById('logoMissing');
   setTimeout(()=> {
@@ -524,6 +689,7 @@ window.addEventListener('load', function(){
   }, 50);
 });
 
+// Password Strength Logic
 (function(){
   const pw = document.getElementById('password'), bar = document.getElementById('pwBar'), label = document.getElementById('pwStrengthLabel');
   function evaluate(v){
@@ -551,6 +717,7 @@ window.addEventListener('load', function(){
   });
 })();
 
+// Form Submission Logic
 (function(){
   const form = document.getElementById('loginForm'), user = document.getElementById('username'), pw = document.getElementById('password'), error = document.getElementById('formError'), signinBtn = document.getElementById('signinBtn'), signinText = document.getElementById('signinText'), signinLoader = document.getElementById('signinLoader');
   form.addEventListener('submit', function(ev){
@@ -563,7 +730,7 @@ window.addEventListener('load', function(){
   });
 })();
 
-/* Left uploader (one-time) */
+/* Left uploader (Company Logo Only - One-time) */
 (function(){
   const dz = document.getElementById('dz'), input = document.getElementById('logoFileInput'), chooseBtn = document.getElementById('chooseFileBtn'), logoImg = document.getElementById('logoImg'), logoFallback = document.getElementById('logoFallback'), logoMissing = document.getElementById('logoMissing'), uploaderContainer = document.getElementById('logoUploaderContainer');
   function showPreviewAndPersist(file){
@@ -585,9 +752,10 @@ window.addEventListener('load', function(){
   input.addEventListener('change', function(){ if(this.files && this.files[0]){ if (localStorage.getItem(LS_COMP_SET) === 'true') return; const f = this.files[0]; if(f.type.startsWith('image/')) showPreviewAndPersist(f); } });
 })();
 
-/* Modal logic (edit logos & shop name) */
+/* Modal logic (Edit BOTH Logos & Shop Name) */
 (function(){
   const title = document.getElementById('title');
+  const shopBadge = document.getElementById('shopBadgeTrigger');
   const modalBackdrop = document.getElementById('modalBackdrop');
   const modalCompanyFile = document.getElementById('modalCompanyFile');
   const modalShopFile = document.getElementById('modalShopFile');
@@ -598,16 +766,39 @@ window.addEventListener('load', function(){
   const modalShopNameInput = document.getElementById('modalShopName');
   const modalSave = document.getElementById('modalSave');
   const modalCancel = document.getElementById('modalCancel');
+  const modalCompanyControls = document.getElementById('modalCompanyControls');
+  const compLockBadge = document.getElementById('compLockBadge');
 
   function openModal(){
+    // Load Company Data
     const compSrc = localStorage.getItem(LS_COMP_SRC) || document.getElementById('logoImg').src || '';
-    const shopSrc = localStorage.getItem(LS_SHOP_SRC) || document.getElementById('shopLogoImg').src || '';
     modalCompanyImg.src = compSrc && (compSrc.startsWith('data:') || compSrc.indexOf('http') !== -1) ? compSrc : '';
+    
+    // Load Shop Data
+    const shopSrc = localStorage.getItem(LS_SHOP_SRC) || document.getElementById('shopLogoImg').src || '';
     modalShopImg.src = shopSrc && (shopSrc.startsWith('data:') || shopSrc.indexOf('http') !== -1) ? shopSrc : '';
+    
+    // Load Name
     modalShopNameInput.value = localStorage.getItem(LS_SHOP_NAME) || document.getElementById('shopName').textContent || '';
+    
+    // --- CRITICAL LOCK LOGIC FOR COMPANY LOGO ---
+    const isCompanyLocked = localStorage.getItem(LS_COMP_SET) === 'true';
+    if(isCompanyLocked){
+      modalCompanyFile.disabled = true;
+      modalCompanyClear.disabled = true;
+      modalCompanyControls.classList.add('controls-locked');
+      compLockBadge.classList.remove('hidden');
+    } else {
+      modalCompanyFile.disabled = false;
+      modalCompanyClear.disabled = false;
+      modalCompanyControls.classList.remove('controls-locked');
+      compLockBadge.classList.add('hidden');
+    }
+
     modalBackdrop.style.display = 'flex';
     modalBackdrop.setAttribute('aria-hidden', 'false');
-    modalCompanyFile.focus();
+    if(!isCompanyLocked) modalCompanyFile.focus();
+    else modalShopNameInput.focus();
   }
 
   function closeModal(){
@@ -615,7 +806,10 @@ window.addEventListener('load', function(){
     modalBackdrop.setAttribute('aria-hidden', 'true');
   }
 
+  // Triggers
   title.addEventListener('click', openModal);
+  if(shopBadge) shopBadge.addEventListener('click', openModal);
+  
   title.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openModal(); } });
 
   function fileToDataUrl(file, cb){
@@ -635,17 +829,21 @@ window.addEventListener('load', function(){
   modalShopClear.addEventListener('click', function(){ modalShopFile.value = ''; modalShopImg.src = ''; });
 
   modalSave.addEventListener('click', function(){
-    const compSrc = modalCompanyImg.src || '';
-    if(compSrc && (compSrc.startsWith('data:') || compSrc.indexOf('blob:') === 0 || compSrc.indexOf('http') === 0)){
-      trySetLS(LS_COMP_SRC, compSrc); trySetLS(LS_COMP_SET, 'true');
-      document.getElementById('logoImg').src = compSrc; document.getElementById('logoImg').style.display = 'block'; document.getElementById('logoFallback').style.display = 'none'; document.getElementById('logoMissing').style.display = 'none';
-      const uploader = document.getElementById('logoUploaderContainer'); if (uploader) uploader.style.display = 'none';
-    } else if(compSrc === ''){
-      tryRemoveLS(LS_COMP_SRC); tryRemoveLS(LS_COMP_SET);
-      const imgEl = document.getElementById('logoImg'); if(imgEl) imgEl.style.display = 'none'; document.getElementById('logoFallback').style.display = 'grid'; document.getElementById('logoMissing').style.display = 'block';
-      const uploader = document.getElementById('logoUploaderContainer'); if (uploader) uploader.style.display = '';
+    // 1. Save Company Logo (ONLY IF NOT LOCKED)
+    if(localStorage.getItem(LS_COMP_SET) !== 'true'){
+      const compSrc = modalCompanyImg.src || '';
+      if(compSrc && (compSrc.startsWith('data:') || compSrc.indexOf('blob:') === 0 || compSrc.indexOf('http') === 0)){
+        trySetLS(LS_COMP_SRC, compSrc); trySetLS(LS_COMP_SET, 'true');
+        document.getElementById('logoImg').src = compSrc; document.getElementById('logoImg').style.display = 'block'; document.getElementById('logoFallback').style.display = 'none'; document.getElementById('logoMissing').style.display = 'none';
+        const uploader = document.getElementById('logoUploaderContainer'); if (uploader) uploader.style.display = 'none';
+      } else if(compSrc === ''){
+        tryRemoveLS(LS_COMP_SRC); tryRemoveLS(LS_COMP_SET);
+        const imgEl = document.getElementById('logoImg'); if(imgEl) imgEl.style.display = 'none'; document.getElementById('logoFallback').style.display = 'grid'; document.getElementById('logoMissing').style.display = 'block';
+        const uploader = document.getElementById('logoUploaderContainer'); if (uploader) uploader.style.display = '';
+      }
     }
 
+    // 2. Save Shop Logo (ALWAYS ALLOWED)
     const shopSrc = modalShopImg.src || '';
     if(shopSrc && (shopSrc.startsWith('data:') || shopSrc.indexOf('blob:') === 0 || shopSrc.indexOf('http') === 0)){
       trySetLS(LS_SHOP_SRC, shopSrc); trySetLS(LS_SHOP_SET, 'true');
@@ -655,6 +853,7 @@ window.addEventListener('load', function(){
       document.getElementById('shopLogoImg').style.display = 'none'; document.getElementById('shopLogoFallback').style.display = 'grid';
     }
 
+    // 3. Save Shop Name (ALWAYS ALLOWED)
     const shopNameVal = modalShopNameInput.value.trim();
     if(shopNameVal.length){
       trySetLS(LS_SHOP_NAME, shopNameVal);
@@ -670,6 +869,7 @@ window.addEventListener('load', function(){
   document.getElementById('modalBackdrop').addEventListener('click', function(e){ if(e.target === this) closeModal(); });
 })();
 
+// Accessibility for Dropzone
 (function(){
   const dz = document.getElementById('dz');
   if (!dz) return;
@@ -681,6 +881,7 @@ window.addEventListener('load', function(){
   });
 })();
 
+// Forgot Password Placeholder
 (function(){
   const fl = document.getElementById('forgotLink');
   if (!fl) return;
@@ -689,14 +890,6 @@ window.addEventListener('load', function(){
     alert('Forgot password flow — implement server-side recovery.');
   });
 })();
-
-/* DEV clear localStorage:
-   localStorage.removeItem('vt_logo_set');
-   localStorage.removeItem('vt_logo_src');
-   localStorage.removeItem('vt_shop_set');
-   localStorage.removeItem('vt_shop_src');
-   localStorage.removeItem('vt_shop_name');
-*/
 </script>
 </body>
 </html>
