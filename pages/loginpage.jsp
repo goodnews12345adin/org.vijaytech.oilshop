@@ -491,14 +491,12 @@
         <section class="right" aria-label="Sign-in panel">
           <div class="form-head">
             <div style="width: 100%; text-align: center; margin-bottom: 15px;">
-                            <h1 style="margin:0; font-size: 24px; color: #e6eefc;">THIRU SENTHILATHIPATHI OIL STORE</h1>
-            <br>
-                <h3 style="margin:0; font-size: 24px; color: #e6eefc;">Sign in</h3><br>
+                <h3 style="margin:0; font-size: 24px; color: #e6eefc;">Sign in</h3>
                 <div class="form-desc" id="card-desc">Enter your credentials to access dashboard</div>
             </div>
 
             <!-- Shop Badge (Clickable to manage Customer Logo) -->
-          <!--   <div class="shop-badge" id="shopBadgeTrigger" aria-hidden="false" title="Click to manage Customer Logo">
+            <div class="shop-badge" id="shopBadgeTrigger" aria-hidden="false" title="Click to manage Customer Logo">
               <div class="shop-logo" title="Textile Shop Logo">
                 <img id="shopLogoImg" src="shop-logo.png" alt="Shop logo" onerror="this.style.display='none'; document.getElementById('shopLogoFallback').style.display='grid'">
                 <div id="shopLogoFallback" class="logo-fallback" style="display:none;font-size:12px;padding:6px">Textile</div>
@@ -507,7 +505,7 @@
                 <div id="shopName" class="shop-name" title="Textile Shop">TSA OilStore</div>
                 <span class="shop-tooltip">Edit Logo</span>
               </div>
-            </div> -->
+            </div>
           </div>
 
           <!-- NOTE: form action uses a relative path to avoid server-side EL errors -->

@@ -50,24 +50,30 @@
   <!-- jQuery -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   
-  <!-- Select2 -->
+  <!-- Select2 (Dropdowns) -->
   <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
   
-  <!-- QZ Tray & Crypto -->
+  <!-- QZ Tray (Silent Printing) & Crypto -->
   <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.4/qz-tray.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jsrsasign/10.8.6/jsrsasign-all-min.js"></script>
 
 <style>
+    /* === ROOT VARIABLES === */
     :root {
       --accent: #15a0c6;
       --accent-dark: #0e7d9b;
+      --accent-glow: rgba(21, 160, 198, 0.4);
       --bg-slate: #f8fafc;
       --header-bg: rgba(10, 18, 32, 0.95);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --card-radius: 24px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       --danger: #ef4444;
       --success: #10b981;
     }
 
+    /* === GLOBAL RESETS === */
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
       background-color: var(--bg-slate);
@@ -75,8 +81,12 @@
       margin: 0;
       padding-top: 90px;
       min-height: 100vh;
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(21, 160, 198, 0.05) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(10, 18, 32, 0.02) 0px, transparent 50%);
     }
 
+    /* === HEADER === */
     .app-header {
       position: fixed;
       top: 0; right: 0; left: 0;
@@ -89,7 +99,7 @@
       justify-content: space-between;
       padding: 0 40px;
       z-index: 1040;
-      border-bottom:1px solid rgba(255, 255, 255, 0.1);
+      border-bottom:1px solid var(--glass-border);
       box-shadow: 0 10px 40px rgba(0,0,0,0.1);
     }
 
@@ -110,11 +120,12 @@
       border: 1px solid rgba(255,255,255,0.1);
       display: flex;
       align-items: center;
-      transition: all 0.3s;
+      transition: var(--transition);
       box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     }
     .header-action:hover { background: rgba(255,255,255,0.15); transform: translateY(-2px); }
 
+    /* === MAIN LAYOUT === */
     .page-wrap {
       padding: 30px 40px 100px 40px;
       max-width: 1500px;
@@ -124,7 +135,7 @@
 
     .invoice-box {
       background: #ffffff;
-      border-radius: 24px;
+      border-radius: var(--card-radius);
       padding: 45px;
       box-shadow: 0 20px 60px -10px rgba(0,0,0,0.08);
       border: 1px solid #edf2f7;
@@ -138,7 +149,7 @@
         top: 0; left: 0; right: 0;
         height: 8px;
         background: linear-gradient(90deg, var(--accent), #3b82f6);
-        box-shadow: 0 4px 20px rgba(21, 160, 198, 0.4);
+        box-shadow: 0 4px 20px var(--accent-glow);
     }
 
     .invoice-head {
@@ -157,12 +168,13 @@
       letter-spacing: -1px;
     }
 
+    /* === INPUT STYLING === */
     .border-dashed {
       border: 2px dashed #cbd5e1;
       border-radius: 20px;
       padding: 30px;
       background: #fafbfc;
-      transition: all 0.3s;
+      transition: var(--transition);
       height: 100%;
       position: relative;
       z-index: 1;
@@ -181,7 +193,7 @@
       padding: 10px 18px;
       font-size: 15px;
       font-weight: 500;
-      transition: all 0.3s;
+      transition: var(--transition);
       box-shadow: 0 2px 4px rgba(0,0,0,0.02);
       background-color: #fff;
     }
@@ -217,6 +229,7 @@
         box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
     }
 
+    /* === TABLE STYLING === */
     .table-responsive {
       border-radius: 20px;
       border: 1px solid #f1f5f9;
@@ -266,6 +279,7 @@
         box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
     }
 
+    /* === TOTALS SECTION === */
    .total-box {
     display: flex;
     flex-wrap: wrap;
@@ -304,7 +318,7 @@
         border-radius: 10px;
         font-size: 16px;
         font-weight: 600;
-        transition: all 0.3s;
+        transition: var(--transition);
     }
     .total-item-group input:focus {
         background: rgba(255,255,255,0.15);
@@ -328,12 +342,13 @@
         color: #ff4757;
     }
 
+    /* === BUTTONS === */
     .btn {
         padding: 12px 28px;
         border-radius: 12px;
         font-weight: 600;
         letter-spacing: 0.3px;
-        transition: all 0.3s;
+        transition: var(--transition);
         text-transform: none;
     }
 
@@ -348,6 +363,7 @@
       box-shadow: 0 15px 30px -5px rgba(21, 160, 198, 0.6);
     }
 
+    /* === LOADER OVERLAY === */
     #loader {
       background: rgba(255, 255, 255, 0.85);
       backdrop-filter: blur(12px);
@@ -379,6 +395,7 @@
     }
     #loader.active .box { transform: scale(1); }
 
+    /* === THERMAL RECEIPT === */
     #thermal-print-area {
         display: none; 
         width: 80mm; 
@@ -401,6 +418,7 @@
     .receipt-divider { border-top: 1px dashed #000; margin: 5px 0; }
     .receipt-footer { text-align: center; margin-top: 10px; font-size: 11px; }
 
+    /* === WONDERFUL BOX (Custom Modal) === */
     #wonderful-alert-box { z-index: 100000; }
     
     .modal-content.wonderful-box {
@@ -476,6 +494,7 @@
         backdrop-filter: blur(5px);
     }
 
+    /* === TOAST === */
     .toast-container { z-index: 99999; }
     .custom-toast {
         background: rgba(255,255,255,0.9);
@@ -494,14 +513,6 @@
     .custom-toast .toast-body {
         font-weight: 600;
         font-size: 0.95rem;
-    }
-    
-    .select2-results__option--highlighted {
-        background-color: var(--accent) !important;
-    }
-    
-    .select2-selection__choice__remove:hover {
-        color: var(--accent) !important;
     }
 
     @media (max-width: 575.98px) {
@@ -573,22 +584,17 @@
                             </div>
                             <span class="fw-bold fs-5 text-dark">Bill To</span>
                         </div>
-                        
-                        <!-- Hidden ID for BP -->
-                        <input type="hidden" id="cust-bp-id" value="0">
-
                         <div class="form-floating mb-3">
-                            <input type="text" class="form-control" id="cust-name" placeholder="Name" style="height:50px; border-radius:12px;">
-                            <label for="cust-name" class="text-muted">Search Name / Mobile (Type to search)</label>
+                            <input type="text" class="form-control" id="cust-name" placeholder="Name">
+                            <label for="cust-name" class="text-muted">Customer Name</label>
                         </div>
-                        
                         <div class="form-floating mb-3">
                             <input type="text" class="form-control" id="cust-address" placeholder="Address">
-                            <label for="cust-address" class="text-muted">Address / Destination</label>
+                            <label for="cust-address" class="text-muted">Address</label>
                         </div>
                         <div class="form-floating">
                             <input type="text" class="form-control" id="cust-phone" placeholder="Phone">
-                            <label for="cust-phone" class="text-muted">Phone Number</label>
+                            <label for="cust-phone" class="text-muted">Phone Number (Optional)</label>
                         </div>
                     </div>
                 </div>
@@ -598,6 +604,7 @@
                     <div class="p-4 bg-light rounded-4 border border-light-subtle h-100">
                         <label class="form-label fw-bold d-flex justify-content-between mb-3">
                             <span class="text-dark"><i class="bi bi-box-seam me-2"></i>Add Products</span>
+                            <span class="text-primary small cursor-pointer text-decoration-underline"><i class="bi bi-search me-1"></i>Search (Press Enter)</span>
                         </label>
                         
                         <div class="mb-4">
@@ -626,7 +633,7 @@
                         
                         <div class="d-flex align-items-center gap-3 text-muted small bg-white p-3 rounded border border-secondary-subtle shadow-sm">
                              <i class="bi bi-lightbulb-fill text-warning fs-5"></i>
-                             <span>Type product name and press <strong class="text-dark">ENTER</strong> to add quickly.</span>
+                             <span>Tip: Type product name and press <strong class="text-dark">ENTER</strong> to add quickly.</span>
                         </div>
                     </div>
                 </div>
@@ -788,20 +795,24 @@
     </div>
 </div>
 
-<!-- === WONDERFUL ALERT BOX === -->
+<!-- === WONDERFUL ALERT BOX (REPLACES TOAST AND CONFIRM) === -->
 <div class="modal fade" id="wonderful-alert-box" tabindex="-1" aria-labelledby="wonderfulAlertLabel" aria-hidden="true" data-bs-backdrop="static">
   <div class="modal-dialog modal-dialog-centered modal-sm">
     <div class="modal-content wonderful-box text-center">
       <div class="modal-body p-4">
         
+        <!-- Icon Area -->
         <div class="wonderful-icon-area" id="wb-icon-area">
           <!-- Icon injected by JS -->
         </div>
 
+        <!-- Title -->
         <h5 class="wonderful-title" id="wb-title">Title</h5>
         
+        <!-- Message -->
         <p class="wonderful-msg" id="wb-message">Message goes here...</p>
 
+        <!-- Actions (Buttons) -->
         <div class="d-flex justify-content-center gap-2" id="wb-actions">
           <!-- Buttons injected by JS -->
         </div>
@@ -811,7 +822,7 @@
   </div>
 </div>
 
-<!-- ORIGINAL TOAST -->
+<!-- ORIGINAL TOAST (Kept in DOM but logic replaced per request) -->
 <div class="toast-container position-fixed bottom-0 end-0 p-4">
   <div id="liveToast" class="toast custom-toast align-items-center" role="alert" aria-live="assertive" aria-atomic="true">
     <div class="d-flex">
@@ -830,8 +841,12 @@
  $(function () { 
     $("#cancelId").val("0");
 
+    // Initialize Wonderful Box Modal
     const wonderfulModal = new bootstrap.Modal(document.getElementById('wonderful-alert-box'));
 
+    /**
+     * SHOW WONDERFUL BOX
+     */
     function showWonderfulBox(type, title, message, onConfirm, onCancel) {
         const $iconArea = $('#wb-icon-area');
         const $title = $('#wb-title');
@@ -893,15 +908,17 @@
         wonderfulModal.show();
     }
 
-    /* QZ TRAY SETUP */
+    /* ===========================
+       QZ TRAY SETUP
+       =========================== */
     qz.security.setCertificatePromise(function(resolve, reject) {
-        resolve("-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJAKg0HhUxzBrdMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV\nBAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBX\naWRnaXRzIFB0eSBMdGQwHhcNMTcwOTA0MDQzOTI5WhcNMTgwOTA0MDQzOTI5WjBF\nMQswCQYDVQQGEwJBVTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50\nZXJuZXQgV2lkZ2l0cyBQdHkgTHRkMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB\nCgKCAQEAuPwsKsV0g2EgLQLUjdInXx3gXVwJnCiC4K1/H6VNF2nzQ3VLDmKQAu7Jf\nwGpQ6KZZF+j2N7sUHnJyCkg+0R3bA3JX5V8kxvK7dOq4DlBjkURUqS3LY3U6K3jXJ\n5f0L6H8f8nKbJZJNYJVjmZJ8p2Wj8bZ6K5W1WfWZ9Wv7Jq0pY0UqY6F8R3bA3JX5V\n8kxvK7dOq4DlBjkURUqS3LY3U6K3jXJ5f0L6H8f8nKbJZJNYJVjmZJ8p2Wj8bZ6K\n5W1WfWZ9Wv7Jq0pY0UqY6F8R3bA3JX5V8kxvK7dOq4DlBjkURUqS3LY3U6K3jXJ5\nf0L6H8f8nKbJZJNYJVjmZJ8wIDAQABo1AwTjAdBgNVHQ4EFgQUhP7V5k4V8JF1dJK9JK9JK9JK9JK9JK9J\nK9JK9HwYDVR0lBBgwFAYKKwYBBAGCNwoDDAYKKwYBBAGCNwoDBDAKBggrBgEFBQcD\nATANBgkqhkiG9w0BAQsFAAOCAQEAXPQ3X3X3X3X3X3X3X3X3X3X\nX3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3\nX3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3\nX3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3\n3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3\n3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3Q==\n-----END CERTIFICATE-----");
+        resolve("-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJAKg0HhUxzBrdMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV\nBAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBX\naWRnaXRzIFB0eSBMdGQwHhcNMTcwOTA0MDQzOTI5WhcNMTgwOTA0MDQzOTI5WjBF\nMQswCQYDVQQGEwJBVTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50\nZXJuZXQgV2lkZ2l0cyBQdHkgTHRkMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB\nCgKCAQEAuPwsKsV0g2EgLQLUjdInXx3gXVwJnCiC4K1/H6VNF2nzQ3VLDmKQAu7Jf\nwGpQ6KZZF+j2N7sUHnJyCkg+0R3bA3JX5V8kxvK7dOq4DlBjkURUqS3LY3U6K3jXJ\n5f0L6H8f8nKbJZJNYJVjmZJ8p2Wj8bZ6K5W1WfWZ9Wv7Jq0pY0UqY6F8R3bA3JX5V\n8kxvK7dOq4DlBjkURUqS3LY3U6K3jXJ5f0L6H8f8nKbJZJNYJVjmZJ8p2Wj8bZ6K\n5W1WfWZ9Wv7Jq0pY0UqY6F8R3bA3JX5V8kxvK7dOq4DlBjkURUqS3LY3U6K3jXJ5\nf0L6H8f8nKbJZJNYJVjmZJ8wIDAQABo1AwTjAdBgNVHQ4EFgQUhP7V5k4V8JF1dJK9JK9JK9JK9JK9JK9J\nK9JK9HwYDVR0lBBgwFAYKKwYBBAGCNwoDDAYKKwYBBAGCNwoDBDAKBggrBgEFBQcD\nATANBgkqhkiG9w0BAQsFAAOCAQEAXPQ3X3X3X3X3X3X3X3X3X3X3X\nX3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3\nX3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3\nX3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3\n3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3Q==\n-----END CERTIFICATE-----");
     });
 
     qz.security.setSignaturePromise(function(toSign) {
         return function(resolve, reject) {
             try {
-                var pk = "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC4/CwqxXSDYSAtA\ntS0MidaHeBdXAmcKILgrX8fpU0XafNDdUsOYoAC7sl/AalDoplkX6PY3uxQecnIKS\nD7RHdsDclfnXyTG8rt06rgOUOSRRFStLctjTorcel8n+0vofx/ycpslkk1glWOZnk\nynZaPxtnornVbVZ9Zn1a/smrSljRSpjoXxHdsDclfnXyTG8rt06rgOUOSRRFStLc\ntjTorcel8n+0vofx/ycpslkk1glWOZnkynZaPxtnornVbVZ9Zn1a/smrSljRSpjo\nXxHdsDclfnXyTG8rt06rgOUOSRRFStLctjTorcel8n+0vofx/ycpslkk1glWOZnk\nynZaPxtnornVbVZ9Zn1a/smrSljRSpjoXxHdsDclfnXyTG8rt06rgOUOSRRFStLc\ntjTorcel8n+0vofx/ycpslkk1glWbQIDAQABAoIBAE7P3X3X3X3X3X3X3X3X3\n3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3\n3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3\n3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3\n3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3\n3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3\n3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3Q==\n-----END PRIVATE KEY-----";
+                var pk = "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC4/CwqxXSDYSAtA\ntS0MidaHeBdXAmcKILgrX8fpU0XafNDdUsOYoAC7sl/AalDoplkX6PY3uxQecnIKS\nD7RHdsDclfnXyTG8rt06rgOUOSRRFStLctjTorcel8n+0vofx/ycpslkk1glWOZnk\nynZaPxtnornVbVZ9Zn1a/smrSljRSpjoXxHdsDclfnXyTG8rt06rgOUOSRRFStLc\ntjTorcel8n+0vofx/ycpslkk1glWOZnkynZaPxtnornVbVZ9Zn1a/smrSljRSpjo\nXxHdsDclfnXyTG8rt06rgOUOSRRFStLctjTorcel8n+0vofx/ycpslkk1glWOZnk\nynZaPxtnornVbVZ9Zn1a/smrSljRSpjoXxHdsDclfnXyTG8rt06rgOUOSRRFStLc\ntjTorcel8n+0vofx/ycpslkk1glWbQIDAQABAoIBAE7P3X3X3X3X3X3X3X3X3\n3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3\n3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3\n3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3\n3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3\n3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3\n3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3Q==\n-----END PRIVATE KEY-----";
                 var rsa = new KJUR.crypto.Signature({"alg": "SHA1withRSA"});
                 rsa.init(pk);
                 rsa.updateString(toSign);
@@ -925,8 +942,6 @@
     /* ===========================
        Select2 Initialization
     =========================== */
-    
-    // 1. Product Select2
     $("#manual-product").select2({
         placeholder: "-- Search Product --",
         width: "100%",
@@ -943,64 +958,6 @@
     });
 
     $('#manual-product').on('select2:select', function (e) { $(this).trigger('change'); });
-
-    // 2. Customer Name Select2 (AJAX + TAGS)
-    $("#cust-name").select2({
-        placeholder: "Search Customer (Name or Phone)...",
-        width: "100%",
-        allowClear: true,
-        minimumInputLength: 2,
-        tags: true,
-        createTag: function (params) {
-            return {
-                id: params.term,
-                text: params.term,
-                newOption: true
-            };
-        },
-        templateResult: function (data) {
-            if (data.loading) return data.text;
-            var $result = $("<span></span>");
-            $result.text(data.text);
-            if (data.newOption) {
-                $result.append(" <small>(New Customer)</small>");
-            }
-            return $result;
-        },
-        ajax: {
-            url: function (params) {
-                return "<%= request.getContextPath() %>/SalesServlet?action=searchBP&term=" + params.term;
-            },
-            dataType: 'json',
-            delay: 250,
-            processResults: function (data) {
-                return { results: data };
-            },
-            cache: true
-        }
-    });
-
-    // When a customer is selected
-    $('#cust-name').on('select2:select', function (e) {
-        var data = e.params.data;
-        if (data && data.id) {
-            if (!isNaN(data.id)) {
-                $('#cust-bp-id').val(data.id);
-                $('#cust-phone').val(data.phone);
-                $('#cust-address').val(data.address);
-            } else {
-                $('#cust-bp-id').val('0'); 
-                $('#cust-phone').val('');
-                $('#cust-address').val('');
-            }
-        }
-    });
-    
-    $('#cust-name').on('select2:clear', function (e) {
-        $('#cust-bp-id').val('0');
-        $('#cust-phone').val('');
-        $('#cust-address').val('');
-    });
 
     /* ===========================
        Date & Setup
@@ -1217,8 +1174,8 @@
         if(!held) return;
         
         showWonderfulBox('confirm', 'Resume Order?', 'Resume previous held order? The current cart will be cleared.', 
-            function() { 
-                $("#cust-name").val(held.customer.name).trigger('change'); 
+            function() { // On Confirm
+                $("#cust-name").val(held.customer.name);
                 $("#cust-address").val(held.customer.address);
                 $("#cust-phone").val(held.customer.phone);
                 $("#discount").val(held.discount);
@@ -1233,7 +1190,9 @@
                 checkHeldOrder();
                 showWonderfulBox('success', 'Resumed', 'Order has been resumed successfully.');
             },
-            function() { }
+            function() { // On Cancel
+                // Do nothing
+            }
         );
     });
 
@@ -1246,10 +1205,8 @@
     function resetInvoiceForm() {
         $('.invoice-box').css('opacity', '0.5');
         setTimeout(() => {
-            $('#cust-name').val(null).trigger('change');
-            $('#cust-address, #cust-phone').val('');
-            $('#cust-bp-id').val('0');
-            
+            $('#cust-name, #cust-address, #cust-phone').val('');
+            $('#manual-product').val(null).trigger('change');
             $('#discount').val(''); 
             $('#cash').val('');     
             $('#upi').val('');      
@@ -1377,16 +1334,16 @@ function saveInvoice(printAfterSave) {
 
   $("#loader").css("display", "flex").addClass("active");
 
+  // ✅ CRITICAL FIX: Corrected JSON Syntax (colon instead of equals)
   const data = {
       discountType: $("#disc-type-toggle").is(":checked") ? "PERCENT" : "FIXED",
       discount: parseFloat($("#discount").val()) || 0,
       subtotal: parseFloat($("#subtotal").text()) || 0,
       total: parseFloat($("#grand-total").text()) || 0,
-      cash: parseFloat($("#cash").val()) || 0,
-      upi: parseFloat($("#upi").val()) || 0,
+      cash: parseFloat($("#cash").val()) || 0,  // FIXED
+      upi: parseFloat($("#upi").val()) || 0,     // FIXED
       printRequired: printAfterSave,
       customer: {
-          bpId: $("#cust-bp-id").val(),
           name: $("#cust-name").val(),
           address: $("#cust-address").val(),
           phone: $("#cust-phone").val()
@@ -1410,7 +1367,7 @@ function saveInvoice(printAfterSave) {
 
   $.ajax({
       type: "POST",
-      url: "<%= request.getContextPath() %>/SalesServlet",
+      url: "<%= request.getContextPath() %>/SalesSaveServlet",
       data: JSON.stringify({ salesData: data }),
       contentType: "application/json; charset=utf-8",
       dataType: "json",
@@ -1430,10 +1387,12 @@ function saveInvoice(printAfterSave) {
                   `Invoice No. <b>${docNo}</b> saved successfully!`
               );
 
+              // ✅ Print ONLY if Save+Print
               if (printAfterSave) {
                   printThermalReceipt(docNo);
               }
 
+              // ✅ Show Cancel Button
               $("#cancelId").val(docNo);
               toggleCancelButton();
 
@@ -1469,7 +1428,7 @@ function saveInvoice(printAfterSave) {
         }
         
         showWonderfulBox('confirm', 'Cancel Invoice?', 'Are you sure you want to CANCEL this invoice? This action cannot be undone.',
-            function() { 
+            function() { // On Confirm
                 $("#loader").css("display", "flex").addClass("active");
                 $.ajax({
                     type: "POST",
@@ -1482,6 +1441,10 @@ function saveInvoice(printAfterSave) {
                             $("#cancelId").val("0");
                             $("#cancel").addClass("d-none");
                             showWonderfulBox('success', 'Canceled', 'The invoice has been canceled successfully.');
+                            // We do NOT resetInvoiceForm here because the user might want to re-enter the sale manually 
+                            // or the form is already blank from the previous save. 
+                            // Depending on workflow, you might want to clear everything:
+                            // resetInvoiceForm(); 
                         } else {
                             const err = response ? (response.error || response.message) : "Unknown error";
                             showWonderfulBox('error', 'Failed', err);
@@ -1494,7 +1457,9 @@ function saveInvoice(printAfterSave) {
                     }
                 });
             },
-            function() { }
+            function() { // On Cancel
+                // Do nothing
+            }
         );
     });
 
