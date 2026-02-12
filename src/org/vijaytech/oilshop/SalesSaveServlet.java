@@ -163,11 +163,12 @@ public class SalesSaveServlet extends HttpServlet {
             int existingBP_ID = 0;
 
             // Only search by phone if phone is provided and not empty
-            if (phone != null && !phone.isEmpty()) {
+            if (phone != null && !phone.isEmpty() && name != null && !name.isEmpty()) {
                 existingBP_ID = DB.getSQLValue(
                     null,
-                    "SELECT C_BPartner_ID FROM C_BPartner WHERE Phone=? AND AD_Client_ID=?",
+                    "SELECT C_BPartner_ID FROM C_BPartner WHERE Phone=?  AND Name =? AND AD_Client_ID=?",
                     phone,
+                    name,
                     adClientId
                 );
             }

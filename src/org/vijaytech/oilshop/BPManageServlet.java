@@ -3,18 +3,22 @@ package org.vijaytech.oilshop;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.List;
+import java.util.Properties;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
-import javax.servlet.http.*;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.compiere.util.Trx;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.syvasoft.tallyfrontcrusher.model.TF_MBPartner; 
+import org.syvasoft.tallyfrontcrusher.model.TF_MBPartner;
 
 public class BPManageServlet extends HttpServlet {
 
@@ -25,6 +29,7 @@ public class BPManageServlet extends HttpServlet {
             throws IOException, ServletException {
 
         HttpSession session = request.getSession(false);
+        // Check Session
         if (session == null || session.getAttribute("ctx") == null) {
             if ("list".equalsIgnoreCase(request.getParameter("action"))) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -38,7 +43,7 @@ public class BPManageServlet extends HttpServlet {
         Properties ctx = (Properties) session.getAttribute("ctx");
         Env.setCtx(ctx);
 
-        // Ensure Context Keys
+        // Ensure Context Keys are present
         if (Env.getAD_Client_ID(ctx) == 0) Env.setContext(ctx, "#AD_Client_ID", 1000000);
         if (Env.getAD_Org_ID(ctx) == 0)    Env.setContext(ctx, "#AD_Org_ID", 1000000);
         if (Env.getAD_User_ID(ctx) == 0)   Env.setContext(ctx, "#AD_User_ID", 100);
@@ -64,8 +69,8 @@ public class BPManageServlet extends HttpServlet {
                     obj.put("isCustomer", bp.isCustomer());
                     obj.put("isVendor", bp.isVendor());
                     
-                    // ✅ Added new fields to JSON response
-                    obj.put("location", bp.getDesignation());
+                    // Add these fields to display in Customer/Vendor list
+                    obj.put("location", bp.getAddress1()); // Used as Address/Location
                     obj.put("taxId", bp.getTaxID());
                     obj.put("phone", bp.getPhone());
                     
@@ -103,7 +108,7 @@ public class BPManageServlet extends HttpServlet {
         // Set Context for current thread
         Env.setCtx(ctx);
         
-        // Ensure Context IDs (Safety Net)
+        // IMPORTANT: Ensure Context IDs match the Session to avoid "Cross Tenant" errors
         if (Env.getAD_Client_ID(ctx) == 0) Env.setContext(ctx, "#AD_Client_ID", 1000000);
         if (Env.getAD_Org_ID(ctx) == 0)    Env.setContext(ctx, "#AD_Org_ID", 1000000);
 
@@ -121,8 +126,12 @@ public class BPManageServlet extends HttpServlet {
             String name = root.optString("name").trim();
             String value = root.optString("value").trim();
             
-            // ✅ Extract new fields
+            // Extract fields - supports 'location' (BP page) and 'address' (Sales page)
             String location = root.optString("location").trim();
+            if (location.isEmpty()) {
+                location = root.optString("address").trim();
+            }
+            
             String taxId = root.optString("taxId").trim();
             String phone = root.optString("phone").trim();
             
@@ -135,10 +144,9 @@ public class BPManageServlet extends HttpServlet {
                 return;
             }
 
-            // ✅ ✅ VALIDATION BLOCK START ✅ ✅
+            // --- VALIDATION BLOCK START ---
             
-            // 1. Validate Phone Number
-            // Logic: Optional '+', followed by 10-15 digits, spaces, or hyphens allowed.
+            // 1. Validate Phone Number (Optional '+' followed by 10-15 digits)
             if (!phone.isEmpty()) {
                 if (!phone.matches("^[+]?[0-9\\-\\s]{10,15}$")) {
                     response.setStatus(400);
@@ -147,9 +155,7 @@ public class BPManageServlet extends HttpServlet {
                 }
             }
 
-            // 2. Validate Tax ID
-            // Logic: Alphanumeric characters and hyphens allowed. Length 5-30.
-            // This accommodates GSTIN (15 chars) and other generic formats.
+            // 2. Validate Tax ID (Alphanumeric, 5-30 chars)
             if (!taxId.isEmpty()) {
                 if (!taxId.matches("^[0-9A-Za-z\\-]{5,30}$")) {
                     response.setStatus(400);
@@ -157,20 +163,18 @@ public class BPManageServlet extends HttpServlet {
                     return;
                 }
             }
-            
-            // ✅ ✅ VALIDATION BLOCK END ✅ ✅
+            // --- VALIDATION BLOCK END ---
 
             trx = Trx.get(trxName, true);
 
             TF_MBPartner bp = new TF_MBPartner(ctx, 0, trxName);
             
-            // --- FIX FOR NULLPOINTER EXCEPTION ---
-            // The Model's beforeSave() logic expects these fields.
+            // --- MANDATORY FIELDS TO PREVENT EXCEPTIONS ---
             bp.setCity("Head Office");         
             bp.setC_Country_ID(208);          
             bp.setContactName(name);          
             bp.setAD_Org_ID(Env.getAD_Org_ID(ctx));
-            // -----------------------------------
+            // -------------------------------------------
 
             bp.setName(name);
             if(!value.isEmpty()) bp.setValue(value);
@@ -179,8 +183,13 @@ public class BPManageServlet extends HttpServlet {
             bp.setIsVendor(isVendor);
             bp.setIsActive(true);
             
-            // ✅ Set new fields
-            if (!location.isEmpty()) bp.setDesignation(location);
+            // Set Address/Location
+            if (!location.isEmpty()) {
+              //  bp.setDesignation(location); // Custom field used for Location
+                bp.setAddress1(location);
+                bp.setAddress2(location);// Standard Address field
+            }
+            
             if (!taxId.isEmpty()) bp.setTaxID(taxId);
             if (!phone.isEmpty()) bp.setPhone(phone);
             
@@ -201,7 +210,7 @@ public class BPManageServlet extends HttpServlet {
             }
             
             bp.setSO_CreditLimit(BigDecimal.ZERO); 
-            
+            bp.setCity(location);
             bp.saveEx(trxName);
 
             trx.commit(true);

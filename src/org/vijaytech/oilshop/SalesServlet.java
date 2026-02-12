@@ -173,6 +173,7 @@ public class SalesServlet extends HttpServlet {
             bp.setPhone(phone);
             bp.setContactName(name);
             bp.setCity("NA");
+            bp.setDesignation(address);
             bp.setAddress1(address != null ? address : "NA");
             bp.setSOCreditStatus("X");
             bp.setSO_CreditLimit(BigDecimal.ZERO);
