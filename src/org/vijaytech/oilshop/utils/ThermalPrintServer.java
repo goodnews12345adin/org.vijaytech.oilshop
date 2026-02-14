@@ -114,7 +114,7 @@ public class ThermalPrintServer {
                 double baseAmt = rsTax.getDouble("TaxBaseAmt");
                 double taxAmt  = rsTax.getDouble("TaxAmt");
 
-                baseTotal += baseAmt;
+                baseTotal = baseAmt;
 
                 if (taxName.contains("CGST")) {
                     cgstAmt += taxAmt;
