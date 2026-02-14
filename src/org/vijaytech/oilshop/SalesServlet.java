@@ -23,6 +23,7 @@ import javax.servlet.http.HttpSession;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MOrder;
+import org.compiere.model.MTax;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.json.JSONArray;
@@ -37,6 +38,19 @@ import org.vijaytech.oilshop.utils.WhatsAppSender;
 public class SalesServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
+    
+    // =====================================================
+    // DEFAULT GST RATE FOR EDIBLE OIL = 5%
+    // CGST = 2.5%, SGST = 2.5% (for intra-state)
+    // This is ONLY used as fallback when product has no tax configured
+    // =====================================================
+    private static final BigDecimal DEFAULT_GST_RATE = new BigDecimal("5");
+    
+    // Rounding mode for all calculations - HALF_UP for standard rounding
+    private static final RoundingMode ROUNDING_MODE = RoundingMode.HALF_UP;
+    
+    // Scale for decimal places
+    private static final int DECIMAL_SCALE = 2;
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -61,8 +75,8 @@ public class SalesServlet extends HttpServlet {
             List<TF_MProduct> prodList = new Query(ctx, TF_MProduct.Table_Name,
                     "IsSold='Y' AND WeighmentEnabled='Y' AND IsActive='Y' AND ProductType='I' AND AD_Org_ID=?",
                     null)
-                    .setClient_ID()         // tenant-safe
-                    .setParameters(1000000) // your org; change to Env.getAD_Org_ID(ctx) if needed
+                    .setClient_ID()
+                    .setParameters(1000000)
                     .list();
 
             List<Map<String, Object>> productData = new ArrayList<>();
@@ -74,6 +88,11 @@ public class SalesServlet extends HttpServlet {
                 p.put("rate", pro.getBillPrice());
                 p.put("uom", pro.getC_UOM().getName());
                 p.put("prodId", pro.get_ID());
+                
+                // Get GST Rate from product's tax category or use default
+                BigDecimal gstRate = getGSTRateFromProduct(ctx, pro);
+                p.put("gstRate", gstRate);
+                
                 productData.add(p);
             }
             System.out.println("Product data loaded: " + productData.size());
@@ -93,6 +112,34 @@ public class SalesServlet extends HttpServlet {
             RequestDispatcher rd = request.getRequestDispatcher("/pages/sales.jsp");
             rd.forward(request, response);
         }
+    }
+
+    /**
+     * Get GST rate percentage from Product
+     * Returns the GST rate from product's tax category or default (5%)
+     */
+    private BigDecimal getGSTRateFromProduct(Properties ctx, TF_MProduct product) {
+        try {
+            // Try to get tax from product's tax category
+            int taxCategoryID = product.getC_TaxCategory_ID();
+            if (taxCategoryID > 0) {
+                // Get the tax rate from tax category's default tax
+                MTax[] taxes = MTax.getAll(ctx);
+                for (MTax tax : taxes) {
+                    if (tax.getC_TaxCategory_ID() == taxCategoryID && tax.isActive()) {
+                        BigDecimal rate = tax.getRate();
+                        if (rate != null && rate.compareTo(BigDecimal.ZERO) > 0) {
+                            return rate;
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error getting GST rate for product " + product.getValue() + ": " + e.getMessage());
+        }
+        
+        // Return default GST rate (5% for Edible Oil)
+        return DEFAULT_GST_RATE;
     }
 
     @Override
@@ -146,7 +193,6 @@ public class SalesServlet extends HttpServlet {
             String address = customer.optString("address", "");
             String phone = customer.optString("phone", "");
 
-            // CHANGE: Phone validation removed. If empty, defaults to Walk-in logic later or empty string.
             System.out.println("Customer: " + name + " | Phone: " + phone + " (Optional)");
 
             // Safe discount parsing
@@ -168,7 +214,7 @@ public class SalesServlet extends HttpServlet {
 
             // Create/Update Business Partner
             TF_MBPartner bp = new TF_MBPartner(ctx, 0, null);
-            bp.setAD_Org_ID(1000000); // Default or dynamic based on BP logic
+            bp.setAD_Org_ID(1000000);
             bp.setName(name != null ? name : "Walk-in");
             bp.setPhone(phone);
             bp.setContactName(name);
@@ -181,7 +227,7 @@ public class SalesServlet extends HttpServlet {
             bp.setIsActive(true);
             bp.saveEx();
 
-            // Update context IDs from BP if needed (assuming BP inherits org)
+            // Update context IDs from BP if needed
             if (adClientId == 0) {
                 adClientId = bp.getAD_Client_ID();
                 Env.setContext(ctx, "#AD_Client_ID", adClientId);
@@ -204,9 +250,17 @@ public class SalesServlet extends HttpServlet {
             ordH.setDateAcct(new Timestamp(System.currentTimeMillis()));
             ordH.setDateOrdered(new Timestamp(System.currentTimeMillis()));
             ordH.setDocStatus(MOrder.DOCSTATUS_Drafted);
+            ordH.setC_BPartner_ID(bp.getC_BPartner_ID());
             ordH.saveEx();
 
             System.out.println("Order Header Created: " + ordH.get_ID());
+
+            // Variables for GST calculation summary
+            BigDecimal totalTaxableAmount = BigDecimal.ZERO;
+            BigDecimal totalCGST = BigDecimal.ZERO;
+            BigDecimal totalSGST = BigDecimal.ZERO;
+            BigDecimal currentGstRate = DEFAULT_GST_RATE;
+            Map<BigDecimal, BigDecimal> gstSummaryMap = new HashMap<>();
 
             // Create Order Lines
             for (int i = 0; i < items.length(); i++) {
@@ -214,15 +268,59 @@ public class SalesServlet extends HttpServlet {
 
                 int prodId = item.getInt("prodId");
                 
+                // Get GST rate from item data (dynamic, not constant)
+                BigDecimal gstRate = new BigDecimal(item.optString("gstRate", "5"));
+                currentGstRate = gstRate;
+                
                 // Parsing values safely
                 BigDecimal qty = new BigDecimal(item.get("qty").toString());
-                BigDecimal rate = new BigDecimal(item.get("rate").toString()).setScale(2, RoundingMode.HALF_UP);
-                BigDecimal amount = new BigDecimal(item.get("amount").toString()).setScale(2, RoundingMode.HALF_UP);
+                BigDecimal amount = new BigDecimal(item.get("amount").toString()).setScale(DECIMAL_SCALE, ROUNDING_MODE);
+                
+                // =====================================================
+                // INCLUSIVE GST CALCULATION WITH PROPER ROUNDING
+                // 
+                // FORMULA:
+                // Taxable Amount = Total Amount × (100 / (100 + GST Rate))
+                // GST Amount = Total Amount - Taxable Amount
+                // CGST = GST Amount / 2 (for intra-state)
+                // SGST = GST Amount / 2 (for intra-state)
+                // 
+                // EXAMPLE for 5% GST (Edible Oil):
+                // Total Amount = Rs. 105.00
+                // Taxable = 105 × (100/105) = Rs. 100.00
+                // GST = 105 - 100 = Rs. 5.00
+                // CGST (2.5%) = 5/2 = Rs. 2.50
+                // SGST (2.5%) = 5/2 = Rs. 2.50
+                // =====================================================
+                
+                // Calculate divisor (100 + GST Rate)
+                BigDecimal gstDivisor = BigDecimal.valueOf(100).add(gstRate);
+                
+                // Calculate taxable amount with proper rounding
+                BigDecimal taxableAmount = amount.multiply(BigDecimal.valueOf(100))
+                        .divide(gstDivisor, DECIMAL_SCALE, ROUNDING_MODE);
+                
+                // Calculate GST amount
+                BigDecimal gstAmount = amount.subtract(taxableAmount);
+                
+                // Calculate rate per unit (taxable)
+                BigDecimal ratePerUnit = taxableAmount.divide(qty, DECIMAL_SCALE, ROUNDING_MODE);
+                
+                // Split GST into CGST and SGST (for intra-state transactions)
+                // CGST = SGST = GST Amount / 2
+                BigDecimal cgstAmount = gstAmount.divide(BigDecimal.valueOf(2), DECIMAL_SCALE, ROUNDING_MODE);
+                BigDecimal sgstAmount = gstAmount.subtract(cgstAmount).setScale(DECIMAL_SCALE, ROUNDING_MODE);
+                
+                // Accumulate totals with proper rounding
+                totalTaxableAmount = totalTaxableAmount.add(taxableAmount);
+                totalCGST = totalCGST.add(cgstAmount);
+                totalSGST = totalSGST.add(sgstAmount);
+                
+                // Track GST summary by rate
+                BigDecimal currentTaxable = gstSummaryMap.getOrDefault(gstRate, BigDecimal.ZERO);
+                gstSummaryMap.put(gstRate, currentTaxable.add(taxableAmount));
 
                 TF_MProduct prod = new TF_MProduct(ctx, prodId, null);
-                // Update product price if needed (optional)
-                // prod.setBillPrice(rate); 
-                // prod.saveEx();
                 
                 if (prod.getAD_Client_ID() != adClientId) {
                     throw new AdempiereException("Product " + prod.getName() + " belongs to another tenant!");
@@ -236,10 +334,22 @@ public class SalesServlet extends HttpServlet {
                 ordLine.setDiscount(discount);
                 ordLine.setQty(qty);
                 ordLine.setQtyOrdered(qty);
-                ordLine.setPrice(rate);
-                ordLine.setPriceActual(rate);
+                // Set taxable price (price before GST)
+                ordLine.setPrice(ratePerUnit);
+                ordLine.setPriceActual(ratePerUnit);
+                ordLine.setPriceList(ratePerUnit);
                 ordLine.setC_Tax_ID(1000017);
+                // Set line net amount (taxable)
+                ordLine.setLineNetAmt(taxableAmount);
                 ordLine.saveEx();
+                
+                // Log each line with GST details
+                System.out.println("Line " + (i+1) + ": Product=" + prod.getName() + 
+                        ", Qty=" + qty + 
+                        ", Amount=" + amount + 
+                        ", Taxable=" + taxableAmount + 
+                        ", CGST(" + (gstRate.divide(BigDecimal.valueOf(2)).setScale(2, ROUNDING_MODE)) + "%)=" + cgstAmount + 
+                        ", SGST(" + (gstRate.divide(BigDecimal.valueOf(2)).setScale(2, ROUNDING_MODE)) + "%)=" + sgstAmount);
             }
 
             // Complete Document
@@ -252,6 +362,16 @@ public class SalesServlet extends HttpServlet {
 
             String docNo = ordH.getDocumentNo();
             System.out.println("Order Completed. Document No: " + docNo);
+            
+            // Log GST Summary
+            System.out.println("=== GST SUMMARY ===");
+            System.out.println("GST Rate: " + currentGstRate + "%");
+            System.out.println("CGST Rate: " + currentGstRate.divide(BigDecimal.valueOf(2)).setScale(2, ROUNDING_MODE) + "%");
+            System.out.println("SGST Rate: " + currentGstRate.divide(BigDecimal.valueOf(2)).setScale(2, ROUNDING_MODE) + "%");
+            System.out.println("Total Taxable Amount: Rs." + totalTaxableAmount.setScale(DECIMAL_SCALE, ROUNDING_MODE));
+            System.out.println("Total CGST: Rs." + totalCGST.setScale(DECIMAL_SCALE, ROUNDING_MODE));
+            System.out.println("Total SGST: Rs." + totalSGST.setScale(DECIMAL_SCALE, ROUNDING_MODE));
+            System.out.println("Total GST: Rs." + totalCGST.add(totalSGST).setScale(DECIMAL_SCALE, ROUNDING_MODE));
 
             // ===== Generate PDF and send WhatsApp =====
             String filename = "invoice_" + docNo + ".pdf";
@@ -278,10 +398,21 @@ public class SalesServlet extends HttpServlet {
                 waex.printStackTrace();
             }
 
-            // Return JSON with docNo
+            // Calculate CGST and SGST rates
+            BigDecimal cgstRate = currentGstRate.divide(BigDecimal.valueOf(2)).setScale(2, ROUNDING_MODE);
+            BigDecimal sgstRate = currentGstRate.divide(BigDecimal.valueOf(2)).setScale(2, ROUNDING_MODE);
+
+            // Return JSON with docNo and GST summary
             JSONObject jsonResp = new JSONObject();
             jsonResp.put("status", "success");
             jsonResp.put("docNo", docNo);
+            jsonResp.put("gstRate", currentGstRate.setScale(2, ROUNDING_MODE).toString());
+            jsonResp.put("cgstRate", cgstRate.toString());
+            jsonResp.put("sgstRate", sgstRate.toString());
+            jsonResp.put("totalTaxableAmount", totalTaxableAmount.setScale(DECIMAL_SCALE, ROUNDING_MODE).toString());
+            jsonResp.put("totalCGST", totalCGST.setScale(DECIMAL_SCALE, ROUNDING_MODE).toString());
+            jsonResp.put("totalSGST", totalSGST.setScale(DECIMAL_SCALE, ROUNDING_MODE).toString());
+            jsonResp.put("totalGST", totalCGST.add(totalSGST).setScale(DECIMAL_SCALE, ROUNDING_MODE).toString());
             response.getWriter().write(jsonResp.toString());
 
         } catch (Exception e) {

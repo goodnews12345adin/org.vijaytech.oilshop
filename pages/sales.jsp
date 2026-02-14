@@ -279,6 +279,17 @@ color: #fff;
 box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
+/* === GST INFO COLUMN === */
+.gst-info {
+font-size: 11px;
+color: #64748b;
+margin-top: 4px;
+}
+.gst-info span {
+display: block;
+line-height: 1.3;
+}
+
 /* === TOTALS SECTION === */
 .total-box {
 display: flex;
@@ -342,6 +353,46 @@ font-weight: 700;
 color: #ff4757;
 }
 
+/* === GST SUMMARY BOX === */
+.gst-summary-box {
+background: linear-gradient(135deg, #1e3a5f, #0f2847);
+border-radius: 16px;
+padding: 20px 25px;
+margin-top: 20px;
+border: 1px solid rgba(255,255,255,0.1);
+}
+
+.gst-summary-box h6 {
+color: #94a3b8;
+font-size: 12px;
+text-transform: uppercase;
+letter-spacing: 1px;
+margin-bottom: 15px;
+font-weight: 700;
+}
+
+.gst-row {
+display: flex;
+justify-content: space-between;
+padding: 8px 0;
+border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.gst-row:last-child {
+border-bottom: none;
+}
+
+.gst-label {
+color: #cbd5e1;
+font-size: 13px;
+}
+
+.gst-value {
+color: #fff;
+font-weight: 600;
+font-size: 13px;
+}
+
 /* === BUTTONS === */
 .btn {
 padding: 12px 28px;
@@ -395,28 +446,160 @@ transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 #loader.active .box { transform: scale(1); }
 
-/* === THERMAL RECEIPT === */
+/* === THERMAL RECEIPT - PERFECT ALIGNMENT FOR 80MM === */
 #thermal-print-area {
 display: none;
-width: 80mm;
+width: 72mm;
+max-width: 72mm;
 background-color: #ffffff;
 color: #000000;
 font-family: 'Courier New', Courier, monospace;
-font-size: 12px;
-padding: 2mm;
-line-height: 1.3;
+font-size: 10px;
+padding: 0;
+line-height: 1.2;
 text-align: left;
+box-sizing: border-box;
 }
 
-.receipt-header { text-align: center; margin-bottom: 10px; border-bottom: 1px dashed #000; padding-bottom: 5px; }
+.thermal-content {
+padding: 2mm;
+box-sizing: border-box;
+}
+
+.receipt-header {
+text-align: center;
+margin-bottom: 8px;
+padding-bottom: 6px;
+border-bottom: 1px dashed #000;
+}
+
+.receipt-header h2 {
+margin: 0 0 2px 0;
+font-size: 14px;
+font-weight: bold;
+letter-spacing: 0.5px;
+}
+
+.receipt-header .sub-header {
+margin: 2px 0;
+font-size: 10px;
+}
+
+.receipt-header .inv-details {
+margin: 4px 0 0 0;
+font-size: 9px;
+}
+
+.receipt-header .inv-details div {
+margin: 1px 0;
+}
+
+/* Receipt Table - Perfect Column Alignment */
+.receipt-table {
+width: 100%;
+border-collapse: collapse;
+margin: 6px 0;
+font-size: 9px;
+}
+
+.receipt-table thead {
+border-top: 1px dashed #000;
+border-bottom: 1px dashed #000;
+}
+
+.receipt-table th {
+padding: 4px 2px;
+text-align: left;
+font-weight: bold;
+font-size: 9px;
+}
+
+.receipt-table th.col-sno { width: 8%; text-align: center; }
+.receipt-table th.col-item { width: 42%; }
+.receipt-table th.col-qty { width: 12%; text-align: right; }
+.receipt-table th.col-rate { width: 18%; text-align: right; }
+.receipt-table th.col-amt { width: 20%; text-align: right; }
+
+.receipt-table td {
+padding: 3px 2px;
+vertical-align: top;
+}
+
+.receipt-table td.col-sno { text-align: center; }
+.receipt-table td.col-item { word-wrap: break-word; }
+.receipt-table td.col-qty { text-align: right; }
+.receipt-table td.col-rate { text-align: right; }
+.receipt-table td.col-amt { text-align: right; font-weight: bold; }
+
+/* Item Name - Truncate if too long */
+.item-name {
+max-width: 28mm;
+overflow: hidden;
+text-overflow: ellipsis;
+white-space: nowrap;
+display: inline-block;
+}
+
+/* GST Breakdown in Items */
+.item-gst {
+font-size: 7px;
+color: #555;
+display: block;
+margin-top: 1px;
+}
+
+/* Totals Section */
+.receipt-totals {
+margin-top: 6px;
+border-top: 1px dashed #000;
+padding-top: 6px;
+}
+
 .receipt-row {
 display: flex;
 justify-content: space-between;
-margin-bottom: 4px;
-width: 100%;
+padding: 2px 0;
+font-size: 10px;
 }
-.receipt-divider { border-top: 1px dashed #000; margin: 5px 0; }
-.receipt-footer { text-align: center; margin-top: 10px; font-size: 11px; }
+
+.receipt-row.total-row {
+font-weight: bold;
+font-size: 12px;
+border-top: 1px dashed #000;
+border-bottom: 1px dashed #000;
+padding: 4px 0;
+margin-top: 2px;
+margin-bottom: 2px;
+}
+
+.receipt-row.gst-row {
+font-size: 9px;
+color: #333;
+}
+
+/* Payment Section */
+.receipt-payments {
+margin-top: 6px;
+border-top: 1px dashed #000;
+padding-top: 6px;
+}
+
+.receipt-footer {
+text-align: center;
+margin-top: 8px;
+padding-top: 6px;
+border-top: 1px dashed #000;
+font-size: 9px;
+}
+
+.receipt-footer p {
+margin: 2px 0;
+}
+
+.receipt-divider {
+border-top: 1px dashed #000;
+margin: 4px 0;
+}
 
 /* === WONDERFUL BOX (Custom Modal) === */
 #wonderful-alert-box { z-index: 100000; }
@@ -618,11 +801,13 @@ String rate = p.get("rate") != null ? p.get("rate").toString() : "0";
 String uom = p.get("uom") != null ? p.get("uom").toString() : "";
 String prodId = p.get("prodId") != null ? p.get("prodId").toString() : "0";
 String search = p.get("value") != null ? p.get("value").toString() : "";
+String gstRate = p.get("gstRate") != null ? p.get("gstRate").toString() : "5";
 %>
 <option value="<%= name %>|<%= rate %>|<%= uom %>"
 data-prodid="<%= prodId %>"
-data-search="<%= search %>">
-<%= name %> (₹<%= rate %>/<%= uom %>) [Code: <%= search %>]
+data-search="<%= search %>"
+data-gstrate="<%= gstRate %>">
+<%= name %> (Rs.<%= rate %>/<%= uom %>) [Code: <%= search %>] - <%= gstRate %>% GST
 </option>
 <%
 }
@@ -633,7 +818,7 @@ data-search="<%= search %>">
 
 <div class="d-flex align-items-center gap-3 text-muted small bg-white p-3 rounded border border-secondary-subtle shadow-sm">
 <i class="bi bi-lightbulb-fill text-warning fs-5"></i>
-<span>Tip: Type product name and press <strong class="text-dark">ENTER</strong> to add quickly.</span>
+<span>Tip: Type product name and press <strong class="text-dark">ENTER</strong> to add quickly. Prices are inclusive of GST.</span>
 </div>
 </div>
 </div>
@@ -646,10 +831,11 @@ data-search="<%= search %>">
 <tr>
 <th class="text-center" width="5%">#</th>
 <th width="35%">Description</th>
-<th class="text-center" width="10%">Unit</th>
-<th class="text-center" width="15%">Qty</th>
-<th class="text-end" width="15%">Rate (₹)</th>
-<th class="text-end" width="15%">Amount (₹)</th>
+<th class="text-center" width="8%">Unit</th>
+<th class="text-center" width="10%">Qty</th>
+<th class="text-end" width="12%">Rate (Rs.)</th>
+<th class="text-end" width="12%">Amount (Rs.)</th>
+<th class="text-end" width="13%">GST Info</th>
 <th class="text-center" width="5%"></th>
 </tr>
 </thead>
@@ -662,6 +848,27 @@ No items added yet
 </div>
 </div>
 
+<!-- GST Summary Box -->
+<div class="gst-summary-box" id="gst-summary-box">
+<h6><i class="bi bi-calculator me-2"></i>GST Summary (Inclusive Pricing)</h6>
+<div class="gst-row">
+<span class="gst-label">Taxable Amount</span>
+<span class="gst-value">Rs.<span id="gst-taxable">0.00</span></span>
+</div>
+<div class="gst-row">
+<span class="gst-label">CGST (<span id="cgst-rate-label">2.50</span>%)</span>
+<span class="gst-value">Rs.<span id="gst-cgst">0.00</span></span>
+</div>
+<div class="gst-row">
+<span class="gst-label">SGST (<span id="sgst-rate-label">2.50</span>%)</span>
+<span class="gst-value">Rs.<span id="gst-sgst">0.00</span></span>
+</div>
+<div class="gst-row" style="border-top: 1px solid rgba(255,255,255,0.2); padding-top: 10px; margin-top: 5px;">
+<span class="gst-label" style="font-weight: bold;">Total GST (<span id="total-gst-rate-label">5.00</span>%)</span>
+<span class="gst-value" style="font-weight: bold; color: #1ec8ff;">Rs.<span id="gst-total">0.00</span></span>
+</div>
+</div>
+
 <div class="total-box">
 
 <div class="total-item-group">
@@ -669,11 +876,11 @@ No items added yet
 Discount
 <div class="form-check form-switch">
 <input class="form-check-input" type="checkbox" id="disc-type-toggle" style="width:36px; height:20px;">
-<label class="form-check-label text-white small" for="disc-type-toggle" id="disc-type-label">₹</label>
+<label class="form-check-label text-white small" for="disc-type-toggle" id="disc-type-label">Rs.</label>
 </div>
 </label>
 <div class="input-group">
-<input type="number" id="discount" class="form-control form-control-sm" value="" min="0" placeholder="0.00">
+<input type="number" id="discount" class="form-control form-control-sm" value="" min="0" step="0.01" placeholder="0.00">
 <button class="btn btn-outline-light btn-sm" type="button" id="round-off-btn" title="Round Off Total">
 <i class="bi bi-calculator"></i>
 </button>
@@ -682,12 +889,12 @@ Discount
 
 <div class="total-item-group">
 <label>Cash Paid</label>
-<input type="number" id="cash" class="form-control form-control-sm" value="" min="0" placeholder="0.00">
+<input type="number" id="cash" class="form-control form-control-sm" value="" min="0" step="0.01" placeholder="0.00">
 </div>
 
 <div class="total-item-group">
 <label>UPI / Bank</label>
-<input type="number" id="upi" class="form-control form-control-sm" value="" min="0" placeholder="0.00">
+<input type="number" id="upi" class="form-control form-control-sm" value="" min="0" step="0.01" placeholder="0.00">
 </div>
 
 <div class="total-item-group text-end w-auto">
@@ -699,7 +906,7 @@ Discount
 
 <div class="total-item-group text-end w-auto">
 <label class="text-white" style="font-size:14px">Subtotal</label>
-<span class="fw-bold text-white">₹<span id="subtotal"></span></span>
+<span class="fw-bold text-white">Rs.<span id="subtotal"></span></span>
 </div>
 
 <div class="total-item-group text-end w-auto">
@@ -738,22 +945,52 @@ Discount
 </main>
 </div>
 
-<!-- HIDDEN PRINT AREA FOR THERMAL PRINTER -->
+<!-- HIDDEN PRINT AREA FOR THERMAL PRINTER - PERFECT ALIGNMENT -->
 <div id="thermal-print-area">
+<div class="thermal-content">
 <div class="receipt-header">
-<h2 style="margin:0; font-size: 18px; font-weight: bold;"><%= orgName %></h2>
-<p style="margin:5px 0; font-size: 12px;">Receipt / Invoice</p>
-<p style="margin:0; font-size: 11px;">Bill No: <span id="print-inv-no" style="font-weight:bold"></span></p>
-<p style="margin:0; font-size: 11px;" id="print-date"></p>
-<p style="margin:0; font-size: 11px;">Bill To: <span id="print-cust">Walk-in</span></p>
+<h2><%= orgName %></h2>
+<p class="sub-header">TAX INVOICE</p>
+<div class="inv-details">
+<div>Bill No: <span id="print-inv-no" style="font-weight:bold"></span></div>
+<div id="print-date"></div>
+<div>Customer: <span id="print-cust">Walk-in</span></div>
 </div>
-<div class="receipt-divider"></div>
+</div>
 
-<!-- Items -->
-<div id="print-items"></div>
+<!-- Items Table - Perfect Column Alignment -->
+<table class="receipt-table">
+<thead>
+<tr>
+<th class="col-sno">#</th>
+<th class="col-item">Item</th>
+<th class="col-qty">Qty</th>
+<th class="col-rate">Rate</th>
+<th class="col-amt">Amount</th>
+</tr>
+</thead>
+<tbody id="print-items">
+</tbody>
+</table>
 
-<div class="receipt-divider"></div>
+<!-- GST Summary -->
+<div class="receipt-totals" id="print-gst-section">
+<div class="receipt-row gst-row">
+<span>Taxable Amt:</span>
+<span id="print-taxable">0.00</span>
+</div>
+<div class="receipt-row gst-row">
+<span>CGST (<span id="print-cgst-rate">2.50</span>%):</span>
+<span id="print-cgst">0.00</span>
+</div>
+<div class="receipt-row gst-row">
+<span>SGST (<span id="print-sgst-rate">2.50</span>%):</span>
+<span id="print-sgst">0.00</span>
+</div>
+</div>
 
+<!-- Totals -->
+<div class="receipt-totals">
 <div class="receipt-row">
 <span>Subtotal:</span>
 <span id="print-subtotal">0.00</span>
@@ -762,12 +999,14 @@ Discount
 <span>Discount:</span>
 <span id="print-discount">0.00</span>
 </div>
-<div class="receipt-row" style="font-weight:bold; font-size:14px; margin-top:5px;">
+<div class="receipt-row total-row">
 <span>TOTAL:</span>
 <span id="print-total">0.00</span>
 </div>
+</div>
 
-<div class="receipt-divider"></div>
+<!-- Payments -->
+<div class="receipt-payments">
 <div class="receipt-row">
 <span>Cash:</span>
 <span id="print-cash">0.00</span>
@@ -776,14 +1015,18 @@ Discount
 <span>UPI:</span>
 <span id="print-upi">0.00</span>
 </div>
-<div class="receipt-row" style="font-weight:bold;">
+<div class="receipt-row" style="font-weight:bold; border-top: 1px dashed #000; padding-top: 4px; margin-top: 4px;">
 <span>BALANCE:</span>
 <span id="print-balance">0.00</span>
 </div>
+</div>
 
+<!-- Footer -->
 <div class="receipt-footer">
 <p>Thank you for your business!</p>
+<p>*** GST Inclusive Pricing ***</p>
 <p>Software by Vijay Tech Orbit</p>
+</div>
 </div>
 </div>
 
@@ -838,8 +1081,8 @@ Discount
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-$(function () {
-$("#cancelId").val("0");
+ $(function () {
+ $("#cancelId").val("0");
 
 // Initialize Wonderful Box Modal
 const wonderfulModal = new bootstrap.Modal(document.getElementById('wonderful-alert-box'));
@@ -853,9 +1096,9 @@ const $title = $('#wb-title');
 const $msg = $('#wb-message');
 const $actions = $('#wb-actions');
 
-$actions.empty();
-$title.text(title);
-$msg.html(message);
+ $actions.empty();
+ $title.text(title);
+ $msg.html(message);
 
 let iconClass = '';
 let iconTag = '';
@@ -877,7 +1120,7 @@ iconClass = 'wb-icon-confirm';
 iconTag = '<i class="bi bi-info-circle-fill"></i>';
 }
 
-$iconArea.removeClass().addClass('wonderful-icon-area ' + iconClass).html(iconTag);
+ $iconArea.removeClass().addClass('wonderful-icon-area ' + iconClass).html(iconTag);
 
 if (type === 'confirm') {
 const btnYes = $('<button class="btn wonderful-btn wb-btn-confirm">Yes, Proceed</button>');
@@ -893,7 +1136,7 @@ wonderfulModal.hide();
 if (typeof onCancel === 'function') onCancel();
 });
 
-$actions.append(btnYes, btnNo);
+ $actions.append(btnYes, btnNo);
 } else {
 const btnOk = $('<button class="btn wonderful-btn wb-btn-confirm">OK</button>');
 
@@ -902,7 +1145,7 @@ wonderfulModal.hide();
 if (typeof onConfirm === 'function') onConfirm();
 });
 
-$actions.append(btnOk);
+ $actions.append(btnOk);
 }
 
 wonderfulModal.show();
@@ -912,7 +1155,7 @@ wonderfulModal.show();
 QZ TRAY SETUP
 =========================== */
 qz.security.setCertificatePromise(function(resolve, reject) {
-resolve("-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJAKg0HhUxzBrdMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV\nBAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBX\naWRnaXRzIFB0eSBMdGQwHhcNMTcwOTA0MDQzOTI5WhcNMTgwOTA0MDQzOTI5WjBF\nMQswCQYDVQQGEwJBVTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50\nZXJuZXQgV2lkZ2l0cyBQdHkgTHRkMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB\nCgKCAQEAuPwsKsV0g2EgLQLUjdInXx3gXVwJnCiC4K1/H6VNF2nzQ3VLDmKQAu7Jf\nwGpQ6KZZF+j2N7sUHnJyCkg+0R3bA3JX5V8kxvK7dOq4DlBjkURUqS3LY3U6K3jXJ\n5f0L6H8f8nKbJZJNYJVjmZJ8p2Wj8bZ6K5W1WfWZ9Wv7Jq0pY0UqY6F8R3bA3JX5V\n8kxvK7dOq4DlBjkURUqS3LY3U6K3jXJ5f0L6H8f8nKbJZJNYJVjmZJ8p2Wj8bZ6K\n5W1WfWZ9Wv7Jq0pY0UqY6F8R3bA3JX5V8kxvK7dOq4DlBjkURUqS3LY3U6K3jXJ5\nf0L6H8f8nKbJZJNYJVjmZJ8wIDAQABo1AwTjAdBgNVHQ4EFgQUhP7V5k4V8JF1dJK9JK9JK9JK9JK9JK9J\nK9JK9HwYDVR0lBBgwFAYKKwYBBAGCNwoDDAYKKwYBBAGCNwoDBDAKBggrBgEFBQcD\nATANBgkqhkiG9w0BAQsFAAOCAQEAXPQ3X3X3X3X3X3X3X3X3X3X3X\nX3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3\nX3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3\nX3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3\n3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3Q==\n-----END CERTIFICATE-----");
+resolve("-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJAKg0HhUxzBrdMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV\nBAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBX\naWRnaXRzIFB0eSBMdGQwHhcNMTcwOTA0MDQzOTI5WhcNMTgwOTA0MDQzOTI5WjBF\nMQswCQYDVQQGEwJBVTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50\nZXJuZXQgV2lkZ2l0cyBQdHkgTHRkMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB\nCgKCAQEAuPwsKsV0g2EgLQLUjdInXx3gXVwJnCiC4K1/H6VNF2nzQ3VLDmKQAu7Jf\nwGpQ6KZZF+j2N7sUHnJyCkg+0R3bA3JX5V8kxvK7dOq4DlBjkURUqS3LY3U6K3jXJ\n5f0L6H8f8nKbJZJNYJVjmZJ8p2Wj8bZ6K5W1WfWZ9Wv7Jq0pY0UqY6F8R3bA3JX5V\n8kxvK7dOq4DlBjkURUqS3LY3U6K3jXJ5f0L6H8f8nKbJZJNYJVjmZJ8p2Wj8bZ6K\n5W1WfWZ9Wv7Jq0pY0UqY6F8R3bA3JX5V8kxvK7dOq4DlBjkURUqS3LY3U6K3jXJ5\nf0L6H8f8nKbJZJNYJVjmZJ8wIDAQABo1AwTjAdBgNVHQ4EFgQUhP7V5k4V8JF1dJK9JK9JK9JK9JK9JK9J\nK9JK9HwYDVR0lBBgwFAYKKwYBBAGCNwoDDAYKKwYBBAGCNwoDBDAKBggrBgEFBQcD\nATANBgkqhkiG9w0BAQsFAAOCAQEAXPQ3X3X3X3X3X3X3X3X3X3X3X3\nX3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3\nX3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3\nX3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3\n3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3X3Q==\n-----END CERTIFICATE-----");
 });
 
 qz.security.setSignaturePromise(function(toSign) {
@@ -942,7 +1185,7 @@ console.warn("QZ Tray Connection Failed (Will try again on print):", err);
 /* ===========================
 Select2 Initialization
 =========================== */
-$("#manual-product").select2({
+ $("#manual-product").select2({
 placeholder: "-- Search Product --",
 width: "100%",
 allowClear: true,
@@ -957,7 +1200,7 @@ return null;
 }
 });
 
-$('#manual-product').on('select2:select', function (e) { $(this).trigger('change'); });
+ $('#manual-product').on('select2:select', function (e) { $(this).trigger('change'); });
 
 /* ===========================
 Date & Setup
@@ -969,18 +1212,137 @@ day: 'numeric', month: 'long', year: 'numeric'
 checkHeldOrder();
 
 /* ===========================
+GST CALCULATION UTILITIES - DYNAMIC GST RATE
+=========================== */
+
+/**
+ * Calculate inclusive GST breakdown with proper rounding
+ * For Edible Oil: CGST 2.5% + SGST 2.5% = Total GST 5%
+ * 
+ * @param {number} amount - Total amount (inclusive of GST)
+ * @param {number} gstRate - GST percentage (e.g., 5 for 5%, 12 for 12%, 18 for 18%)
+ * @returns {object} - Breakdown with taxable, cgst, sgst, totalGst
+ * 
+ * FORMULA:
+ * Taxable Amount = Total Amount × (100 / (100 + GST Rate))
+ * GST Amount = Total Amount - Taxable Amount
+ * CGST = GST Amount / 2 (for intra-state)
+ * SGST = GST Amount / 2 (for intra-state)
+ * 
+ * EXAMPLE for 5% GST (Edible Oil):
+ * If Total Amount = Rs. 105.00
+ * Taxable = 105 × (100/105) = Rs. 100.00
+ * GST = 105 - 100 = Rs. 5.00
+ * CGST (2.5%) = 5/2 = Rs. 2.50
+ * SGST (2.5%) = 5/2 = Rs. 2.50
+ */
+function calculateInclusiveGST(amount, gstRate) {
+    // Handle invalid inputs
+    if (!amount || amount <= 0 || isNaN(amount)) {
+        return { 
+            taxable: 0, 
+            gst: 0, 
+            cgst: 0, 
+            sgst: 0,
+            cgstRate: 0,
+            sgstRate: 0
+        };
+    }
+    
+    // Parse and validate GST rate (default to 5% if invalid)
+    gstRate = parseFloat(gstRate);
+    if (isNaN(gstRate) || gstRate <= 0) {
+        gstRate = 5; // Default for Edible Oil
+    }
+    
+    // Calculate CGST and SGST rates (each is half of total GST for intra-state)
+    const cgstRate = gstRate / 2;
+    const sgstRate = gstRate / 2;
+    
+    // Formula for inclusive GST:
+    // Taxable Amount = Total Amount × (100 / (100 + GST Rate))
+    const divisor = 100 + gstRate;
+    const taxable = (amount * 100) / divisor;
+    const gst = amount - taxable;
+    
+    // Split GST into CGST and SGST (for intra-state transactions)
+    const cgst = gst / 2;
+    const sgst = gst / 2;
+    
+    // Round to 2 decimal places using proper rounding
+    // Using Math.round for proper rounding (not truncation)
+    return {
+        taxable: Math.round(taxable * 100) / 100,
+        gst: Math.round(gst * 100) / 100,
+        cgst: Math.round(cgst * 100) / 100,
+        sgst: Math.round(sgst * 100) / 100,
+        cgstRate: cgstRate,
+        sgstRate: sgstRate,
+        totalGstRate: gstRate
+    };
+}
+
+/**
+ * Proper rounding function - rounds to 2 decimal places
+ * Example: 1.005 rounds to 1.01, 1.004 rounds to 1.00
+ */
+function roundToTwo(num) {
+    return Math.round((num + Number.EPSILON) * 100) / 100;
+}
+
+/**
+ * Update GST Summary display with dynamic rates
+ */
+function updateGSTSummary() {
+    let totalTaxable = 0;
+    let totalCGST = 0;
+    let totalSGST = 0;
+    let totalGSTAmount = 0;
+    
+    // Find the GST rate from items (assuming same rate for all items in summary)
+    let currentGstRate = 5; // Default
+    let currentCgstRate = 2.5;
+    let currentSgstRate = 2.5;
+    
+    $("#items-body tr").each(function() {
+        const gstBreakdown = $(this).data('gstBreakdown');
+        if (gstBreakdown) {
+            totalTaxable += gstBreakdown.taxable;
+            totalCGST += gstBreakdown.cgst;
+            totalSGST += gstBreakdown.sgst;
+            currentGstRate = gstBreakdown.totalGstRate || 5;
+            currentCgstRate = gstBreakdown.cgstRate || (currentGstRate / 2);
+            currentSgstRate = gstBreakdown.sgstRate || (currentGstRate / 2);
+        }
+    });
+    
+    totalGSTAmount = totalCGST + totalSGST;
+    
+    // Update display values with proper rounding
+    $("#gst-taxable").text(roundToTwo(totalTaxable).toFixed(2));
+    $("#gst-cgst").text(roundToTwo(totalCGST).toFixed(2));
+    $("#gst-sgst").text(roundToTwo(totalSGST).toFixed(2));
+    $("#gst-total").text(roundToTwo(totalGSTAmount).toFixed(2));
+    
+    // Update rate labels dynamically
+    $("#cgst-rate-label").text(currentCgstRate.toFixed(2));
+    $("#sgst-rate-label").text(currentSgstRate.toFixed(2));
+    $("#total-gst-rate-label").text(currentGstRate.toFixed(2));
+}
+
+/* ===========================
 Table Logic
 =========================== */
 function checkEmptyState() {
 if ($('#items-body tr').length === 0) {
-$('#empty-state').show();
+ $('#empty-state').show();
 } else {
-$('#empty-state').hide();
+ $('#empty-state').hide();
 }
 }
 
-function addRow(Id, name, unit, qty, rate) {
-$('#empty-state').hide();
+function addRow(Id, name, unit, qty, rate, gstRate) {
+ $('#empty-state').hide();
 const tr = $('<tr>');
 const tdIndex = $('<td class="text-center fw-bold text-muted"></td>');
 const tdDesc = $('<td>');
@@ -988,28 +1350,31 @@ const tdUom = $('<td class="text-center">');
 const tdQty = $('<td>');
 const tdRate = $('<td>');
 const tdAmt = $('<td class="text-end fw-bold amount">0.00</td>');
+const tdGST = $('<td class="text-end gst-cell"></td>');
 const tdAct = $('<td class="text-center">');
 
 const inDesc = $('<input type="text" class="form-control form-control-sm desc" readonly>').val(name);
 const inId = $('<input type="hidden" class="ProdId">').val(Id);
+const inGstRate = $('<input type="hidden" class="GstRate">').val(gstRate || 5);
 const inUom = $('<input type="text" class="form-control form-control-sm uom text-center" readonly style="background:#f8f9fa">').val(unit);
 const inQty = $('<input type="number" class="form-control form-control-sm qty text-center fw-bold" min="0" step="0.01">').val(qty);
 const inRate = $('<input type="number" class="form-control form-control-sm rate text-end" min="0" step="0.01">').val(rate);
 const btnDel = $('<button class="btn btn-sm btn-outline-danger remove-row"><i class="bi bi-x-lg"></i></button>');
 
-tdDesc.append(inDesc).append(inId);
+tdDesc.append(inDesc).append(inId).append(inGstRate);
 tdUom.append(inUom);
 tdQty.append(inQty);
 tdRate.append(inRate);
 tdAct.append(btnDel);
 
-tr.append(tdIndex, tdDesc, tdUom, tdQty, tdRate, tdAmt, tdAct);
+tr.append(tdIndex, tdDesc, tdUom, tdQty, tdRate, tdAmt, tdGST, tdAct);
 tr.hide().appendTo("#items-body").fadeIn(300);
 
 btnDel.on('click', function() {
 tr.fadeOut(300, function() {
-$(this).remove();
+ $(this).remove();
 recalc();
+updateGSTSummary();
 checkEmptyState();
 });
 });
@@ -1020,23 +1385,46 @@ inRate.on('input', updateRow);
 function updateRow() {
 const q = parseFloat(inQty.val()) || 0;
 const r = parseFloat(inRate.val()) || 0;
-tdAmt.text((q * r).toFixed(2));
+const gRate = parseFloat(inGstRate.val()) || 5;
+const amount = q * r;
+
+// Round amount to 2 decimal places
+tdAmt.text(roundToTwo(amount).toFixed(2));
+
+// Calculate and store GST breakdown with dynamic rate
+const gstBreakdown = calculateInclusiveGST(amount, gRate);
+tr.data('gstBreakdown', gstBreakdown);
+
+// Update GST cell with proper CGST/SGST percentage display
+const cgstPercent = gstBreakdown.cgstRate.toFixed(2);
+const sgstPercent = gstBreakdown.sgstRate.toFixed(2);
+
+tdGST.html(
+    '<div class="gst-info">' +
+    '<span>Taxable: Rs.' + gstBreakdown.taxable.toFixed(2) + '</span>' +
+    '<span>CGST (' + cgstPercent + '%): Rs.' + gstBreakdown.cgst.toFixed(2) + '</span>' +
+    '<span>SGST (' + sgstPercent + '%): Rs.' + gstBreakdown.sgst.toFixed(2) + '</span>' +
+    '<span class="text-info">Total GST: ' + gstBreakdown.totalGstRate + '%</span>' +
+    '</div>'
+);
+
 recalc();
+updateGSTSummary();
 }
 updateRow();
 }
 
 /* ===========================
-Calculations
+Calculations with Proper Rounding
 =========================== */
 function recalc() {
 let sub = 0;
-$("#items-body tr").each(function (i) {
-$(this).find("td:first").text(i + 1);
+ $("#items-body tr").each(function (i) {
+ $(this).find("td:first").text(i + 1);
 const val = parseFloat($(this).find(".amount").text()) || 0;
 sub += val;
 });
-$("#subtotal").text(sub.toFixed(2));
+ $("#subtotal").text(roundToTwo(sub).toFixed(2));
 calculateTotal();
 }
 
@@ -1052,59 +1440,102 @@ discAmount = sub * (discInput / 100);
 discAmount = discInput;
 }
 
+// Round discount amount
+discAmount = roundToTwo(discAmount);
+
 let total = Math.max(0, sub - discAmount);
-$("#grand-total").text(total.toFixed(2));
+ $("#grand-total").text(roundToTwo(total).toFixed(2));
 calculateBalance();
 }
 
-$("#disc-type-toggle").on("change", function() {
-$("#disc-type-label").text($(this).is(":checked") ? "%" : "₹");
+ $("#disc-type-toggle").on("change", function() {
+ $("#disc-type-label").text($(this).is(":checked") ? "%" : "Rs.");
 calculateTotal();
 });
-$("#discount").on("input", calculateTotal);
-$("#cash").on("input", calculateBalance);
-$("#upi").on("input", calculateBalance);
-$("#recalculate").on("click", function(e){ e.preventDefault(); recalc(); });
+ $("#discount").on("input", calculateTotal);
+ $("#cash").on("input", calculateBalance);
+ $("#upi").on("input", calculateBalance);
+ $("#recalculate").on("click", function(e){ e.preventDefault(); recalc(); updateGSTSummary(); });
 
-$("#round-off-btn").on("click", function() {
-let sub = parseFloat($("#subtotal").text()) || 0;
-let nearestRound = Math.round(sub);
-let diff = sub - nearestRound;
-
-if(diff > 0) {
-$("#discount").val(diff.toFixed(2));
-if($("#disc-type-toggle").is(":checked")) {
-$("#disc-type-toggle").prop("checked", false).trigger("change");
-}
-calculateTotal();
-showWonderfulBox('success', 'Rounded Off', 'Total rounded off to ₹' + nearestRound.toFixed(2));
-}
+/* ===========================
+ROUND OFF BUTTON - Proper Rounding Logic
+=========================== */
+ $("#round-off-btn").on("click", function() {
+    let sub = parseFloat($("#subtotal").text()) || 0;
+    let currentDiscount = parseFloat($("#discount").val()) || 0;
+    let isPercent = $("#disc-type-toggle").is(":checked");
+    
+    // Calculate current discount amount
+    let currentDiscAmount = isPercent ? (sub * currentDiscount / 100) : currentDiscount;
+    
+    // Calculate current grand total
+    let currentGrandTotal = sub - currentDiscAmount;
+    
+    // Round to nearest rupee
+    let nearestRound = Math.round(currentGrandTotal);
+    
+    // Calculate the difference (how much to add to discount)
+    let diff = roundToTwo(currentGrandTotal - nearestRound);
+    
+    // Only apply if there's a difference (not already rounded)
+    if(Math.abs(diff) > 0.001) {
+        // Calculate new discount
+        let newDiscountAmount;
+        if(isPercent) {
+            // If discount is in percentage, convert diff to percentage
+            newDiscountAmount = currentDiscount + roundToTwo((diff / sub) * 100);
+        } else {
+            // If discount is in rupees, add directly
+            newDiscountAmount = currentDiscount + diff;
+        }
+        
+        // Ensure discount doesn't go negative
+        if(newDiscountAmount >= 0) {
+            $("#discount").val(roundToTwo(newDiscountAmount).toFixed(2));
+            calculateTotal();
+            
+            // Show success message
+            if(diff > 0) {
+                showWonderfulBox('success', 'Rounded Off', 
+                    'Total rounded off to Rs.' + nearestRound.toFixed(2) + 
+                    '<br>Discount increased by Rs.' + diff.toFixed(2));
+            } else {
+                showWonderfulBox('success', 'Rounded Off', 
+                    'Total rounded off to Rs.' + nearestRound.toFixed(2) + 
+                    '<br>Discount adjusted by Rs.' + Math.abs(diff).toFixed(2));
+            }
+        }
+    } else {
+        showWonderfulBox('warning', 'Already Rounded', 
+            'Total is already rounded to Rs.' + nearestRound.toFixed(2));
+    }
 });
 
-$("#manual-product").on("change", function () {
+ $("#manual-product").on("change", function () {
 const val = $(this).val();
 if (!val) return;
 const parts = val.split("|");
 const prodId = $(this).find(":selected").data("prodid") || "0";
+const gstRate = $(this).find(":selected").data("gstrate") || 5;
 
 let exists = false;
-$("#items-body tr").each(function() {
+ $("#items-body tr").each(function() {
 if($(this).find(".ProdId").val() == prodId) {
 const qInput = $(this).find(".qty");
 qInput.val((parseFloat(qInput.val()) || 0) + 1).trigger('input');
 exists = true;
-$(this).addClass("table-info");
+ $(this).addClass("table-info");
 setTimeout(() => $(this).removeClass("table-info"), 500);
 }
 });
 
 if(!exists) {
-addRow(prodId, parts[0], parts[2], 1, parseFloat(parts[1])||0);
+addRow(prodId, parts[0], parts[2], 1, parseFloat(parts[1])||0, gstRate);
 }
 
-$(this).val(null).trigger('change');
+ $(this).val(null).trigger('change');
 setTimeout(function() {
-$('#manual-product').select2('open');
+ $('#manual-product').select2('open');
 }, 100);
 });
 
@@ -1116,7 +1547,7 @@ const paid = cash + upi;
 const balance = grandTotal - paid;
 
 const balElem = $("#Bal-amt");
-balElem.text(balance.toFixed(2));
+balElem.text(roundToTwo(balance).toFixed(2));
 
 if(balance <= 0.1) {
 balElem.removeClass('text-danger').addClass('text-success');
@@ -1128,7 +1559,7 @@ balElem.removeClass('text-success').addClass('text-danger');
 /* ===========================
 Hold / Resume Logic
 =========================== */
-$("#hold-btn").on("click", function() {
+ $("#hold-btn").on("click", function() {
 if($("#items-body tr").length === 0) {
 showWonderfulBox('error', 'Cart Empty', 'There are no items to hold.');
 return;
@@ -1144,13 +1575,14 @@ discount: $("#discount").val(),
 isDiscPercent: $("#disc-type-toggle").is(":checked")
 };
 
-$("#items-body tr").each(function() {
+ $("#items-body tr").each(function() {
 holdData.items.push({
 prodId: $(this).find(".ProdId").val(),
 name: $(this).find(".desc").val(),
 uom: $(this).find(".uom").val(),
 qty: $(this).find(".qty").val(),
-rate: $(this).find(".rate").val()
+rate: $(this).find(".rate").val(),
+gstRate: $(this).find(".GstRate").val()
 });
 });
 
@@ -1163,27 +1595,27 @@ checkHeldOrder();
 function checkHeldOrder() {
 const held = localStorage.getItem('vijay_held_order');
 if(held) {
-$("#resume-btn").removeClass("d-none");
+ $("#resume-btn").removeClass("d-none");
 } else {
-$("#resume-btn").addClass("d-none");
+ $("#resume-btn").addClass("d-none");
 }
 }
 
-$("#resume-btn").on("click", function() {
+ $("#resume-btn").on("click", function() {
 const held = JSON.parse(localStorage.getItem('vijay_held_order'));
 if(!held) return;
 
 showWonderfulBox('confirm', 'Resume Order?', 'Resume previous held order? The current cart will be cleared.',
 function() { // On Confirm
-$("#cust-name").val(held.customer.name);
-$("#cust-address").val(held.customer.address);
-$("#cust-phone").val(held.customer.phone);
-$("#discount").val(held.discount);
-$("#disc-type-toggle").prop("checked", held.isDiscPercent).trigger("change");
+ $("#cust-name").val(held.customer.name);
+ $("#cust-address").val(held.customer.address);
+ $("#cust-phone").val(held.customer.phone);
+ $("#discount").val(held.discount);
+ $("#disc-type-toggle").prop("checked", held.isDiscPercent).trigger("change");
 
-$("#items-body").empty();
+ $("#items-body").empty();
 held.items.forEach(item => {
-addRow(item.prodId, item.name, item.uom, item.qty, item.rate);
+addRow(item.prodId, item.name, item.uom, item.qty, item.rate, item.gstRate || 5);
 });
 
 localStorage.removeItem('vijay_held_order');
@@ -1203,67 +1635,105 @@ const toastEl = document.getElementById('liveToast');
 const toast = new bootstrap.Toast(toastEl, { delay: 4000 });
 
 function resetInvoiceForm() {
-$('.invoice-box').css('opacity', '0.5');
+ $('.invoice-box').css('opacity', '0.5');
 setTimeout(() => {
-$('#cust-name, #cust-address, #cust-phone').val('');
-$('#manual-product').val(null).trigger('change');
-$('#discount').val('');
-$('#cash').val('');
-$('#upi').val('');
+ $('#cust-name, #cust-address, #cust-phone').val('');
+ $('#manual-product').val(null).trigger('change');
+ $('#discount').val('');
+ $('#cash').val('');
+ $('#upi').val('');
 
-$('#items-body').empty();
+ $('#items-body').empty();
 checkEmptyState();
 
-$('#subtotal').text('');
-$('#grand-total').text('');
-$('#Bal-amt').text('');
+ $('#subtotal').text('');
+ $('#grand-total').text('');
+ $('#Bal-amt').text('');
 
-$('.invoice-box').css('opacity', '1');
+ $('#gst-taxable').text('0.00');
+ $('#gst-cgst').text('0.00');
+ $('#gst-sgst').text('0.00');
+ $('#gst-total').text('0.00');
+
+ $('.invoice-box').css('opacity', '1');
 }, 300);
 }
 
 function toggleCancelButton() {
 const cancelId = $("#cancelId").val();
 if (cancelId && cancelId !== "0") {
-$("#cancel").removeClass("d-none");
+ $("#cancel").removeClass("d-none");
 } else {
-$("#cancel").addClass("d-none");
+ $("#cancel").addClass("d-none");
 }
 }
 
 /* ===========================
-THERMAL PRINTER LOGIC
+THERMAL PRINTER LOGIC - PERFECT ALIGNMENT
 =========================== */
 function printThermalReceipt(docNo) {
-$('#print-date').text(new Date().toLocaleString());
-$('#print-inv-no').text(docNo || "PENDING");
+ $('#print-date').text(new Date().toLocaleString());
+ $('#print-inv-no').text(docNo || "PENDING");
 
 const custName = $('#cust-name').val();
-$('#print-cust').text(custName ? custName : 'Walk-in Customer');
+ $('#print-cust').text(custName ? custName : 'Walk-in Customer');
 
+// Build items table with perfect alignment
 let itemsHtml = '';
-$('#items-body tr').each(function() {
-const name = $(this).find('.desc').val();
-const qty = $(this).find('.qty').val();
-const rate = $(this).find('.rate').val();
-const amt = $(this).find('.amount').text();
-const shortName = name.length > 18 ? name.substring(0, 18) + '..' : name;
+let printTaxable = 0;
+let printCGST = 0;
+let printSGST = 0;
+let currentGstRate = 5;
+let currentCgstRate = 2.5;
+let currentSgstRate = 2.5;
 
-itemsHtml += `
-<div class="receipt-row" style="font-size:11px;">
-<span>${shortName} x${qty}</span>
-<span>${amt}</span>
-</div>
-`;
+ $('#items-body tr').each(function() {
+    const name = $(this).find('.desc').val() || '';
+    const qty = $(this).find('.qty').val() || '0';
+    const rate = $(this).find('.rate').val() || '0';
+    const amt = $(this).find('.amount').text() || '0.00';
+    const gstBreakdown = $(this).data('gstBreakdown') || { taxable: 0, cgst: 0, sgst: 0, cgstRate: 2.5, sgstRate: 2.5, totalGstRate: 5 };
+    
+    // Accumulate GST totals
+    printTaxable += gstBreakdown.taxable;
+    printCGST += gstBreakdown.cgst;
+    printSGST += gstBreakdown.sgst;
+    currentGstRate = gstBreakdown.totalGstRate || 5;
+    currentCgstRate = gstBreakdown.cgstRate || (currentGstRate / 2);
+    currentSgstRate = gstBreakdown.sgstRate || (currentGstRate / 2);
+    
+    // Truncate name to fit column (max ~20 chars for 72mm paper)
+    const shortName = name.length > 18 ? name.substring(0, 16) + '..' : name;
+    
+    itemsHtml += '<tr>';
+    itemsHtml += '<td class="col-sno">' + ($(this).index() + 1) + '</td>';
+    itemsHtml += '<td class="col-item"><span class="item-name">' + shortName + '</span></td>';
+    itemsHtml += '<td class="col-qty">' + parseFloat(qty).toFixed(2) + '</td>';
+    itemsHtml += '<td class="col-rate">' + parseFloat(rate).toFixed(2) + '</td>';
+    itemsHtml += '<td class="col-amt">' + parseFloat(amt).toFixed(2) + '</td>';
+    itemsHtml += '</tr>';
 });
-$('#print-items').html(itemsHtml);
 
-$('#print-subtotal').text($('#subtotal').text() || "0.00");
-$('#print-discount').text($('#discount').val() + ($("#disc-type-toggle").is(":checked")?"%":""));
-$('#print-total').text($('#grand-total').text() || "0.00");
-$('#print-cash').text($('#cash').val() || "0.00");
-$('#print-upi').text($('#upi').val() || "0.00");
-$('#print-balance').text($('#Bal-amt').text() || "0.00");
+ $('#print-items').html(itemsHtml);
+
+// Update GST summary in receipt with dynamic rates
+ $('#print-taxable').text(roundToTwo(printTaxable).toFixed(2));
+ $('#print-cgst').text(roundToTwo(printCGST).toFixed(2));
+ $('#print-sgst').text(roundToTwo(printSGST).toFixed(2));
+ $('#print-cgst-rate').text(currentCgstRate.toFixed(2));
+ $('#print-sgst-rate').text(currentSgstRate.toFixed(2));
+
+// Update totals
+ $('#print-subtotal').text($('#subtotal').text() || "0.00");
+
+const discVal = $('#discount').val() || "0";
+const discType = $("#disc-type-toggle").is(":checked") ? "%" : "Rs.";
+ $('#print-discount').text(discVal + (discType === "%" ? "%" : ""));
+
+ $('#print-total').text($('#grand-total').text() || "0.00");
+ $('#print-cash').text($('#cash').val() || "0.00");
+ $('#print-upi').text($('#upi').val() || "0.00");
+ $('#print-balance').text($('#Bal-amt').text() || "0.00");
 
 var connectPromise = Promise.resolve();
 if (!qz.websocket.isActive()) {
@@ -1279,7 +1749,10 @@ return qz.printers.find();
 if (!printer) {
 throw new Error("No printer selected or available.");
 }
-var config = qz.configs.create(printer);
+var config = qz.configs.create(printer, {
+    units: 'mm',
+    altPrinting: true
+});
 var printData = [
 {
 type: 'html',
@@ -1301,12 +1774,12 @@ console.warn("Connection recovered or transient error occurred, print may still 
 ✅ SAVE + SAVE PRINT LOGIC
 =========================== */
 
-$("#save-btn").on("click", function (e) {
+ $("#save-btn").on("click", function (e) {
 e.preventDefault();
 saveInvoice(false);
 });
 
-$("#save-print-btn").on("click", function (e) {
+ $("#save-print-btn").on("click", function (e) {
 e.preventDefault();
 saveInvoice(true);
 });
@@ -1332,16 +1805,23 @@ showWonderfulBox('error', 'Payment Error',
 return;
 }
 
-$("#loader").css("display", "flex").addClass("active");
+ $("#loader").css("display", "flex").addClass("active");
 
-// ✅ CRITICAL FIX: Corrected JSON Syntax (colon instead of equals)
+// Collect GST summary data
+let totalTaxable = 0;
+let totalCGST = 0;
+let totalSGST = 0;
+let currentGstRate = 5;
+let currentCgstRate = 2.5;
+let currentSgstRate = 2.5;
+
 const data = {
 discountType: $("#disc-type-toggle").is(":checked") ? "PERCENT" : "FIXED",
 discount: parseFloat($("#discount").val()) || 0,
 subtotal: parseFloat($("#subtotal").text()) || 0,
 total: parseFloat($("#grand-total").text()) || 0,
-cash: parseFloat($("#cash").val()) || 0, // FIXED
-upi: parseFloat($("#upi").val()) || 0, // FIXED
+cash: parseFloat($("#cash").val()) || 0,
+upi: parseFloat($("#upi").val()) || 0,
 printRequired: printAfterSave,
 customer: {
 name: $("#cust-name").val(),
@@ -1351,21 +1831,45 @@ phone: $("#cust-phone").val()
 items: []
 };
 
-$("#items-body tr").each(function () {
+ $("#items-body tr").each(function () {
 const row = $(this);
+const gstBreakdown = row.data('gstBreakdown') || { taxable: 0, cgst: 0, sgst: 0, cgstRate: 2.5, sgstRate: 2.5, totalGstRate: 5 };
+
+totalTaxable += gstBreakdown.taxable;
+totalCGST += gstBreakdown.cgst;
+totalSGST += gstBreakdown.sgst;
+currentGstRate = gstBreakdown.totalGstRate || 5;
+currentCgstRate = gstBreakdown.cgstRate || (currentGstRate / 2);
+currentSgstRate = gstBreakdown.sgstRate || (currentGstRate / 2);
+
 data.items.push({
 prodId: row.find(".ProdId").val(),
 product: row.find(".desc").val(),
 unit: row.find(".uom").val(),
 qty: parseFloat(row.find(".qty").val()) || 0,
 rate: parseFloat(row.find(".rate").val()) || 0,
-amount: parseFloat(row.find(".amount").text()) || 0
+amount: parseFloat(row.find(".amount").text()) || 0,
+gstRate: parseFloat(row.find(".GstRate").val()) || 5,
+taxable: gstBreakdown.taxable,
+cgst: gstBreakdown.cgst,
+sgst: gstBreakdown.sgst
 });
 });
+
+// Add GST summary to data with proper rounding
+data.gstSummary = {
+totalTaxable: roundToTwo(totalTaxable),
+totalCGST: roundToTwo(totalCGST),
+totalSGST: roundToTwo(totalSGST),
+totalGST: roundToTwo(totalCGST + totalSGST),
+gstRate: currentGstRate,
+cgstRate: currentCgstRate,
+sgstRate: currentSgstRate
+};
 
 console.log("Sending Data:", data);
 
-$.ajax({
+ $.ajax({
 type: "POST",
 url: "<%= request.getContextPath() %>/SalesSaveServlet",
 data: JSON.stringify({ salesData: data }),
@@ -1374,7 +1878,7 @@ dataType: "json",
 
 success: function (response) {
 
-$("#loader").removeClass("active");
+ $("#loader").removeClass("active");
 setTimeout(() => { $("#loader").hide(); }, 300);
 
 if (response && response.status === "success") {
@@ -1393,7 +1897,7 @@ printThermalReceipt(docNo);
 }
 
 // ✅ Show Cancel Button
-$("#cancelId").val(docNo);
+ $("#cancelId").val(docNo);
 toggleCancelButton();
 
 resetInvoiceForm();
@@ -1405,7 +1909,7 @@ showWonderfulBox('error', 'Save Failed', err);
 },
 
 error: function (xhr, status, error) {
-$("#loader").removeClass("active");
+ $("#loader").removeClass("active");
 setTimeout(() => { $("#loader").hide(); }, 300);
 showWonderfulBox(
 'error',
@@ -1420,7 +1924,7 @@ console.error(xhr.responseText);
 /* ===========================
 CANCEL ENTRY LOGIC
 =========================== */
-$("#cancel").on("click", function () {
+ $("#cancel").on("click", function () {
 const cancelId = $("#cancelId").val();
 if (!cancelId || cancelId === "0") {
 showWonderfulBox('error', 'Error', 'Document ID not found.');
@@ -1429,29 +1933,25 @@ return;
 
 showWonderfulBox('confirm', 'Cancel Invoice?', 'Are you sure you want to CANCEL this invoice? This action cannot be undone.',
 function() { // On Confirm
-$("#loader").css("display", "flex").addClass("active");
-$.ajax({
+ $("#loader").css("display", "flex").addClass("active");
+ $.ajax({
 type: "POST",
 url: "<%= request.getContextPath() %>/CancelSalesEntry",
 data: { documentNo: cancelId },
 success: function (response) {
-$("#loader").removeClass("active");
+ $("#loader").removeClass("active");
 setTimeout(() => { $("#loader").hide(); }, 300);
 if (response && response.status === "success") {
-$("#cancelId").val("0");
-$("#cancel").addClass("d-none");
+ $("#cancelId").val("0");
+ $("#cancel").addClass("d-none");
 showWonderfulBox('success', 'Canceled', 'The invoice has been canceled successfully.');
-// We do NOT resetInvoiceForm here because the user might want to re-enter the sale manually
-// or the form is already blank from the previous save.
-// Depending on workflow, you might want to clear everything:
-// resetInvoiceForm();
 } else {
 const err = response ? (response.error || response.message) : "Unknown error";
 showWonderfulBox('error', 'Failed', err);
 }
 },
 error: function (xhr, status, error) {
-$("#loader").removeClass("active");
+ $("#loader").removeClass("active");
 setTimeout(() => { $("#loader").hide(); }, 300);
 showWonderfulBox('error', 'Connection Failed', "Server Connection Failed: " + error);
 }
